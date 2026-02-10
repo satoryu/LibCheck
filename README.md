@@ -1,16 +1,12 @@
-# libcheck
+# LibCheck
 
-A new Flutter project.
+カメラでISBNのバーコードを撮影し、普段利用している図書館に蔵書があるかどうかを確認するモバイルアプリケーション。
 
-## Getting Started
+## 対応OS
 
-This project is a starting point for a Flutter application.
+Android
 
-A few resources to get you started if this is your first Flutter project:
+## 技術スタック
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Flutter
+- [カーリル 図書館API](https://calil.jp/doc/api_ref.html)
