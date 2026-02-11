@@ -89,52 +89,63 @@ void main() {
       expect(result[1].systemId, 'Tokyo_Shibuya');
     });
 
-    test('add stores a library', () async {
-      await repository.add(library1);
+    test('add stores a library and returns updated list', () async {
+      final result = await repository.add(library1);
 
-      final result = await repository.getAll();
       expect(result, hasLength(1));
       expect(result[0], equals(library1));
     });
 
     test('add does not duplicate existing library', () async {
       await repository.add(library1);
-      await repository.add(library1);
+      final result = await repository.add(library1);
 
-      final result = await repository.getAll();
       expect(result, hasLength(1));
     });
 
-    test('addAll stores multiple libraries', () async {
-      await repository.addAll([library1, library2]);
+    test('addAll stores multiple libraries and returns updated list', () async {
+      final result = await repository.addAll([library1, library2]);
 
-      final result = await repository.getAll();
       expect(result, hasLength(2));
     });
 
     test('addAll skips duplicates', () async {
       await repository.add(library1);
-      await repository.addAll([library1, library2]);
+      final result = await repository.addAll([library1, library2]);
 
-      final result = await repository.getAll();
       expect(result, hasLength(2));
     });
 
-    test('remove deletes a library', () async {
+    test('remove deletes a library and returns updated list', () async {
       await repository.addAll([library1, library2]);
-      await repository.remove(library1);
+      final result = await repository.remove(library1);
 
-      final result = await repository.getAll();
       expect(result, hasLength(1));
       expect(result[0], equals(library2));
     });
 
     test('remove does nothing when library not found', () async {
       await repository.add(library1);
-      await repository.remove(library2);
+      final result = await repository.remove(library2);
+
+      expect(result, hasLength(1));
+    });
+
+    test('getAll returns empty list when JSON is corrupted', () async {
+      await fakeStorage.setString('registered_libraries', 'not valid json');
 
       final result = await repository.getAll();
-      expect(result, hasLength(1));
+      expect(result, isEmpty);
+    });
+
+    test('getAll returns empty list when JSON structure is invalid', () async {
+      await fakeStorage.setString(
+        'registered_libraries',
+        '{"not": "a list"}',
+      );
+
+      final result = await repository.getAll();
+      expect(result, isEmpty);
     });
 
     test('saveAll replaces all libraries', () async {

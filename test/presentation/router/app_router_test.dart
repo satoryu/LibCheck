@@ -14,11 +14,11 @@ class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
   @override
   Future<void> saveAll(List<Library> libraries) async {}
   @override
-  Future<void> add(Library library) async {}
+  Future<List<Library>> add(Library library) async => [];
   @override
-  Future<void> addAll(List<Library> libraries) async {}
+  Future<List<Library>> addAll(List<Library> libraries) async => [];
   @override
-  Future<void> remove(Library library) async {}
+  Future<List<Library>> remove(Library library) async => [];
 }
 
 void main() {

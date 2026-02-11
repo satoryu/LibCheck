@@ -16,10 +16,16 @@ class RegisteredLibraryRepositoryImpl implements RegisteredLibraryRepository {
     final jsonString = await _localStorage.getString(_storageKey);
     if (jsonString == null) return [];
 
-    final jsonList = jsonDecode(jsonString) as List<dynamic>;
-    return jsonList
-        .map((e) => Library.fromJson(e as Map<String, dynamic>))
-        .toList();
+    try {
+      final jsonList = jsonDecode(jsonString) as List<dynamic>;
+      return jsonList
+          .map((e) => Library.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on FormatException {
+      return [];
+    } on TypeError {
+      return [];
+    }
   }
 
   @override
@@ -29,15 +35,16 @@ class RegisteredLibraryRepositoryImpl implements RegisteredLibraryRepository {
   }
 
   @override
-  Future<void> add(Library library) async {
+  Future<List<Library>> add(Library library) async {
     final current = await getAll();
-    if (current.contains(library)) return;
+    if (current.contains(library)) return current;
     current.add(library);
     await saveAll(current);
+    return current;
   }
 
   @override
-  Future<void> addAll(List<Library> libraries) async {
+  Future<List<Library>> addAll(List<Library> libraries) async {
     final current = await getAll();
     for (final library in libraries) {
       if (!current.contains(library)) {
@@ -45,12 +52,14 @@ class RegisteredLibraryRepositoryImpl implements RegisteredLibraryRepository {
       }
     }
     await saveAll(current);
+    return current;
   }
 
   @override
-  Future<void> remove(Library library) async {
+  Future<List<Library>> remove(Library library) async {
     final current = await getAll();
     current.removeWhere((e) => e == library);
     await saveAll(current);
+    return current;
   }
 }

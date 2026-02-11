@@ -17,24 +17,27 @@ class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
   }
 
   @override
-  Future<void> add(Library library) async {
+  Future<List<Library>> add(Library library) async {
     if (!_libraries.contains(library)) {
       _libraries.add(library);
     }
+    return List.from(_libraries);
   }
 
   @override
-  Future<void> addAll(List<Library> libraries) async {
+  Future<List<Library>> addAll(List<Library> libraries) async {
     for (final lib in libraries) {
       if (!_libraries.contains(lib)) {
         _libraries.add(lib);
       }
     }
+    return List.from(_libraries);
   }
 
   @override
-  Future<void> remove(Library library) async {
+  Future<List<Library>> remove(Library library) async {
     _libraries.removeWhere((e) => e == library);
+    return List.from(_libraries);
   }
 }
 

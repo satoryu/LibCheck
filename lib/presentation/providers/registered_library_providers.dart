@@ -22,20 +22,20 @@ class RegisteredLibrariesNotifier extends AsyncNotifier<List<Library>> {
 
   Future<void> add(Library library) async {
     final repository = ref.read(registeredLibraryRepositoryProvider);
-    await repository.add(library);
-    state = AsyncValue.data(await repository.getAll());
+    final updated = await repository.add(library);
+    state = AsyncValue.data(updated);
   }
 
   Future<void> addAll(List<Library> libraries) async {
     final repository = ref.read(registeredLibraryRepositoryProvider);
-    await repository.addAll(libraries);
-    state = AsyncValue.data(await repository.getAll());
+    final updated = await repository.addAll(libraries);
+    state = AsyncValue.data(updated);
   }
 
   Future<void> remove(Library library) async {
     final repository = ref.read(registeredLibraryRepositoryProvider);
-    await repository.remove(library);
-    state = AsyncValue.data(await repository.getAll());
+    final updated = await repository.remove(library);
+    state = AsyncValue.data(updated);
   }
 }
 
