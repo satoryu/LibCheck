@@ -5,8 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:libcheck/domain/models/book_availability.dart';
 import 'package:libcheck/domain/models/library.dart';
 import 'package:libcheck/domain/repositories/library_repository.dart';
+import 'package:libcheck/domain/repositories/registered_library_repository.dart';
 import 'package:libcheck/presentation/pages/library_list_page.dart';
 import 'package:libcheck/presentation/providers/library_providers.dart';
+import 'package:libcheck/presentation/providers/registered_library_providers.dart';
 
 class MockLibraryRepository implements LibraryRepository {
   final List<Library> _libraries;
@@ -71,8 +73,52 @@ Library _createLibrary({
   );
 }
 
+class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
+  List<Library> _libraries = [];
+
+  List<Library> get libraries => List.from(_libraries);
+
+  @override
+  Future<List<Library>> getAll() async => List.from(_libraries);
+
+  @override
+  Future<void> saveAll(List<Library> libraries) async {
+    _libraries = List.from(libraries);
+  }
+
+  @override
+  Future<List<Library>> add(Library library) async {
+    if (!_libraries.contains(library)) {
+      _libraries.add(library);
+    }
+    return List.from(_libraries);
+  }
+
+  @override
+  Future<List<Library>> addAll(List<Library> libraries) async {
+    for (final lib in libraries) {
+      if (!_libraries.contains(lib)) {
+        _libraries.add(lib);
+      }
+    }
+    return List.from(_libraries);
+  }
+
+  @override
+  Future<List<Library>> remove(Library library) async {
+    _libraries.removeWhere((e) => e == library);
+    return List.from(_libraries);
+  }
+}
+
 void main() {
   group('LibraryListPage', () {
+    late FakeRegisteredLibraryRepository fakeRegisteredRepo;
+
+    setUp(() {
+      fakeRegisteredRepo = FakeRegisteredLibraryRepository();
+    });
+
     Widget buildSubject({
       required LibraryRepository repository,
       String prefecture = '東京都',
@@ -81,6 +127,8 @@ void main() {
       return ProviderScope(
         overrides: [
           libraryRepositoryProvider.overrideWithValue(repository),
+          registeredLibraryRepositoryProvider
+              .overrideWithValue(fakeRegisteredRepo),
         ],
         child: MaterialApp(
           home: LibraryListPage(prefecture: prefecture, city: city),
@@ -227,6 +275,37 @@ void main() {
 
       final button = tester.widget<FilledButton>(find.byType(FilledButton));
       expect(button.onPressed, isNull);
+    });
+
+    testWidgets('register button saves selected libraries', (tester) async {
+      final libraries = [
+        _createLibrary(
+          formalName: '図書館1',
+          address: '住所1',
+          libId: '1',
+        ),
+        _createLibrary(
+          formalName: '図書館2',
+          address: '住所2',
+          libId: '2',
+        ),
+      ];
+
+      await tester.pumpWidget(buildSubject(
+        repository: MockLibraryRepository(libraries),
+      ));
+      await tester.pumpAndSettle();
+
+      // Select first library
+      await tester.tap(find.byType(CheckboxListTile).first);
+      await tester.pump();
+
+      // Tap register button
+      await tester.tap(find.byType(FilledButton));
+      await tester.pumpAndSettle();
+
+      expect(fakeRegisteredRepo.libraries, hasLength(1));
+      expect(fakeRegisteredRepo.libraries[0].formalName, '図書館1');
     });
 
     testWidgets('shows error message on failure', (tester) async {
