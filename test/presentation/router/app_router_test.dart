@@ -76,5 +76,28 @@ void main() {
 
       expect(find.widgetWithText(AppBar, '東京都の市区町村'), findsOneWidget);
     });
+
+    testWidgets(
+        'navigates to library list placeholder at /library/add/:pref/:city',
+        (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp.router(
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      router.go('/library/add/東京都/港区');
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(AppBar, '港区の図書館'), findsOneWidget);
+    });
   });
 }

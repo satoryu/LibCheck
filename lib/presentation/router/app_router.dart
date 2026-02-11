@@ -25,6 +25,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           return CitySelectionPage(prefecture: pref);
         },
       ),
+      GoRoute(
+        path: '/library/add/:pref/:city',
+        builder: (context, state) {
+          final pref = state.pathParameters['pref']!;
+          final city = state.pathParameters['city']!;
+          return Scaffold(
+            appBar: AppBar(title: Text('$cityの図書館')),
+            body: Center(child: Text('$pref $city の図書館一覧（未実装）')),
+          );
+        },
+      ),
     ],
   );
 });
