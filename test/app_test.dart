@@ -22,8 +22,10 @@ void main() {
           child: const LibCheckApp(),
         ),
       );
+      await tester.pumpAndSettle();
 
-      final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
+      final materialApp =
+          tester.widget<MaterialApp>(find.byType(MaterialApp));
       expect(materialApp.title, 'LibCheck');
     });
 
@@ -37,6 +39,7 @@ void main() {
           child: const LibCheckApp(),
         ),
       );
+      await tester.pumpAndSettle();
 
       expect(find.text('LibCheck'), findsOneWidget);
     });
