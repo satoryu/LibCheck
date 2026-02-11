@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:libcheck/presentation/pages/home_page.dart';
 import 'package:libcheck/presentation/pages/prefecture_selection_page.dart';
 import 'package:libcheck/presentation/pages/city_selection_page.dart';
+import 'package:libcheck/presentation/pages/library_list_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -30,10 +31,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final pref = state.pathParameters['pref']!;
           final city = state.pathParameters['city']!;
-          return Scaffold(
-            appBar: AppBar(title: Text('$cityの図書館')),
-            body: Center(child: Text('$pref $city の図書館一覧（未実装）')),
-          );
+          return LibraryListPage(prefecture: pref, city: city);
         },
       ),
     ],
