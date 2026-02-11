@@ -1,0 +1,216 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:libcheck/domain/models/library.dart';
+import 'package:libcheck/domain/repositories/registered_library_repository.dart';
+import 'package:libcheck/presentation/pages/library_management_page.dart';
+import 'package:libcheck/presentation/providers/registered_library_providers.dart';
+
+class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
+  List<Library> _libraries = [];
+
+  FakeRegisteredLibraryRepository([List<Library>? initial]) {
+    if (initial != null) _libraries = List.from(initial);
+  }
+
+  @override
+  Future<List<Library>> getAll() async => List.from(_libraries);
+
+  @override
+  Future<void> saveAll(List<Library> libraries) async {
+    _libraries = List.from(libraries);
+  }
+
+  @override
+  Future<void> add(Library library) async {
+    if (!_libraries.contains(library)) {
+      _libraries.add(library);
+    }
+  }
+
+  @override
+  Future<void> addAll(List<Library> libraries) async {
+    for (final lib in libraries) {
+      if (!_libraries.contains(lib)) {
+        _libraries.add(lib);
+      }
+    }
+  }
+
+  @override
+  Future<void> remove(Library library) async {
+    _libraries.removeWhere((e) => e == library);
+  }
+}
+
+const _library1 = Library(
+  systemId: 'Tokyo_Minato',
+  systemName: '港区図書館',
+  libKey: 'みなと',
+  libId: '123',
+  shortName: 'みなと図書館',
+  formalName: '港区立みなと図書館',
+  address: '東京都港区芝公園3-2-25',
+  pref: '東京都',
+  city: '港区',
+  category: 'MEDIUM',
+);
+
+const _library2 = Library(
+  systemId: 'Tokyo_Shibuya',
+  systemName: '渋谷区図書館',
+  libKey: 'しぶや',
+  libId: '456',
+  shortName: '渋谷図書館',
+  formalName: '渋谷区立中央図書館',
+  address: '東京都渋谷区神宮前1-1-1',
+  pref: '東京都',
+  city: '渋谷区',
+  category: 'LARGE',
+);
+
+Widget _buildTestWidget({required FakeRegisteredLibraryRepository repo}) {
+  return ProviderScope(
+    overrides: [
+      registeredLibraryRepositoryProvider.overrideWithValue(repo),
+    ],
+    child: const MaterialApp(
+      home: LibraryManagementPage(),
+    ),
+  );
+}
+
+void main() {
+  group('LibraryManagementPage', () {
+    testWidgets('shows empty state when no libraries registered',
+        (tester) async {
+      await tester.pumpWidget(
+        _buildTestWidget(repo: FakeRegisteredLibraryRepository()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('図書館が登録されていません'), findsOneWidget);
+      expect(find.text('図書館を登録する'), findsOneWidget);
+    });
+
+    testWidgets('shows registered libraries', (tester) async {
+      await tester.pumpWidget(
+        _buildTestWidget(
+          repo: FakeRegisteredLibraryRepository([_library1, _library2]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('港区立みなと図書館'), findsOneWidget);
+      expect(find.text('渋谷区立中央図書館'), findsOneWidget);
+    });
+
+    testWidgets('shows AppBar with title', (tester) async {
+      await tester.pumpWidget(
+        _buildTestWidget(repo: FakeRegisteredLibraryRepository()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(AppBar, '登録図書館'), findsOneWidget);
+    });
+
+    testWidgets('shows add button in AppBar', (tester) async {
+      await tester.pumpWidget(
+        _buildTestWidget(repo: FakeRegisteredLibraryRepository()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.add), findsOneWidget);
+    });
+
+    testWidgets('shows delete confirmation dialog', (tester) async {
+      await tester.pumpWidget(
+        _buildTestWidget(
+          repo: FakeRegisteredLibraryRepository([_library1]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      expect(find.text('図書館の登録を解除しますか？'), findsOneWidget);
+      expect(
+        find.text('「港区立みなと図書館」の登録を解除します。'),
+        findsOneWidget,
+      );
+      expect(find.text('キャンセル'), findsOneWidget);
+      expect(find.text('解除する'), findsOneWidget);
+    });
+
+    testWidgets('cancel button dismisses dialog', (tester) async {
+      await tester.pumpWidget(
+        _buildTestWidget(
+          repo: FakeRegisteredLibraryRepository([_library1]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('図書館の登録を解除しますか？'), findsNothing);
+      expect(find.text('港区立みなと図書館'), findsOneWidget);
+    });
+
+    testWidgets('confirming delete removes library and shows SnackBar',
+        (tester) async {
+      await tester.pumpWidget(
+        _buildTestWidget(
+          repo: FakeRegisteredLibraryRepository([_library1]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('解除する'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('図書館の登録を解除しました'), findsOneWidget);
+      expect(find.text('元に戻す'), findsOneWidget);
+      expect(find.text('図書館が登録されていません'), findsOneWidget);
+    });
+
+    testWidgets('undo restores deleted library', (tester) async {
+      await tester.pumpWidget(
+        _buildTestWidget(
+          repo: FakeRegisteredLibraryRepository([_library1]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('解除する'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('元に戻す'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('港区立みなと図書館'), findsOneWidget);
+    });
+
+    testWidgets('shows location subtitle for each library', (tester) async {
+      await tester.pumpWidget(
+        _buildTestWidget(
+          repo: FakeRegisteredLibraryRepository([_library1]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('東京都港区'), findsOneWidget);
+    });
+  });
+}

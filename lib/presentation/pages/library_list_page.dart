@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:libcheck/presentation/providers/library_list_providers.dart';
+import 'package:libcheck/presentation/providers/registered_library_providers.dart';
 
 class LibraryListPage extends ConsumerWidget {
   const LibraryListPage({
@@ -67,7 +68,24 @@ class LibraryListPage extends ConsumerWidget {
                 child: SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: selected.isEmpty ? null : () {},
+                    onPressed: selected.isEmpty
+                        ? null
+                        : () async {
+                            await ref
+                                .read(registeredLibrariesProvider.notifier)
+                                .addAll(selected.toList());
+                            ref
+                                .read(selectedLibrariesProvider.notifier)
+                                .clear();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('図書館を登録しました'),
+                                ),
+                              );
+                              Navigator.of(context).pop();
+                            }
+                          },
                     child: Text(
                       selected.isEmpty
                           ? '選択した図書館を登録する'

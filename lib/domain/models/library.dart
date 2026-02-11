@@ -29,6 +29,42 @@ class Library {
   final String? tel;
   final String? geocode;
 
+  factory Library.fromJson(Map<String, dynamic> json) {
+    return Library(
+      systemId: json['systemId'] as String,
+      systemName: json['systemName'] as String,
+      libKey: json['libKey'] as String,
+      libId: json['libId'] as String,
+      shortName: json['shortName'] as String,
+      formalName: json['formalName'] as String,
+      address: json['address'] as String,
+      pref: json['pref'] as String,
+      city: json['city'] as String,
+      category: json['category'] as String,
+      url: json['url'] as String?,
+      tel: json['tel'] as String?,
+      geocode: json['geocode'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'systemId': systemId,
+      'systemName': systemName,
+      'libKey': libKey,
+      'libId': libId,
+      'shortName': shortName,
+      'formalName': formalName,
+      'address': address,
+      'pref': pref,
+      'city': city,
+      'category': category,
+      'url': url,
+      'tel': tel,
+      'geocode': geocode,
+    };
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

@@ -3,7 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:libcheck/domain/models/library.dart';
+import 'package:libcheck/domain/repositories/registered_library_repository.dart';
+import 'package:libcheck/presentation/providers/registered_library_providers.dart';
 import 'package:libcheck/presentation/router/app_router.dart';
+
+class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
+  @override
+  Future<List<Library>> getAll() async => [];
+  @override
+  Future<void> saveAll(List<Library> libraries) async {}
+  @override
+  Future<void> add(Library library) async {}
+  @override
+  Future<void> addAll(List<Library> libraries) async {}
+  @override
+  Future<void> remove(Library library) async {}
+}
 
 void main() {
   group('AppRouter', () {
@@ -15,14 +31,21 @@ void main() {
       expect(router, isA<GoRouter>());
     });
 
-    testWidgets('navigates to home page at /', (tester) async {
-      final container = ProviderContainer();
+    testWidgets('navigates to home page at / with BottomNavigationBar',
+        (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          registeredLibraryRepositoryProvider
+              .overrideWithValue(FakeRegisteredLibraryRepository()),
+        ],
+      );
       addTearDown(container.dispose);
 
       final router = container.read(routerProvider);
 
       await tester.pumpWidget(
-        ProviderScope(
+        UncontrolledProviderScope(
+          container: container,
           child: MaterialApp.router(
             routerConfig: router,
           ),
@@ -31,17 +54,83 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('LibCheck'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.text('ホーム'), findsOneWidget);
+      expect(find.text('図書館'), findsOneWidget);
+      expect(find.text('履歴'), findsOneWidget);
     });
 
-    testWidgets('navigates to prefecture selection page at /library/add',
+    testWidgets('tapping library tab navigates to library management page',
         (tester) async {
-      final container = ProviderContainer();
+      final container = ProviderContainer(
+        overrides: [
+          registeredLibraryRepositoryProvider
+              .overrideWithValue(FakeRegisteredLibraryRepository()),
+        ],
+      );
       addTearDown(container.dispose);
 
       final router = container.read(routerProvider);
 
       await tester.pumpWidget(
-        ProviderScope(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('図書館'));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(AppBar, '登録図書館'), findsOneWidget);
+    });
+
+    testWidgets('tapping history tab navigates to history placeholder page',
+        (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          registeredLibraryRepositoryProvider
+              .overrideWithValue(FakeRegisteredLibraryRepository()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('履歴'));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(AppBar, '検索履歴'), findsOneWidget);
+    });
+
+    testWidgets('navigates to prefecture selection page at /library/add',
+        (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          registeredLibraryRepositoryProvider
+              .overrideWithValue(FakeRegisteredLibraryRepository()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
           child: MaterialApp.router(
             routerConfig: router,
           ),
@@ -57,13 +146,19 @@ void main() {
 
     testWidgets('navigates to city selection page at /library/add/:pref',
         (tester) async {
-      final container = ProviderContainer();
+      final container = ProviderContainer(
+        overrides: [
+          registeredLibraryRepositoryProvider
+              .overrideWithValue(FakeRegisteredLibraryRepository()),
+        ],
+      );
       addTearDown(container.dispose);
 
       final router = container.read(routerProvider);
 
       await tester.pumpWidget(
-        ProviderScope(
+        UncontrolledProviderScope(
+          container: container,
           child: MaterialApp.router(
             routerConfig: router,
           ),
@@ -78,15 +173,21 @@ void main() {
     });
 
     testWidgets(
-        'navigates to library list placeholder at /library/add/:pref/:city',
+        'navigates to library list page at /library/add/:pref/:city',
         (tester) async {
-      final container = ProviderContainer();
+      final container = ProviderContainer(
+        overrides: [
+          registeredLibraryRepositoryProvider
+              .overrideWithValue(FakeRegisteredLibraryRepository()),
+        ],
+      );
       addTearDown(container.dispose);
 
       final router = container.read(routerProvider);
 
       await tester.pumpWidget(
-        ProviderScope(
+        UncontrolledProviderScope(
+          container: container,
           child: MaterialApp.router(
             routerConfig: router,
           ),
