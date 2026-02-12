@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:libcheck/presentation/pages/app_shell.dart';
+import 'package:libcheck/presentation/pages/book_search_result_page.dart';
 import 'package:libcheck/presentation/pages/home_page.dart';
 import 'package:libcheck/presentation/pages/library_management_page.dart';
 import 'package:libcheck/presentation/pages/history_placeholder_page.dart';
@@ -62,6 +63,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           final pref = state.pathParameters['pref']!;
           final city = state.pathParameters['city']!;
           return LibraryListPage(prefecture: pref, city: city);
+        },
+      ),
+      GoRoute(
+        path: '/result/:isbn',
+        builder: (context, state) {
+          final isbn = state.pathParameters['isbn']!;
+          return BookSearchResultPage(isbn: isbn);
         },
       ),
     ],
