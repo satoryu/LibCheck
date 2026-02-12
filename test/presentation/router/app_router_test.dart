@@ -3,10 +3,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:libcheck/domain/models/book_availability.dart';
 import 'package:libcheck/domain/models/library.dart';
+import 'package:libcheck/domain/repositories/library_repository.dart';
 import 'package:libcheck/domain/repositories/registered_library_repository.dart';
+import 'package:libcheck/presentation/providers/library_providers.dart';
 import 'package:libcheck/presentation/providers/registered_library_providers.dart';
 import 'package:libcheck/presentation/router/app_router.dart';
+
+class FakeLibraryRepository implements LibraryRepository {
+  @override
+  Future<List<Library>> getLibraries({
+    required String pref,
+    String? city,
+  }) async =>
+      [];
+
+  @override
+  Future<List<BookAvailability>> checkBookAvailability({
+    required List<String> isbn,
+    required List<String> systemIds,
+  }) async =>
+      [];
+}
 
 class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
   @override
@@ -199,6 +218,37 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.widgetWithText(AppBar, '港区の図書館'), findsOneWidget);
+    });
+
+    testWidgets('navigates to search result page at /result/:isbn',
+        (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          registeredLibraryRepositoryProvider
+              .overrideWithValue(FakeRegisteredLibraryRepository()),
+          libraryRepositoryProvider
+              .overrideWithValue(FakeLibraryRepository()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      router.go('/result/9784123456789');
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(AppBar, '検索結果'), findsOneWidget);
+      expect(find.textContaining('9784123456789'), findsOneWidget);
     });
   });
 }
