@@ -89,7 +89,7 @@ class _BarcodeScannerPageState extends State<BarcodeScannerPage> {
                     .invokeMethod<void>('openAppSettings');
               },
               onManualInput: () {
-                // TODO: Issue #9 で手動入力画面へ遷移
+                context.go('/isbn-input');
               },
             )
           : Column(
@@ -123,7 +123,7 @@ class _BarcodeScannerPageState extends State<BarcodeScannerPage> {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          // TODO: Issue #9 で手動入力画面へ遷移
+                          context.go('/isbn-input');
                         },
                         icon: const Icon(Icons.keyboard),
                         label: const Text('ISBNを手動入力する'),

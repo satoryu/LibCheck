@@ -279,5 +279,33 @@ void main() {
       expect(find.widgetWithText(AppBar, 'バーコードスキャン'), findsOneWidget);
     });
 
+    testWidgets('navigates to ISBN input page at /isbn-input',
+        (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          registeredLibraryRepositoryProvider
+              .overrideWithValue(FakeRegisteredLibraryRepository()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      router.go('/isbn-input');
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(AppBar, 'ISBN入力'), findsOneWidget);
+    });
+
   });
 }
