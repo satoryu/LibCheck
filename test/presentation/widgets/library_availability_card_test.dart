@@ -57,7 +57,32 @@ void main() {
       expect(find.text('東京都港区'), findsOneWidget);
     });
 
-    testWidgets('displays availability status badge', (tester) async {
+    testWidgets('displays availability status badge based on libKey', (tester) async {
+      await tester.pumpWidget(buildSubject(
+        status: const LibraryStatus(
+          systemId: 'Tokyo_Minato',
+          status: AvailabilityStatus.available,
+          libKeyStatuses: {'みなと': '貸出可'},
+        ),
+      ));
+
+      expect(find.byType(AvailabilityStatusBadge), findsOneWidget);
+      expect(find.text('貸出可能'), findsOneWidget);
+    });
+
+    testWidgets('displays checkedOut status based on libKey', (tester) async {
+      await tester.pumpWidget(buildSubject(
+        status: const LibraryStatus(
+          systemId: 'Tokyo_Minato',
+          status: AvailabilityStatus.available,
+          libKeyStatuses: {'みなと': '貸出中'},
+        ),
+      ));
+
+      expect(find.text('貸出中'), findsOneWidget);
+    });
+
+    testWidgets('displays notFound status when libKey is not in statuses', (tester) async {
       await tester.pumpWidget(buildSubject(
         status: const LibraryStatus(
           systemId: 'Tokyo_Minato',
@@ -66,32 +91,21 @@ void main() {
         ),
       ));
 
-      expect(find.byType(AvailabilityStatusBadge), findsOneWidget);
-      expect(find.text('貸出可能'), findsOneWidget);
-    });
-
-    testWidgets('displays checkedOut status', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        status: const LibraryStatus(
-          systemId: 'Tokyo_Minato',
-          status: AvailabilityStatus.checkedOut,
-          libKeyStatuses: {},
-        ),
-      ));
-
-      expect(find.text('貸出中'), findsOneWidget);
-    });
-
-    testWidgets('displays notFound status', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        status: const LibraryStatus(
-          systemId: 'Tokyo_Minato',
-          status: AvailabilityStatus.notFound,
-          libKeyStatuses: {},
-        ),
-      ));
-
       expect(find.text('蔵書なし'), findsOneWidget);
+    });
+
+    testWidgets('displays per-libKey status, not aggregated system status', (tester) async {
+      await tester.pumpWidget(buildSubject(
+        status: const LibraryStatus(
+          systemId: 'Tokyo_Minato',
+          status: AvailabilityStatus.available,
+          libKeyStatuses: {'みなと': '貸出中', 'しば': '貸出可'},
+        ),
+      ));
+
+      // The library's libKey is 'みなと', which is '貸出中'
+      // Even though system status is 'available', the card should show '貸出中'
+      expect(find.text('貸出中'), findsOneWidget);
     });
 
     testWidgets('displays reserve URL link when available', (tester) async {

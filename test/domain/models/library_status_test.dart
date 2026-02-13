@@ -28,5 +28,58 @@ void main() {
 
       expect(status.reserveUrl, 'https://example.com/reserve');
     });
+
+    group('statusForLibKey', () {
+      test('returns correct status for existing libKey', () {
+        const status = LibraryStatus(
+          systemId: 'Tokyo_Minato',
+          status: AvailabilityStatus.available,
+          libKeyStatuses: {'みなと': '貸出可'},
+        );
+
+        expect(
+          status.statusForLibKey('みなと'),
+          AvailabilityStatus.available,
+        );
+      });
+
+      test('returns notFound for non-existing libKey', () {
+        const status = LibraryStatus(
+          systemId: 'Tokyo_Minato',
+          status: AvailabilityStatus.available,
+          libKeyStatuses: {'みなと': '貸出可'},
+        );
+
+        expect(
+          status.statusForLibKey('しば'),
+          AvailabilityStatus.notFound,
+        );
+      });
+
+      test('returns correct status for each libKey when multiple exist', () {
+        const status = LibraryStatus(
+          systemId: 'Tokyo_Minato',
+          status: AvailabilityStatus.available,
+          libKeyStatuses: {
+            'みなと': '貸出可',
+            'しば': '貸出中',
+            'あかさか': '蔵書なし',
+          },
+        );
+
+        expect(
+          status.statusForLibKey('みなと'),
+          AvailabilityStatus.available,
+        );
+        expect(
+          status.statusForLibKey('しば'),
+          AvailabilityStatus.checkedOut,
+        );
+        expect(
+          status.statusForLibKey('あかさか'),
+          AvailabilityStatus.notFound,
+        );
+      });
+    });
   });
 }

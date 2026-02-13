@@ -12,4 +12,10 @@ class LibraryStatus {
   final AvailabilityStatus status;
   final String? reserveUrl;
   final Map<String, String> libKeyStatuses;
+
+  AvailabilityStatus statusForLibKey(String libKey) {
+    final apiString = libKeyStatuses[libKey];
+    if (apiString == null) return AvailabilityStatus.notFound;
+    return AvailabilityStatus.fromApiString(apiString);
+  }
 }
