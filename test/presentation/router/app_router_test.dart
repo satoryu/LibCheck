@@ -250,5 +250,34 @@ void main() {
       expect(find.widgetWithText(AppBar, '検索結果'), findsOneWidget);
       expect(find.textContaining('9784123456789'), findsOneWidget);
     });
+
+    testWidgets('navigates to barcode scanner page at /scan',
+        (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          registeredLibraryRepositoryProvider
+              .overrideWithValue(FakeRegisteredLibraryRepository()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      router.go('/scan');
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(AppBar, 'バーコードスキャン'), findsOneWidget);
+    });
+
   });
 }

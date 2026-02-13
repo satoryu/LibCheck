@@ -1,0 +1,138 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+
+import 'package:libcheck/domain/utils/isbn_validator.dart';
+import 'package:libcheck/presentation/widgets/camera_permission_error_widget.dart';
+import 'package:libcheck/presentation/widgets/scan_overlay_widget.dart';
+
+class BarcodeScannerPage extends StatefulWidget {
+  const BarcodeScannerPage({super.key});
+
+  @override
+  State<BarcodeScannerPage> createState() => _BarcodeScannerPageState();
+}
+
+class _BarcodeScannerPageState extends State<BarcodeScannerPage> {
+  late final MobileScannerController _controller;
+  bool _isFlashOn = false;
+  bool _isProcessing = false;
+  bool _hasPermissionError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = MobileScannerController();
+    _controller.start().then((_) {}).catchError((error) {
+      if (mounted) {
+        setState(() {
+          _hasPermissionError = true;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onBarcodeDetected(BarcodeCapture capture) {
+    if (_isProcessing) return;
+
+    for (final barcode in capture.barcodes) {
+      final value = barcode.rawValue;
+      if (value == null) continue;
+
+      final normalized = IsbnValidator.normalizeIsbn(value);
+      if (IsbnValidator.isValidIsbn13(normalized)) {
+        _isProcessing = true;
+        HapticFeedback.mediumImpact();
+        _controller.stop();
+        _navigateToResult(normalized);
+        return;
+      }
+    }
+  }
+
+  void _navigateToResult(String isbn) {
+    context.go('/result/$isbn');
+  }
+
+  Future<void> _toggleFlash() async {
+    await _controller.toggleTorch();
+    setState(() {
+      _isFlashOn = !_isFlashOn;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('バーコードスキャン'),
+        actions: [
+          if (!_hasPermissionError)
+            IconButton(
+              icon: Icon(_isFlashOn ? Icons.flash_on : Icons.flash_off),
+              onPressed: _toggleFlash,
+            ),
+        ],
+      ),
+      body: _hasPermissionError
+          ? CameraPermissionErrorWidget(
+              onOpenSettings: () {
+                // プラットフォーム設定を開く
+                const MethodChannel('flutter.baseflow.com/permissions/methods')
+                    .invokeMethod<void>('openAppSettings');
+              },
+              onManualInput: () {
+                // TODO: Issue #9 で手動入力画面へ遷移
+              },
+            )
+          : Column(
+              children: [
+                Expanded(
+                  child: Stack(
+                    children: [
+                      MobileScanner(
+                        controller: _controller,
+                        onDetect: _onBarcodeDetected,
+                        errorBuilder: (context, error, child) {
+                          // カメラ権限エラーの場合
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted && !_hasPermissionError) {
+                              setState(() {
+                                _hasPermissionError = true;
+                              });
+                            }
+                          });
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                      const ScanOverlayWidget(),
+                    ],
+                  ),
+                ),
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          // TODO: Issue #9 で手動入力画面へ遷移
+                        },
+                        icon: const Icon(Icons.keyboard),
+                        label: const Text('ISBNを手動入力する'),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+}
