@@ -58,7 +58,12 @@ class _BarcodeScannerPageState extends State<BarcodeScannerPage> {
   }
 
   void _navigateToResult(String isbn) {
-    context.push('/result/$isbn');
+    context.push('/result/$isbn').then((_) {
+      if (mounted) {
+        _isProcessing = false;
+        _controller.start();
+      }
+    });
   }
 
   Future<void> _toggleFlash() async {
