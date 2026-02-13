@@ -58,7 +58,7 @@ class _BarcodeScannerPageState extends State<BarcodeScannerPage> {
   }
 
   void _navigateToResult(String isbn) {
-    context.go('/result/$isbn');
+    context.push('/result/$isbn');
   }
 
   Future<void> _toggleFlash() async {

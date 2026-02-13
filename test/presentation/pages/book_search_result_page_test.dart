@@ -219,5 +219,44 @@ void main() {
 
       expect(find.text('別の本をスキャンする'), findsOneWidget);
     });
+
+    testWidgets('scan another button pops back to previous page',
+        (tester) async {
+      // Simulate navigation stack: Previous page -> BookSearchResultPage
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            libraryRepositoryProvider
+                .overrideWithValue(FakeLibraryRepository()),
+            registeredLibraryRepositoryProvider
+                .overrideWithValue(FakeRegisteredLibraryRepository()),
+          ],
+          child: MaterialApp(
+            home: const Scaffold(body: Text('Previous Page')),
+            routes: {
+              '/result': (context) =>
+                  const BookSearchResultPage(isbn: '9784123456789'),
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Navigate to result page (push onto stack)
+      tester
+          .state<NavigatorState>(find.byType(Navigator))
+          .pushNamed('/result');
+      await tester.pumpAndSettle();
+
+      expect(find.text('検索結果'), findsOneWidget);
+
+      // Tap "別の本をスキャンする" button
+      await tester.tap(find.text('別の本をスキャンする'));
+      await tester.pumpAndSettle();
+
+      // Should pop back to previous page
+      expect(find.text('Previous Page'), findsOneWidget);
+      expect(find.text('検索結果'), findsNothing);
+    });
   });
 }
