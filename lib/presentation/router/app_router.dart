@@ -9,6 +9,7 @@ import 'package:libcheck/presentation/pages/library_management_page.dart';
 import 'package:libcheck/presentation/pages/history_placeholder_page.dart';
 import 'package:libcheck/presentation/pages/prefecture_selection_page.dart';
 import 'package:libcheck/presentation/pages/city_selection_page.dart';
+import 'package:libcheck/presentation/pages/isbn_input_page.dart';
 import 'package:libcheck/presentation/pages/library_list_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -69,6 +70,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/scan',
         builder: (context, state) => const BarcodeScannerPage(),
+      ),
+      GoRoute(
+        path: '/isbn-input',
+        builder: (context, state) => const IsbnInputPage(),
       ),
       GoRoute(
         path: '/result/:isbn',
