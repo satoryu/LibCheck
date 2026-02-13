@@ -25,4 +25,4 @@
   - Update `test/widget_test.dart` to wrap with `ProviderScope`
   - Verify all tests pass with `flutter test` (7/7 passed)
 
-- [ ] 6. Commit and create pull request
+- [x] 6. Commit and create pull request
