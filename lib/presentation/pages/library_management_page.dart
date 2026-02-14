@@ -18,7 +18,7 @@ class LibraryManagementPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () => context.go('/library/add'),
+            onPressed: () => context.push('/library/add'),
             tooltip: '追加',
           ),
         ],
@@ -51,7 +51,7 @@ class LibraryManagementPage extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           FilledButton(
-            onPressed: () => context.go('/library/add'),
+            onPressed: () => context.push('/library/add'),
             child: const Text('図書館を登録する'),
           ),
         ],

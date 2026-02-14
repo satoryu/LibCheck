@@ -77,7 +77,7 @@ class _CitySelectionPageState extends ConsumerState<CitySelectionPage> {
                       title: Text(city),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
-                        context.go(
+                        context.push(
                             '/library/add/${widget.prefecture}/$city');
                       },
                     );

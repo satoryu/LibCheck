@@ -98,7 +98,7 @@ class _RegionSection extends StatelessWidget {
             title: Text(pref),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              context.go('/library/add/$pref');
+              context.push('/library/add/$pref');
             },
           ),
         ),
