@@ -14,10 +14,10 @@ class CalilApiClient {
     http.Client? httpClient,
     Duration? pollingInterval,
     int? maxPollingCount,
-  })  : _appKey = appKey,
-        _httpClient = httpClient ?? http.Client(),
-        _pollingInterval = pollingInterval ?? CalilApiConfig.pollingInterval,
-        _maxPollingCount = maxPollingCount ?? CalilApiConfig.maxPollingCount;
+  }) : _appKey = appKey,
+       _httpClient = httpClient ?? http.Client(),
+       _pollingInterval = pollingInterval ?? CalilApiConfig.pollingInterval,
+       _maxPollingCount = maxPollingCount ?? CalilApiConfig.maxPollingCount;
 
   final String _appKey;
   final http.Client _httpClient;
@@ -32,17 +32,21 @@ class CalilApiClient {
       'appkey': _appKey,
       'pref': pref,
       'format': 'json',
+      'callback': 'no',
       if (city != null) 'city': city,
     };
 
-    final uri =
-        Uri.parse('${CalilApiConfig.baseUrl}/library').replace(queryParameters: queryParams);
+    final uri = Uri.parse(
+      '${CalilApiConfig.baseUrl}/library',
+    ).replace(queryParameters: queryParams);
 
     final response = await _executeRequest(uri);
     final body = _parseJson(response.body);
 
     if (body is! List) {
-      throw const CalilParseException('Expected JSON array for /library response');
+      throw const CalilParseException(
+        'Expected JSON array for /library response',
+      );
     }
 
     return body
@@ -60,10 +64,12 @@ class CalilApiClient {
       'isbn': isbn.join(','),
       'systemid': systemIds.join(','),
       'format': 'json',
+      'callback': 'no',
     };
 
-    final uri =
-        Uri.parse('${CalilApiConfig.baseUrl}/check').replace(queryParameters: queryParams);
+    final uri = Uri.parse(
+      '${CalilApiConfig.baseUrl}/check',
+    ).replace(queryParameters: queryParams);
 
     var response = await _executeRequest(uri);
     var checkResponse = _parseCheckResponse(response.body);
@@ -77,9 +83,11 @@ class CalilApiClient {
         'appkey': _appKey,
         'session': checkResponse.session,
         'format': 'json',
+        'callback': 'no',
       };
-      final pollUri =
-          Uri.parse('${CalilApiConfig.baseUrl}/check').replace(queryParameters: pollParams);
+      final pollUri = Uri.parse(
+        '${CalilApiConfig.baseUrl}/check',
+      ).replace(queryParameters: pollParams);
 
       response = await _executeRequest(pollUri);
       checkResponse = _parseCheckResponse(response.body);
@@ -128,7 +136,9 @@ class CalilApiClient {
   CheckResponse _parseCheckResponse(String body) {
     final parsed = _parseJson(body);
     if (parsed is! Map<String, dynamic>) {
-      throw const CalilParseException('Expected JSON object for /check response');
+      throw const CalilParseException(
+        'Expected JSON object for /check response',
+      );
     }
     return CheckResponse.fromJson(parsed);
   }
