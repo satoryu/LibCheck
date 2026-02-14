@@ -7,10 +7,13 @@ import 'package:libcheck/domain/models/book_availability.dart';
 import 'package:libcheck/domain/models/library.dart';
 import 'package:libcheck/domain/models/library_status.dart';
 import 'package:libcheck/domain/repositories/library_repository.dart';
+import 'package:libcheck/domain/models/search_history_entry.dart';
 import 'package:libcheck/domain/repositories/registered_library_repository.dart';
+import 'package:libcheck/domain/repositories/search_history_repository.dart';
 import 'package:libcheck/presentation/pages/book_search_result_page.dart';
 import 'package:libcheck/presentation/providers/library_providers.dart';
 import 'package:libcheck/presentation/providers/registered_library_providers.dart';
+import 'package:libcheck/presentation/providers/search_history_providers.dart';
 import 'package:libcheck/presentation/widgets/library_availability_card.dart';
 
 class FakeLibraryRepository implements LibraryRepository {
@@ -73,6 +76,30 @@ class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
       List.from(_libraries);
 }
 
+class FakeSearchHistoryRepository implements SearchHistoryRepository {
+  final List<SearchHistoryEntry> savedEntries = [];
+
+  @override
+  Future<List<SearchHistoryEntry>> getAll() async =>
+      List.from(savedEntries);
+
+  @override
+  Future<void> save(SearchHistoryEntry entry) async {
+    savedEntries.removeWhere((e) => e.isbn == entry.isbn);
+    savedEntries.add(entry);
+  }
+
+  @override
+  Future<void> remove(String isbn) async {
+    savedEntries.removeWhere((e) => e.isbn == isbn);
+  }
+
+  @override
+  Future<void> removeAll() async {
+    savedEntries.clear();
+  }
+}
+
 const _library1 = Library(
   systemId: 'Tokyo_Minato',
   systemName: '港区図書館',
@@ -101,9 +128,16 @@ const _library2 = Library(
 
 void main() {
   group('BookSearchResultPage', () {
+    late FakeSearchHistoryRepository fakeHistoryRepo;
+
+    setUp(() {
+      fakeHistoryRepo = FakeSearchHistoryRepository();
+    });
+
     Widget buildSubject({
       required LibraryRepository libraryRepo,
       required RegisteredLibraryRepository registeredRepo,
+      FakeSearchHistoryRepository? historyRepo,
       String isbn = '9784123456789',
     }) {
       return ProviderScope(
@@ -111,6 +145,8 @@ void main() {
           libraryRepositoryProvider.overrideWithValue(libraryRepo),
           registeredLibraryRepositoryProvider
               .overrideWithValue(registeredRepo),
+          searchHistoryRepositoryProvider
+              .overrideWithValue(historyRepo ?? fakeHistoryRepo),
         ],
         child: MaterialApp(
           home: BookSearchResultPage(isbn: isbn),
@@ -229,6 +265,8 @@ void main() {
                 .overrideWithValue(FakeLibraryRepository()),
             registeredLibraryRepositoryProvider
                 .overrideWithValue(FakeRegisteredLibraryRepository()),
+            searchHistoryRepositoryProvider
+                .overrideWithValue(fakeHistoryRepo),
           ],
           child: MaterialApp(
             home: const Scaffold(body: Text('Previous Page')),
@@ -256,6 +294,47 @@ void main() {
       // Should pop back to previous page
       expect(find.text('Previous Page'), findsOneWidget);
       expect(find.text('検索結果'), findsNothing);
+    });
+
+    testWidgets('saves search history when results are loaded',
+        (tester) async {
+      final results = [
+        BookAvailability(
+          isbn: '9784123456789',
+          libraryStatuses: {
+            'Tokyo_Minato': const LibraryStatus(
+              systemId: 'Tokyo_Minato',
+              status: AvailabilityStatus.available,
+              libKeyStatuses: {'みなと': '貸出可'},
+            ),
+          },
+        ),
+      ];
+
+      await tester.pumpWidget(buildSubject(
+        libraryRepo: FakeLibraryRepository(results),
+        registeredRepo: FakeRegisteredLibraryRepository([_library1]),
+        historyRepo: fakeHistoryRepo,
+      ));
+      await tester.pumpAndSettle();
+
+      expect(fakeHistoryRepo.savedEntries, hasLength(1));
+      expect(fakeHistoryRepo.savedEntries[0].isbn, '9784123456789');
+      expect(
+        fakeHistoryRepo.savedEntries[0].libraryStatuses['Tokyo_Minato'],
+        'available',
+      );
+    });
+
+    testWidgets('does not save search history on error', (tester) async {
+      await tester.pumpWidget(buildSubject(
+        libraryRepo: ErrorLibraryRepository(),
+        registeredRepo: FakeRegisteredLibraryRepository([_library1]),
+        historyRepo: fakeHistoryRepo,
+      ));
+      await tester.pumpAndSettle();
+
+      expect(fakeHistoryRepo.savedEntries, isEmpty);
     });
   });
 }
