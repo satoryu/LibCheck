@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:libcheck/domain/models/library.dart';
 import 'package:libcheck/presentation/providers/registered_library_providers.dart';
+import 'package:libcheck/presentation/widgets/error_state_widget.dart';
 
 class LibraryManagementPage extends ConsumerWidget {
   const LibraryManagementPage({super.key});
@@ -24,8 +25,20 @@ class LibraryManagementPage extends ConsumerWidget {
         ],
       ),
       body: registeredLibraries.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('エラー: $error')),
+        loading: () => const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('読み込み中...'),
+            ],
+          ),
+        ),
+        error: (error, _) => ErrorStateWidget(
+          error: error,
+          onRetry: () => ref.invalidate(registeredLibrariesProvider),
+        ),
         data: (libraries) {
           if (libraries.isEmpty) {
             return _buildEmptyState(context);

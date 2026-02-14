@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:libcheck/presentation/providers/library_list_providers.dart';
 import 'package:libcheck/presentation/providers/registered_library_providers.dart';
+import 'package:libcheck/presentation/widgets/error_state_widget.dart';
 
 class LibraryListPage extends ConsumerWidget {
   const LibraryListPage({
@@ -25,21 +26,19 @@ class LibraryListPage extends ConsumerWidget {
         title: Text('$cityの図書館'),
       ),
       body: librariesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
+        loading: () => const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              const Text('エラーが発生しました'),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => ref.invalidate(libraryListProvider(param)),
-                child: const Text('再試行する'),
-              ),
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('図書館を検索中...'),
             ],
           ),
+        ),
+        error: (error, _) => ErrorStateWidget(
+          error: error,
+          onRetry: () => ref.invalidate(libraryListProvider(param)),
         ),
         data: (libraries) {
           return Column(

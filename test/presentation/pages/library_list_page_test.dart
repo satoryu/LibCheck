@@ -9,6 +9,7 @@ import 'package:libcheck/domain/repositories/registered_library_repository.dart'
 import 'package:libcheck/presentation/pages/library_list_page.dart';
 import 'package:libcheck/presentation/providers/library_providers.dart';
 import 'package:libcheck/presentation/providers/registered_library_providers.dart';
+import 'package:libcheck/presentation/widgets/error_state_widget.dart';
 
 class MockLibraryRepository implements LibraryRepository {
   final List<Library> _libraries;
@@ -308,13 +309,24 @@ void main() {
       expect(fakeRegisteredRepo.libraries[0].formalName, '図書館1');
     });
 
-    testWidgets('shows error message on failure', (tester) async {
+    testWidgets('shows ErrorStateWidget on failure', (tester) async {
       await tester.pumpWidget(buildSubject(
         repository: ErrorLibraryRepository(),
       ));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('エラー'), findsOneWidget);
+      expect(find.byType(ErrorStateWidget), findsOneWidget);
+      expect(find.text('エラーが発生しました'), findsOneWidget);
+      expect(find.text('再試行'), findsOneWidget);
+    });
+
+    testWidgets('shows loading text with indicator', (tester) async {
+      await tester.pumpWidget(buildSubject(
+        repository: MockLibraryRepository([]),
+      ));
+      // Check loading state before settling
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('図書館を検索中...'), findsOneWidget);
     });
   });
 }

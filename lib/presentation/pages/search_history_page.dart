@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:libcheck/domain/models/search_history_entry.dart';
 import 'package:libcheck/presentation/providers/search_history_providers.dart';
+import 'package:libcheck/presentation/widgets/error_state_widget.dart';
 import 'package:libcheck/presentation/widgets/search_history_card.dart';
 
 class SearchHistoryPage extends ConsumerWidget {
@@ -26,22 +27,19 @@ class SearchHistoryPage extends ConsumerWidget {
         ],
       ),
       body: historyAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
+        loading: () => const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48,
-                  color: Color(0xFFD32F2F)),
-              const SizedBox(height: 16),
-              const Text('エラーが発生しました'),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () => ref.invalidate(searchHistoryProvider),
-                child: const Text('再試行'),
-              ),
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('読み込み中...'),
             ],
           ),
+        ),
+        error: (error, _) => ErrorStateWidget(
+          error: error,
+          onRetry: () => ref.invalidate(searchHistoryProvider),
         ),
         data: (entries) {
           if (entries.isEmpty) {

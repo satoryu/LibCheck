@@ -6,6 +6,7 @@ import 'package:libcheck/domain/models/library.dart';
 import 'package:libcheck/domain/repositories/registered_library_repository.dart';
 import 'package:libcheck/presentation/pages/library_management_page.dart';
 import 'package:libcheck/presentation/providers/registered_library_providers.dart';
+import 'package:libcheck/presentation/widgets/error_state_widget.dart';
 
 class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
   List<Library> _libraries = [];
@@ -73,7 +74,34 @@ const _library2 = Library(
   category: 'LARGE',
 );
 
-Widget _buildTestWidget({required FakeRegisteredLibraryRepository repo}) {
+class SlowRegisteredLibraryRepository implements RegisteredLibraryRepository {
+  @override
+  Future<List<Library>> getAll() =>
+      Future.delayed(const Duration(seconds: 5), () => []);
+  @override
+  Future<void> saveAll(List<Library> libraries) async {}
+  @override
+  Future<List<Library>> add(Library library) async => [];
+  @override
+  Future<List<Library>> addAll(List<Library> libraries) async => [];
+  @override
+  Future<List<Library>> remove(Library library) async => [];
+}
+
+class ErrorRegisteredLibraryRepository implements RegisteredLibraryRepository {
+  @override
+  Future<List<Library>> getAll() async => throw Exception('load error');
+  @override
+  Future<void> saveAll(List<Library> libraries) async {}
+  @override
+  Future<List<Library>> add(Library library) async => [];
+  @override
+  Future<List<Library>> addAll(List<Library> libraries) async => [];
+  @override
+  Future<List<Library>> remove(Library library) async => [];
+}
+
+Widget _buildTestWidget({required RegisteredLibraryRepository repo}) {
   return ProviderScope(
     overrides: [
       registeredLibraryRepositoryProvider.overrideWithValue(repo),
@@ -214,6 +242,30 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('東京都港区'), findsOneWidget);
+    });
+
+    testWidgets('shows ErrorStateWidget on error', (tester) async {
+      await tester.pumpWidget(
+        _buildTestWidget(repo: ErrorRegisteredLibraryRepository()),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ErrorStateWidget), findsOneWidget);
+      expect(find.text('エラーが発生しました'), findsOneWidget);
+      expect(find.text('再試行'), findsOneWidget);
+    });
+
+    testWidgets('shows loading text with indicator', (tester) async {
+      await tester.pumpWidget(
+        _buildTestWidget(repo: SlowRegisteredLibraryRepository()),
+      );
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('読み込み中...'), findsOneWidget);
+
+      // Clean up pending timers
+      await tester.pumpAndSettle(const Duration(seconds: 6));
     });
   });
 }
