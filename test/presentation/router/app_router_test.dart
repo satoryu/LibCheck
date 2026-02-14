@@ -6,9 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:libcheck/domain/models/book_availability.dart';
 import 'package:libcheck/domain/models/library.dart';
 import 'package:libcheck/domain/repositories/library_repository.dart';
+import 'package:libcheck/domain/models/search_history_entry.dart';
 import 'package:libcheck/domain/repositories/registered_library_repository.dart';
+import 'package:libcheck/domain/repositories/search_history_repository.dart';
 import 'package:libcheck/presentation/providers/library_providers.dart';
 import 'package:libcheck/presentation/providers/registered_library_providers.dart';
+import 'package:libcheck/presentation/providers/search_history_providers.dart';
 import 'package:libcheck/presentation/router/app_router.dart';
 
 class FakeLibraryRepository implements LibraryRepository {
@@ -25,6 +28,17 @@ class FakeLibraryRepository implements LibraryRepository {
     required List<String> systemIds,
   }) async =>
       [];
+}
+
+class FakeSearchHistoryRepository implements SearchHistoryRepository {
+  @override
+  Future<List<SearchHistoryEntry>> getAll() async => [];
+  @override
+  Future<void> save(SearchHistoryEntry entry) async {}
+  @override
+  Future<void> remove(String isbn) async {}
+  @override
+  Future<void> removeAll() async {}
 }
 
 class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
@@ -107,12 +121,14 @@ void main() {
       expect(find.widgetWithText(AppBar, '登録図書館'), findsOneWidget);
     });
 
-    testWidgets('tapping history tab navigates to history placeholder page',
+    testWidgets('tapping history tab navigates to search history page',
         (tester) async {
       final container = ProviderContainer(
         overrides: [
           registeredLibraryRepositoryProvider
               .overrideWithValue(FakeRegisteredLibraryRepository()),
+          searchHistoryRepositoryProvider
+              .overrideWithValue(FakeSearchHistoryRepository()),
         ],
       );
       addTearDown(container.dispose);
@@ -228,6 +244,8 @@ void main() {
               .overrideWithValue(FakeRegisteredLibraryRepository()),
           libraryRepositoryProvider
               .overrideWithValue(FakeLibraryRepository()),
+          searchHistoryRepositoryProvider
+              .overrideWithValue(FakeSearchHistoryRepository()),
         ],
       );
       addTearDown(container.dispose);
