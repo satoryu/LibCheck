@@ -224,7 +224,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      container.listen(bookAvailabilityProvider('9784123456789'), (_, __) {});
+      container.listen(bookAvailabilityProvider('9784123456789'), (_, _) {});
 
       // Wait for the provider to settle
       await Future.delayed(const Duration(milliseconds: 100));

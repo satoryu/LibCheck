@@ -11,7 +11,6 @@ import 'package:libcheck/domain/repositories/registered_library_repository.dart'
 import 'package:libcheck/presentation/pages/book_search_result_page.dart';
 import 'package:libcheck/presentation/providers/library_providers.dart';
 import 'package:libcheck/presentation/providers/registered_library_providers.dart';
-import 'package:libcheck/presentation/widgets/availability_status_badge.dart';
 import 'package:libcheck/presentation/widgets/library_availability_card.dart';
 
 class FakeLibraryRepository implements LibraryRepository {

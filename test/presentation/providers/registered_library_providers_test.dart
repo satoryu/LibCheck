@@ -87,7 +87,7 @@ void main() {
       await fakeRepo.addAll([_library1, _library2]);
 
       final subscription =
-          container.listen(registeredLibrariesProvider, (_, __) {});
+          container.listen(registeredLibrariesProvider, (_, _) {});
       // Wait for async initialization
       await container.read(registeredLibrariesProvider.future);
 
@@ -97,7 +97,7 @@ void main() {
 
     test('initial state is empty when repository is empty', () async {
       final subscription =
-          container.listen(registeredLibrariesProvider, (_, __) {});
+          container.listen(registeredLibrariesProvider, (_, _) {});
       await container.read(registeredLibrariesProvider.future);
 
       final state = subscription.read();
@@ -105,7 +105,7 @@ void main() {
     });
 
     test('add adds a library and updates state', () async {
-      container.listen(registeredLibrariesProvider, (_, __) {});
+      container.listen(registeredLibrariesProvider, (_, _) {});
       await container.read(registeredLibrariesProvider.future);
 
       await container
@@ -117,7 +117,7 @@ void main() {
     });
 
     test('addAll adds multiple libraries', () async {
-      container.listen(registeredLibrariesProvider, (_, __) {});
+      container.listen(registeredLibrariesProvider, (_, _) {});
       await container.read(registeredLibrariesProvider.future);
 
       await container
@@ -131,7 +131,7 @@ void main() {
     test('remove removes a library and updates state', () async {
       await fakeRepo.addAll([_library1, _library2]);
 
-      container.listen(registeredLibrariesProvider, (_, __) {});
+      container.listen(registeredLibrariesProvider, (_, _) {});
       await container.read(registeredLibrariesProvider.future);
 
       await container
