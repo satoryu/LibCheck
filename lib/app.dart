@@ -13,7 +13,10 @@ class LibCheckApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'LibCheck',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF00796B),
+        ),
+        useMaterial3: true,
       ),
       routerConfig: router,
     );

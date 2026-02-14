@@ -51,6 +51,19 @@ void main() {
       expect(find.text('LibCheck'), findsNothing);
     });
 
+    testWidgets('displays welcome icon and description', (tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: HomePage(),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.menu_book), findsOneWidget);
+      expect(find.textContaining('図書館の蔵書'), findsOneWidget);
+    });
+
     testWidgets('バーコードスキャンボタンが表示される', (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
