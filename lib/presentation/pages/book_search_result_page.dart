@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:libcheck/domain/models/book_availability.dart';
 import 'package:libcheck/domain/models/library.dart';
+import 'package:libcheck/domain/models/search_history_entry.dart';
 import 'package:libcheck/presentation/providers/book_availability_providers.dart';
 import 'package:libcheck/presentation/providers/registered_library_providers.dart';
+import 'package:libcheck/presentation/providers/search_history_providers.dart';
 import 'package:libcheck/presentation/widgets/library_availability_card.dart';
 
 class BookSearchResultPage extends ConsumerWidget {
@@ -40,11 +42,31 @@ class BookSearchResultPage extends ConsumerWidget {
   ) {
     final availability = ref.watch(bookAvailabilityProvider(isbn));
 
+    ref.listen(bookAvailabilityProvider(isbn), (previous, next) {
+      if (next is AsyncData<List<BookAvailability>> && next.value.isNotEmpty) {
+        _saveSearchHistory(ref, next.value);
+      }
+    });
+
     return availability.when(
       loading: () => _buildLoadingState(context),
       error: (error, _) => _buildErrorState(context, ref, error),
       data: (results) => _buildResultState(context, libraries, results),
     );
+  }
+
+  void _saveSearchHistory(WidgetRef ref, List<BookAvailability> results) {
+    final result = results[0];
+    final statuses = <String, String>{};
+    for (final entry in result.libraryStatuses.entries) {
+      statuses[entry.key] = entry.value.status.name;
+    }
+    final historyEntry = SearchHistoryEntry(
+      isbn: isbn,
+      searchedAt: DateTime.now(),
+      libraryStatuses: statuses,
+    );
+    ref.read(searchHistoryProvider.notifier).save(historyEntry);
   }
 
   Widget _buildLoadingState(BuildContext context) {
