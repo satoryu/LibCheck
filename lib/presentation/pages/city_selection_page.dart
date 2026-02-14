@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:libcheck/presentation/providers/city_providers.dart';
+import 'package:libcheck/presentation/widgets/error_state_widget.dart';
 
 class CitySelectionPage extends ConsumerStatefulWidget {
   const CitySelectionPage({super.key, required this.prefecture});
@@ -25,22 +26,20 @@ class _CitySelectionPageState extends ConsumerState<CitySelectionPage> {
         title: Text('${widget.prefecture}の市区町村'),
       ),
       body: citiesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
+        loading: () => const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              const Text('エラーが発生しました'),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () =>
-                    ref.invalidate(cityListProvider(widget.prefecture)),
-                child: const Text('再試行する'),
-              ),
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('読み込み中...'),
             ],
           ),
+        ),
+        error: (error, _) => ErrorStateWidget(
+          error: error,
+          onRetry: () =>
+              ref.invalidate(cityListProvider(widget.prefecture)),
         ),
         data: (cities) {
           final filteredCities = _searchQuery.isEmpty

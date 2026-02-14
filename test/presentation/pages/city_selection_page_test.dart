@@ -7,6 +7,7 @@ import 'package:libcheck/domain/models/library.dart';
 import 'package:libcheck/domain/repositories/library_repository.dart';
 import 'package:libcheck/presentation/pages/city_selection_page.dart';
 import 'package:libcheck/presentation/providers/library_providers.dart';
+import 'package:libcheck/presentation/widgets/error_state_widget.dart';
 
 class MockLibraryRepository implements LibraryRepository {
   final List<Library> _libraries;
@@ -149,13 +150,24 @@ void main() {
       expect(find.text('千代田区'), findsNothing);
     });
 
-    testWidgets('shows error message on failure', (tester) async {
+    testWidgets('shows ErrorStateWidget on failure', (tester) async {
       await tester.pumpWidget(buildSubject(
         repository: ErrorLibraryRepository(),
       ));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('エラー'), findsOneWidget);
+      expect(find.byType(ErrorStateWidget), findsOneWidget);
+      expect(find.text('エラーが発生しました'), findsOneWidget);
+      expect(find.text('再試行'), findsOneWidget);
+    });
+
+    testWidgets('shows loading text with indicator', (tester) async {
+      await tester.pumpWidget(buildSubject(
+        repository: MockLibraryRepository([]),
+      ));
+      // Check loading state before settling
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('読み込み中...'), findsOneWidget);
     });
   });
 }

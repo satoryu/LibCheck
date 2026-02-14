@@ -7,6 +7,7 @@ import 'package:libcheck/domain/models/search_history_entry.dart';
 import 'package:libcheck/presentation/providers/book_availability_providers.dart';
 import 'package:libcheck/presentation/providers/registered_library_providers.dart';
 import 'package:libcheck/presentation/providers/search_history_providers.dart';
+import 'package:libcheck/presentation/utils/error_message_resolver.dart';
 import 'package:libcheck/presentation/widgets/library_availability_card.dart';
 
 class BookSearchResultPage extends ConsumerWidget {
@@ -98,7 +99,7 @@ class BookSearchResultPage extends ConsumerWidget {
               children: [
                 const Icon(Icons.error_outline, size: 48, color: Color(0xFFD32F2F)),
                 const SizedBox(height: 16),
-                const Text('エラーが発生しました'),
+                Text(ErrorMessageResolver.resolve(error)),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () {
