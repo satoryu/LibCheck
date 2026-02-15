@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import 'package:libcheck/domain/utils/isbn_validator.dart';
+import 'package:libcheck/presentation/widgets/camera_error_widget.dart';
 import 'package:libcheck/presentation/widgets/camera_permission_error_widget.dart';
 import 'package:libcheck/presentation/widgets/scan_overlay_widget.dart';
 
@@ -18,19 +19,32 @@ class _BarcodeScannerPageState extends State<BarcodeScannerPage> {
   late final MobileScannerController _controller;
   bool _isFlashOn = false;
   bool _isProcessing = false;
-  bool _hasPermissionError = false;
+  MobileScannerErrorCode? _errorCode;
 
   @override
   void initState() {
     super.initState();
     _controller = MobileScannerController();
-    _controller.start().then((_) {}).catchError((error) {
+    _startCamera();
+  }
+
+  Future<void> _startCamera() async {
+    try {
+      await _controller.start();
+    } on MobileScannerException catch (e) {
       if (mounted) {
         setState(() {
-          _hasPermissionError = true;
+          _errorCode = e.errorCode;
         });
       }
+    }
+  }
+
+  void _retryCamera() {
+    setState(() {
+      _errorCode = null;
     });
+    _startCamera();
   }
 
   @override
@@ -61,7 +75,7 @@ class _BarcodeScannerPageState extends State<BarcodeScannerPage> {
     context.push('/result/$isbn').then((_) {
       if (mounted) {
         _isProcessing = false;
-        _controller.start();
+        _startCamera();
       }
     });
   }
@@ -73,30 +87,41 @@ class _BarcodeScannerPageState extends State<BarcodeScannerPage> {
     });
   }
 
+  Widget _buildErrorBody() {
+    if (_errorCode == MobileScannerErrorCode.permissionDenied) {
+      return CameraPermissionErrorWidget(
+        onOpenSettings: () {
+          const MethodChannel('flutter.baseflow.com/permissions/methods')
+              .invokeMethod<void>('openAppSettings');
+        },
+        onManualInput: () {
+          context.go('/isbn-input');
+        },
+      );
+    }
+    return CameraErrorWidget(
+      onRetry: _retryCamera,
+      onManualInput: () {
+        context.go('/isbn-input');
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('バーコードスキャン'),
         actions: [
-          if (!_hasPermissionError)
+          if (_errorCode == null)
             IconButton(
               icon: Icon(_isFlashOn ? Icons.flash_on : Icons.flash_off),
               onPressed: _toggleFlash,
             ),
         ],
       ),
-      body: _hasPermissionError
-          ? CameraPermissionErrorWidget(
-              onOpenSettings: () {
-                // プラットフォーム設定を開く
-                const MethodChannel('flutter.baseflow.com/permissions/methods')
-                    .invokeMethod<void>('openAppSettings');
-              },
-              onManualInput: () {
-                context.go('/isbn-input');
-              },
-            )
+      body: _errorCode != null
+          ? _buildErrorBody()
           : Column(
               children: [
                 Expanded(
@@ -106,11 +131,10 @@ class _BarcodeScannerPageState extends State<BarcodeScannerPage> {
                         controller: _controller,
                         onDetect: _onBarcodeDetected,
                         errorBuilder: (context, error, child) {
-                          // カメラ権限エラーの場合
                           WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (mounted && !_hasPermissionError) {
+                            if (mounted && _errorCode == null) {
                               setState(() {
-                                _hasPermissionError = true;
+                                _errorCode = error.errorCode;
                               });
                             }
                           });
