@@ -24,7 +24,7 @@ class _BarcodeScannerPageState extends State<BarcodeScannerPage> {
   @override
   void initState() {
     super.initState();
-    _controller = MobileScannerController();
+    _controller = MobileScannerController(autoStart: false);
     _startCamera();
   }
 

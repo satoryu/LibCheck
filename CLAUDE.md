@@ -77,3 +77,7 @@ In review phase, you must focus on the following aspects:
 - Performance
 - Security
 - Maintainability
+
+## Merging
+
+Do not merge a PR if there are unchecked items in its Test Plan. For items that cannot be verified by automated tests (e.g. on-device testing), ask the user to confirm and get their approval before merging.
