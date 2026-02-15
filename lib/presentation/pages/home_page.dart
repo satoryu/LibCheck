@@ -33,7 +33,7 @@ class HomePage extends ConsumerWidget {
               ),
               const SizedBox(height: 32),
               FilledButton.icon(
-                onPressed: () => context.go('/scan'),
+                onPressed: () => context.push('/scan'),
                 icon: const Icon(Icons.qr_code_scanner),
                 label: const Text('バーコードでスキャン'),
                 style: FilledButton.styleFrom(
@@ -42,7 +42,7 @@ class HomePage extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               OutlinedButton.icon(
-                onPressed: () => context.go('/isbn-input'),
+                onPressed: () => context.push('/isbn-input'),
                 icon: const Icon(Icons.keyboard),
                 label: const Text('ISBNを入力'),
                 style: OutlinedButton.styleFrom(
