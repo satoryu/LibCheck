@@ -245,26 +245,42 @@ void main() {
       expect(find.text('再試行'), findsOneWidget);
     });
 
-    testWidgets('shows scan another book button', (tester) async {
+    testWidgets('shows add library button when no libraries registered',
+        (tester) async {
       await tester.pumpWidget(buildSubject(
         libraryRepo: FakeLibraryRepository(),
         registeredRepo: FakeRegisteredLibraryRepository(),
       ));
       await tester.pumpAndSettle();
 
-      expect(find.text('別の本をスキャンする'), findsOneWidget);
+      expect(find.text('図書館を登録する'), findsOneWidget);
+      expect(find.text('別の本をスキャンする'), findsNothing);
     });
 
     testWidgets('scan another button pops back to previous page',
         (tester) async {
+      final results = [
+        BookAvailability(
+          isbn: '9784123456789',
+          libraryStatuses: {
+            'Tokyo_Minato': const LibraryStatus(
+              systemId: 'Tokyo_Minato',
+              status: AvailabilityStatus.available,
+              libKeyStatuses: {'みなと': '貸出可'},
+            ),
+          },
+        ),
+      ];
+
       // Simulate navigation stack: Previous page -> BookSearchResultPage
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             libraryRepositoryProvider
-                .overrideWithValue(FakeLibraryRepository()),
+                .overrideWithValue(FakeLibraryRepository(results)),
             registeredLibraryRepositoryProvider
-                .overrideWithValue(FakeRegisteredLibraryRepository()),
+                .overrideWithValue(
+                    FakeRegisteredLibraryRepository([_library1])),
             searchHistoryRepositoryProvider
                 .overrideWithValue(fakeHistoryRepo),
           ],
