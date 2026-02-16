@@ -12,9 +12,10 @@ import 'package:libcheck/presentation/utils/error_message_resolver.dart';
 import 'package:libcheck/presentation/widgets/library_availability_card.dart';
 
 class BookSearchResultPage extends ConsumerWidget {
-  const BookSearchResultPage({super.key, required this.isbn});
+  const BookSearchResultPage({super.key, required this.isbn, this.source});
 
   final String isbn;
+  final String? source;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -212,14 +213,15 @@ class BookSearchResultPage extends ConsumerWidget {
   }
 
   Widget _buildScanAnotherButton(BuildContext context) {
+    final isScan = source == 'scan';
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: () {
           Navigator.of(context).pop();
         },
-        icon: const Icon(Icons.camera_alt),
-        label: const Text('別の本をスキャンする'),
+        icon: Icon(isScan ? Icons.camera_alt : Icons.search),
+        label: Text(isScan ? '別の本をスキャンする' : '別の本を検索する'),
       ),
     );
   }
