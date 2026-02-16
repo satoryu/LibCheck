@@ -112,5 +112,17 @@ void main() {
 
       expect(status.reserveUrl, isNull);
     });
+
+    test('parses empty string reserveurl as null', () {
+      final json = {
+        'status': 'OK',
+        'reserveurl': '',
+        'libkey': {'みなと': '貸出可'},
+      };
+
+      final status = BookSystemStatus.fromJson(json);
+
+      expect(status.reserveUrl, isNull);
+    });
   });
 }

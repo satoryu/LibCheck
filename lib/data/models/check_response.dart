@@ -48,7 +48,8 @@ class BookSystemStatus {
 
   factory BookSystemStatus.fromJson(Map<String, dynamic> json) {
     final status = json['status'] as String? ?? '';
-    final reserveUrl = json['reserveurl'] as String?;
+    final rawReserveUrl = json['reserveurl'] as String?;
+    final reserveUrl = (rawReserveUrl != null && rawReserveUrl.isNotEmpty) ? rawReserveUrl : null;
     final libKeysJson = json['libkey'] as Map<String, dynamic>? ?? {};
     final libKeys = libKeysJson
         .map((key, value) => MapEntry(key, value as String? ?? ''));
