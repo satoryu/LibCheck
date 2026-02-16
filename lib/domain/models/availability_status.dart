@@ -21,6 +21,11 @@ enum AvailabilityStatus {
         unknown => 0,
       };
 
+  bool get isReservable => switch (this) {
+        available || inLibraryOnly || checkedOut || reserved || preparing => true,
+        notFound || closed || error || unknown => false,
+      };
+
   static AvailabilityStatus fromApiString(String value) => switch (value) {
         '貸出可' || '蔵書あり' => available,
         '館内のみ' => inLibraryOnly,

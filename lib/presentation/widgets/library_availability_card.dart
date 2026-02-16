@@ -45,7 +45,7 @@ class LibraryAvailabilityCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             AvailabilityStatusBadge(status: status.statusForLibKey(library.libKey)),
-            if (status.reserveUrl?.isNotEmpty ?? false) ...[
+            if ((status.reserveUrl?.isNotEmpty ?? false) && status.statusForLibKey(library.libKey).isReservable) ...[
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () {
