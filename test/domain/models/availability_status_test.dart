@@ -78,6 +78,44 @@ void main() {
       });
     });
 
+    group('isReservable', () {
+      test('returns true for available', () {
+        expect(AvailabilityStatus.available.isReservable, isTrue);
+      });
+
+      test('returns true for inLibraryOnly', () {
+        expect(AvailabilityStatus.inLibraryOnly.isReservable, isTrue);
+      });
+
+      test('returns true for checkedOut', () {
+        expect(AvailabilityStatus.checkedOut.isReservable, isTrue);
+      });
+
+      test('returns true for reserved', () {
+        expect(AvailabilityStatus.reserved.isReservable, isTrue);
+      });
+
+      test('returns true for preparing', () {
+        expect(AvailabilityStatus.preparing.isReservable, isTrue);
+      });
+
+      test('returns false for notFound', () {
+        expect(AvailabilityStatus.notFound.isReservable, isFalse);
+      });
+
+      test('returns false for closed', () {
+        expect(AvailabilityStatus.closed.isReservable, isFalse);
+      });
+
+      test('returns false for error', () {
+        expect(AvailabilityStatus.error.isReservable, isFalse);
+      });
+
+      test('returns false for unknown', () {
+        expect(AvailabilityStatus.unknown.isReservable, isFalse);
+      });
+    });
+
     group('aggregate', () {
       test('returns the highest priority status', () {
         final statuses = [
