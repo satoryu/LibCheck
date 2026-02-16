@@ -79,7 +79,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/result/:isbn',
         builder: (context, state) {
           final isbn = state.pathParameters['isbn']!;
-          return BookSearchResultPage(isbn: isbn);
+          final source = state.uri.queryParameters['source'];
+          return BookSearchResultPage(isbn: isbn, source: source);
         },
       ),
     ],

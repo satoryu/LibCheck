@@ -139,6 +139,7 @@ void main() {
       required RegisteredLibraryRepository registeredRepo,
       FakeSearchHistoryRepository? historyRepo,
       String isbn = '9784123456789',
+      String? source,
     }) {
       return ProviderScope(
         overrides: [
@@ -149,7 +150,7 @@ void main() {
               .overrideWithValue(historyRepo ?? fakeHistoryRepo),
         ],
         child: MaterialApp(
-          home: BookSearchResultPage(isbn: isbn),
+          home: BookSearchResultPage(isbn: isbn, source: source),
         ),
       );
     }
@@ -257,7 +258,84 @@ void main() {
       expect(find.text('別の本をスキャンする'), findsNothing);
     });
 
-    testWidgets('scan another button pops back to previous page',
+    testWidgets('shows scan button with camera icon when source is scan',
+        (tester) async {
+      final results = [
+        BookAvailability(
+          isbn: '9784123456789',
+          libraryStatuses: {
+            'Tokyo_Minato': const LibraryStatus(
+              systemId: 'Tokyo_Minato',
+              status: AvailabilityStatus.available,
+              libKeyStatuses: {'みなと': '貸出可'},
+            ),
+          },
+        ),
+      ];
+
+      await tester.pumpWidget(buildSubject(
+        libraryRepo: FakeLibraryRepository(results),
+        registeredRepo: FakeRegisteredLibraryRepository([_library1]),
+        source: 'scan',
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('別の本をスキャンする'), findsOneWidget);
+      expect(find.byIcon(Icons.camera_alt), findsOneWidget);
+    });
+
+    testWidgets('shows search button with search icon when source is isbn',
+        (tester) async {
+      final results = [
+        BookAvailability(
+          isbn: '9784123456789',
+          libraryStatuses: {
+            'Tokyo_Minato': const LibraryStatus(
+              systemId: 'Tokyo_Minato',
+              status: AvailabilityStatus.available,
+              libKeyStatuses: {'みなと': '貸出可'},
+            ),
+          },
+        ),
+      ];
+
+      await tester.pumpWidget(buildSubject(
+        libraryRepo: FakeLibraryRepository(results),
+        registeredRepo: FakeRegisteredLibraryRepository([_library1]),
+        source: 'isbn',
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('別の本を検索する'), findsOneWidget);
+      expect(find.byIcon(Icons.search), findsOneWidget);
+    });
+
+    testWidgets('shows search button when source is null',
+        (tester) async {
+      final results = [
+        BookAvailability(
+          isbn: '9784123456789',
+          libraryStatuses: {
+            'Tokyo_Minato': const LibraryStatus(
+              systemId: 'Tokyo_Minato',
+              status: AvailabilityStatus.available,
+              libKeyStatuses: {'みなと': '貸出可'},
+            ),
+          },
+        ),
+      ];
+
+      await tester.pumpWidget(buildSubject(
+        libraryRepo: FakeLibraryRepository(results),
+        registeredRepo: FakeRegisteredLibraryRepository([_library1]),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('別の本を検索する'), findsOneWidget);
+      expect(find.byIcon(Icons.search), findsOneWidget);
+    });
+
+    testWidgets('back button pops back to previous page',
         (tester) async {
       final results = [
         BookAvailability(
@@ -303,8 +381,8 @@ void main() {
 
       expect(find.text('検索結果'), findsOneWidget);
 
-      // Tap "別の本をスキャンする" button
-      await tester.tap(find.text('別の本をスキャンする'));
+      // Tap "別の本を検索する" button (default when source is null)
+      await tester.tap(find.text('別の本を検索する'));
       await tester.pumpAndSettle();
 
       // Should pop back to previous page
