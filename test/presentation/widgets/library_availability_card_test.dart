@@ -132,5 +132,18 @@ void main() {
 
       expect(find.text('予約する'), findsNothing);
     });
+
+    testWidgets('does not display reserve URL link when empty string', (tester) async {
+      await tester.pumpWidget(buildSubject(
+        status: const LibraryStatus(
+          systemId: 'Tokyo_Minato',
+          status: AvailabilityStatus.available,
+          reserveUrl: '',
+          libKeyStatuses: {},
+        ),
+      ));
+
+      expect(find.text('予約する'), findsNothing);
+    });
   });
 }

@@ -41,11 +41,11 @@ class _IsbnInputPageState extends State<IsbnInputPage> {
 
   void _onSubmit() {
     final isbn = IsbnValidator.normalizeIsbn(_controller.text);
-    context.go('/result/$isbn');
+    context.push('/result/$isbn');
   }
 
   void _navigateToScan() {
-    context.go('/scan');
+    context.push('/scan');
   }
 
   @override
