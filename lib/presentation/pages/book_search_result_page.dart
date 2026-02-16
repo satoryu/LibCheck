@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:libcheck/domain/models/book_availability.dart';
 import 'package:libcheck/domain/models/library.dart';
@@ -173,8 +174,21 @@ class BookSearchResultPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
-          _buildScanAnotherButton(context),
+          _buildAddLibraryButton(context),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAddLibraryButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.icon(
+        onPressed: () {
+          context.push('/library/add');
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('図書館を登録する'),
       ),
     );
   }
