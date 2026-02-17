@@ -185,5 +185,57 @@ void main() {
 
       expect(find.text('予約する'), findsOneWidget);
     });
+
+    testWidgets('does not display reserve URL link when URL has javascript scheme', (tester) async {
+      await tester.pumpWidget(buildSubject(
+        status: const LibraryStatus(
+          systemId: 'Tokyo_Minato',
+          status: AvailabilityStatus.available,
+          reserveUrl: 'javascript:alert(1)',
+          libKeyStatuses: {'みなと': '貸出可'},
+        ),
+      ));
+
+      expect(find.text('予約する'), findsNothing);
+    });
+
+    testWidgets('does not display reserve URL link when URL has file scheme', (tester) async {
+      await tester.pumpWidget(buildSubject(
+        status: const LibraryStatus(
+          systemId: 'Tokyo_Minato',
+          status: AvailabilityStatus.available,
+          reserveUrl: 'file:///etc/passwd',
+          libKeyStatuses: {'みなと': '貸出可'},
+        ),
+      ));
+
+      expect(find.text('予約する'), findsNothing);
+    });
+
+    testWidgets('does not display reserve URL link when URL has data scheme', (tester) async {
+      await tester.pumpWidget(buildSubject(
+        status: const LibraryStatus(
+          systemId: 'Tokyo_Minato',
+          status: AvailabilityStatus.available,
+          reserveUrl: 'data:text/html,<script>alert(1)</script>',
+          libKeyStatuses: {'みなと': '貸出可'},
+        ),
+      ));
+
+      expect(find.text('予約する'), findsNothing);
+    });
+
+    testWidgets('displays reserve URL link when URL has http scheme', (tester) async {
+      await tester.pumpWidget(buildSubject(
+        status: const LibraryStatus(
+          systemId: 'Tokyo_Minato',
+          status: AvailabilityStatus.available,
+          reserveUrl: 'http://example.com/reserve',
+          libKeyStatuses: {'みなと': '貸出可'},
+        ),
+      ));
+
+      expect(find.text('予約する'), findsOneWidget);
+    });
   });
 }
