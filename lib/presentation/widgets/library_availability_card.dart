@@ -17,6 +17,7 @@ class LibraryAvailabilityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reserveUri = _safeReserveUri;
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: Padding(
@@ -45,11 +46,11 @@ class LibraryAvailabilityCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             AvailabilityStatusBadge(status: status.statusForLibKey(library.libKey)),
-            if ((status.reserveUrl?.isNotEmpty ?? false) && status.statusForLibKey(library.libKey).isReservable) ...[
+            if (reserveUri != null && status.statusForLibKey(library.libKey).isReservable) ...[
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () {
-                  launchUrl(Uri.parse(status.reserveUrl!));
+                  launchUrl(reserveUri, mode: LaunchMode.externalApplication);
                 },
                 child: const Text('予約する'),
               ),
@@ -58,5 +59,16 @@ class LibraryAvailabilityCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Parses [status.reserveUrl] and returns a [Uri] only if the scheme is
+  /// http or https. Returns null for empty, null, or unsafe URLs.
+  Uri? get _safeReserveUri {
+    final raw = status.reserveUrl;
+    if (raw == null || raw.isEmpty) return null;
+    final uri = Uri.tryParse(raw);
+    if (uri == null) return null;
+    if (uri.scheme != 'http' && uri.scheme != 'https') return null;
+    return uri;
   }
 }
