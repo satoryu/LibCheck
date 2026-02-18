@@ -23,6 +23,12 @@ void main() {
               body: Text('Result: ${state.pathParameters['isbn']}'),
             ),
           ),
+          GoRoute(
+            path: '/isbn-input',
+            builder: (context, state) => Scaffold(
+              appBar: AppBar(title: const Text('ISBN入力')),
+            ),
+          ),
         ],
       );
     });
@@ -61,6 +67,23 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('ISBNを手動入力する'), findsOneWidget);
+    });
+
+    testWidgets('「ISBNを手動入力する」ボタンにキーボードアイコンが表示される', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.keyboard), findsOneWidget);
+    });
+
+    testWidgets('「ISBNを手動入力する」ボタンタップで/isbn-inputへ遷移する', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('ISBNを手動入力する'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('ISBN入力'), findsOneWidget);
     });
   });
 }
