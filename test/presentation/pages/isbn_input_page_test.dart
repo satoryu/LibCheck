@@ -215,5 +215,58 @@ void main() {
 
       expect(find.text('ISBN: 9784873117584'), findsOneWidget);
     });
+
+    testWidgets('11桁入力時に桁数エラーメッセージが表示される', (tester) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '97848731175');
+      await tester.pump();
+
+      expect(find.text('ISBNは10桁または13桁で入力してください'), findsOneWidget);
+    });
+
+    testWidgets('12桁入力時に桁数エラーメッセージが表示される', (tester) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '978487311758');
+      await tester.pump();
+
+      expect(find.text('ISBNは10桁または13桁で入力してください'), findsOneWidget);
+    });
+
+    testWidgets('ISBN-10のXチェックディジットが有効として認識される', (tester) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      // 080442957X: check digit X (=10), valid ISBN-10
+      await tester.enterText(find.byType(TextField), '080442957X');
+      await tester.pump();
+
+      expect(find.text('有効なISBNです'), findsOneWidget);
+      final button = tester.widget<FilledButton>(find.widgetWithText(FilledButton, '検索する'));
+      expect(button.onPressed, isNotNull);
+    });
+
+    testWidgets('978以外で始まるISBN-13はエラーメッセージが表示される', (tester) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '1234567890123');
+      await tester.pump();
+
+      expect(find.text('ISBN-13 は 978 または 979 で始まる必要があります'), findsOneWidget);
+    });
+
+    testWidgets('無効なISBN-10入力時にエラーメッセージが表示される', (tester) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '4873117586');
+      await tester.pump();
+
+      expect(find.text('ISBN-10 のチェックディジットが正しくありません'), findsOneWidget);
+    });
   });
 }
