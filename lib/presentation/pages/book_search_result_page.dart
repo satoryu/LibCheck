@@ -59,7 +59,8 @@ class BookSearchResultPage extends ConsumerWidget {
   }
 
   void _saveSearchHistory(WidgetRef ref, List<BookAvailability> results) {
-    final result = results[0];
+    final result = _findResultForIsbn(results);
+    if (result == null) return;
     final statuses = <String, String>{};
     for (final entry in result.libraryStatuses.entries) {
       statuses[entry.key] = entry.value.status.name;
@@ -70,6 +71,10 @@ class BookSearchResultPage extends ConsumerWidget {
       libraryStatuses: statuses,
     );
     ref.read(searchHistoryProvider.notifier).save(historyEntry);
+  }
+
+  BookAvailability? _findResultForIsbn(List<BookAvailability> results) {
+    return results.where((r) => r.isbn == isbn).firstOrNull;
   }
 
   Widget _buildLoadingState(BuildContext context) {
@@ -138,8 +143,9 @@ class BookSearchResultPage extends ConsumerWidget {
           const SizedBox(height: 8),
           if (results.isNotEmpty)
             ...libraries.map((library) {
+              final result = _findResultForIsbn(results);
               final status =
-                  results[0].libraryStatuses[library.systemId];
+                  result?.libraryStatuses[library.systemId];
               if (status == null) return const SizedBox.shrink();
               return LibraryAvailabilityCard(
                 library: library,

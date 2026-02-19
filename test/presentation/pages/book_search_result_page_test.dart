@@ -430,5 +430,81 @@ void main() {
 
       expect(fakeHistoryRepo.savedEntries, isEmpty);
     });
+
+    testWidgets('displays correct result when multiple BookAvailability results exist', (tester) async {
+      final results = [
+        BookAvailability(
+          isbn: '9784000000000',
+          libraryStatuses: {
+            'Tokyo_Minato': const LibraryStatus(
+              systemId: 'Tokyo_Minato',
+              status: AvailabilityStatus.notFound,
+              libKeyStatuses: {'みなと': '蔵書なし'},
+            ),
+          },
+        ),
+        BookAvailability(
+          isbn: '9784123456789',
+          libraryStatuses: {
+            'Tokyo_Minato': const LibraryStatus(
+              systemId: 'Tokyo_Minato',
+              status: AvailabilityStatus.available,
+              libKeyStatuses: {'みなと': '貸出可'},
+            ),
+          },
+        ),
+      ];
+
+      await tester.pumpWidget(buildSubject(
+        libraryRepo: FakeLibraryRepository(results),
+        registeredRepo: FakeRegisteredLibraryRepository([_library1]),
+        isbn: '9784123456789',
+      ));
+      await tester.pumpAndSettle();
+
+      // Should display the result for the searched ISBN, not results[0]
+      expect(find.text('貸出可能'), findsOneWidget);
+      expect(find.text('蔵書なし'), findsNothing);
+    });
+
+    testWidgets('saves correct search history when multiple results exist', (tester) async {
+      final results = [
+        BookAvailability(
+          isbn: '9784000000000',
+          libraryStatuses: {
+            'Tokyo_Minato': const LibraryStatus(
+              systemId: 'Tokyo_Minato',
+              status: AvailabilityStatus.notFound,
+              libKeyStatuses: {'みなと': '蔵書なし'},
+            ),
+          },
+        ),
+        BookAvailability(
+          isbn: '9784123456789',
+          libraryStatuses: {
+            'Tokyo_Minato': const LibraryStatus(
+              systemId: 'Tokyo_Minato',
+              status: AvailabilityStatus.available,
+              libKeyStatuses: {'みなと': '貸出可'},
+            ),
+          },
+        ),
+      ];
+
+      await tester.pumpWidget(buildSubject(
+        libraryRepo: FakeLibraryRepository(results),
+        registeredRepo: FakeRegisteredLibraryRepository([_library1]),
+        historyRepo: fakeHistoryRepo,
+        isbn: '9784123456789',
+      ));
+      await tester.pumpAndSettle();
+
+      expect(fakeHistoryRepo.savedEntries, hasLength(1));
+      expect(fakeHistoryRepo.savedEntries[0].isbn, '9784123456789');
+      expect(
+        fakeHistoryRepo.savedEntries[0].libraryStatuses['Tokyo_Minato'],
+        'available',
+      );
+    });
   });
 }
