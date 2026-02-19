@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:libcheck/presentation/theme/app_colors.dart';
 import 'package:libcheck/presentation/utils/error_message_resolver.dart';
 
 class ErrorStateWidget extends StatelessWidget {
@@ -20,10 +21,10 @@ class ErrorStateWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline,
               size: 48,
-              color: Color(0xFFD32F2F),
+              color: AppColors.error,
             ),
             const SizedBox(height: 16),
             Text(
