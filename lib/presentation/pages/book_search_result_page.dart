@@ -9,6 +9,7 @@ import 'package:libcheck/presentation/providers/book_availability_providers.dart
 import 'package:libcheck/presentation/providers/registered_library_providers.dart';
 import 'package:libcheck/presentation/providers/search_history_providers.dart';
 import 'package:libcheck/presentation/utils/error_message_resolver.dart';
+import 'package:libcheck/presentation/theme/app_colors.dart';
 import 'package:libcheck/presentation/widgets/library_availability_card.dart';
 
 class BookSearchResultPage extends ConsumerWidget {
@@ -104,7 +105,7 @@ class BookSearchResultPage extends ConsumerWidget {
           Center(
             child: Column(
               children: [
-                const Icon(Icons.error_outline, size: 48, color: Color(0xFFD32F2F)),
+                Icon(Icons.error_outline, size: 48, color: AppColors.error),
                 const SizedBox(height: 16),
                 Text(ErrorMessageResolver.resolve(error)),
                 const SizedBox(height: 16),
@@ -172,7 +173,7 @@ class BookSearchResultPage extends ConsumerWidget {
           Center(
             child: Column(
               children: [
-                const Icon(Icons.local_library, size: 48, color: Color(0xFF9E9E9E)),
+                Icon(Icons.local_library, size: 48, color: AppColors.inactive),
                 const SizedBox(height: 16),
                 const Text('図書館が登録されていません'),
                 const SizedBox(height: 8),

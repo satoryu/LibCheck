@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:libcheck/domain/models/availability_status.dart';
+import 'package:libcheck/presentation/theme/app_colors.dart';
 
 class AvailabilityStatusBadge extends StatelessWidget {
   const AvailabilityStatusBadge({super.key, required this.status});
@@ -31,47 +32,47 @@ class AvailabilityStatusBadge extends StatelessWidget {
     return switch (status) {
       AvailabilityStatus.available => (
           '貸出可能',
-          const Color(0xFF2E7D32),
+          AppColors.success,
           Icons.check_circle,
         ),
       AvailabilityStatus.inLibraryOnly => (
           '館内のみ',
-          const Color(0xFF2E7D32),
+          AppColors.success,
           Icons.check_circle,
         ),
       AvailabilityStatus.checkedOut => (
           '貸出中',
-          const Color(0xFFEF6C00),
+          AppColors.warning,
           Icons.schedule,
         ),
       AvailabilityStatus.reserved => (
           '予約中',
-          const Color(0xFFEF6C00),
+          AppColors.warning,
           Icons.schedule,
         ),
       AvailabilityStatus.preparing => (
           '準備中',
-          const Color(0xFFEF6C00),
+          AppColors.warning,
           Icons.schedule,
         ),
       AvailabilityStatus.closed => (
           '休館中',
-          const Color(0xFF9E9E9E),
+          AppColors.inactive,
           Icons.block,
         ),
       AvailabilityStatus.notFound => (
           '蔵書なし',
-          const Color(0xFF9E9E9E),
+          AppColors.inactive,
           Icons.remove_circle_outline,
         ),
       AvailabilityStatus.error => (
           'エラー',
-          const Color(0xFFD32F2F),
+          AppColors.error,
           Icons.error_outline,
         ),
       AvailabilityStatus.unknown => (
           '不明',
-          const Color(0xFF9E9E9E),
+          AppColors.inactive,
           Icons.help_outline,
         ),
     };

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:libcheck/domain/models/search_history_entry.dart';
 import 'package:libcheck/presentation/providers/search_history_providers.dart';
+import 'package:libcheck/presentation/theme/app_colors.dart';
 import 'package:libcheck/presentation/widgets/error_state_widget.dart';
 import 'package:libcheck/presentation/widgets/search_history_card.dart';
 
@@ -56,7 +57,7 @@ class SearchHistoryPage extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history, size: 48, color: Color(0xFF9E9E9E)),
+          Icon(Icons.history, size: 48, color: AppColors.inactive),
           SizedBox(height: 16),
           Text('検索履歴はありません'),
           SizedBox(height: 8),
@@ -82,7 +83,7 @@ class SearchHistoryPage extends ConsumerWidget {
           background: Container(
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 16),
-            color: const Color(0xFFD32F2F),
+            color: AppColors.error,
             child: const Icon(Icons.delete, color: Colors.white),
           ),
           onDismissed: (_) {
