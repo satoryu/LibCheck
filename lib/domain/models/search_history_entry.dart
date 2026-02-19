@@ -1,3 +1,8 @@
+/// 検索履歴の1エントリ。
+///
+/// [libraryStatuses] は `{systemId: enumName}` の形式で保存される。
+/// Value は [AvailabilityStatus] の Dart enum 名（"available", "checkedOut" 等）。
+/// 復元時は `AvailabilityStatus.values.byName(value)` で型安全に変換する。
 class SearchHistoryEntry {
   const SearchHistoryEntry({
     required this.isbn,
@@ -7,6 +12,9 @@ class SearchHistoryEntry {
 
   final String isbn;
   final DateTime searchedAt;
+
+  /// 図書館システムIDごとの蔵書状態。
+  /// Value は [AvailabilityStatus] の enum 名文字列。
   final Map<String, String> libraryStatuses;
 
   factory SearchHistoryEntry.fromJson(Map<String, dynamic> json) {
