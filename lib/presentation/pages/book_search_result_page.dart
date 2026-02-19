@@ -62,6 +62,8 @@ class BookSearchResultPage extends ConsumerWidget {
   void _saveSearchHistory(WidgetRef ref, List<BookAvailability> results) {
     final result = _findResultForIsbn(results);
     if (result == null) return;
+    // enum名（"available", "checkedOut" 等）で保存する。
+    // API日本語文字列ではなくenum名を使用することで、API仕様変更の影響を受けない。
     final statuses = <String, String>{};
     for (final entry in result.libraryStatuses.entries) {
       statuses[entry.key] = entry.value.status.name;
