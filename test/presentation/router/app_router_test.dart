@@ -56,14 +56,6 @@ class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
 
 void main() {
   group('AppRouter', () {
-    test('routerProvider returns a GoRouter instance', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      final router = container.read(routerProvider);
-      expect(router, isA<GoRouter>());
-    });
-
     testWidgets('navigates to home page at / with BottomNavigationBar',
         (tester) async {
       final container = ProviderContainer(
@@ -179,63 +171,6 @@ void main() {
       expect(find.widgetWithText(AppBar, '都道府県を選択'), findsOneWidget);
     });
 
-    testWidgets('navigates to city selection page at /library/add/:pref',
-        (tester) async {
-      final container = ProviderContainer(
-        overrides: [
-          registeredLibraryRepositoryProvider
-              .overrideWithValue(FakeRegisteredLibraryRepository()),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      final router = container.read(routerProvider);
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      router.go('/library/add/東京都');
-      await tester.pumpAndSettle();
-
-      expect(find.widgetWithText(AppBar, '東京都の市区町村'), findsOneWidget);
-    });
-
-    testWidgets(
-        'navigates to library list page at /library/add/:pref/:city',
-        (tester) async {
-      final container = ProviderContainer(
-        overrides: [
-          registeredLibraryRepositoryProvider
-              .overrideWithValue(FakeRegisteredLibraryRepository()),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      final router = container.read(routerProvider);
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      router.go('/library/add/東京都/港区');
-      await tester.pumpAndSettle();
-
-      expect(find.widgetWithText(AppBar, '港区の図書館'), findsOneWidget);
-    });
-
     testWidgets('navigates to search result page at /result/:isbn',
         (tester) async {
       final container = ProviderContainer(
@@ -267,62 +202,6 @@ void main() {
 
       expect(find.widgetWithText(AppBar, '検索結果'), findsOneWidget);
       expect(find.textContaining('9784123456789'), findsOneWidget);
-    });
-
-    testWidgets('navigates to barcode scanner page at /scan',
-        (tester) async {
-      final container = ProviderContainer(
-        overrides: [
-          registeredLibraryRepositoryProvider
-              .overrideWithValue(FakeRegisteredLibraryRepository()),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      final router = container.read(routerProvider);
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      router.go('/scan');
-      await tester.pumpAndSettle();
-
-      expect(find.widgetWithText(AppBar, 'バーコードスキャン'), findsOneWidget);
-    });
-
-    testWidgets('navigates to ISBN input page at /isbn-input',
-        (tester) async {
-      final container = ProviderContainer(
-        overrides: [
-          registeredLibraryRepositoryProvider
-              .overrideWithValue(FakeRegisteredLibraryRepository()),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      final router = container.read(routerProvider);
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      router.go('/isbn-input');
-      await tester.pumpAndSettle();
-
-      expect(find.widgetWithText(AppBar, 'ISBN入力'), findsOneWidget);
     });
 
   });

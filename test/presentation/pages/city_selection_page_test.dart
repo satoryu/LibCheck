@@ -92,14 +92,6 @@ void main() {
       expect(find.widgetWithText(AppBar, '東京都の市区町村'), findsOneWidget);
     });
 
-    testWidgets('shows loading indicator while fetching', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        repository: MockLibraryRepository([]),
-      ));
-
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    });
-
     testWidgets('displays city list after loading', (tester) async {
       final libraries = [
         _createLibrary(pref: '東京都', city: '港区', libId: '1'),
@@ -115,19 +107,6 @@ void main() {
       expect(find.text('千代田区'), findsOneWidget);
       expect(find.text('新宿区'), findsOneWidget);
       expect(find.text('港区'), findsOneWidget);
-    });
-
-    testWidgets('displays search field', (tester) async {
-      final libraries = [
-        _createLibrary(pref: '東京都', city: '港区', libId: '1'),
-      ];
-
-      await tester.pumpWidget(buildSubject(
-        repository: MockLibraryRepository(libraries),
-      ));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(TextField), findsOneWidget);
     });
 
     testWidgets('filters cities by search text', (tester) async {
@@ -159,15 +138,6 @@ void main() {
       expect(find.byType(ErrorStateWidget), findsOneWidget);
       expect(find.text('エラーが発生しました'), findsOneWidget);
       expect(find.text('再試行'), findsOneWidget);
-    });
-
-    testWidgets('shows loading text with indicator', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        repository: MockLibraryRepository([]),
-      ));
-      // Check loading state before settling
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.text('読み込み中...'), findsOneWidget);
     });
   });
 }

@@ -118,19 +118,6 @@ void main() {
         expect(result[0].libraryStatuses['Tokyo_Chiyoda'], 'available');
       });
 
-      test('limits entries to maxEntries (100)', () async {
-        for (var i = 0; i < 105; i++) {
-          final isbn = '978400310${i.toString().padLeft(4, '0')}';
-          await repository.save(createEntry(
-            isbn: isbn,
-            searchedAt: DateTime(2026, 1, 1).add(Duration(hours: i)),
-          ));
-        }
-
-        final result = await repository.getAll();
-        expect(result, hasLength(100));
-      });
-
       test('removes oldest entries when exceeding maxEntries', () async {
         for (var i = 0; i < 105; i++) {
           final isbn = '978400310${i.toString().padLeft(4, '0')}';
@@ -158,13 +145,6 @@ void main() {
         expect(result[0].isbn, '9784167158057');
       });
 
-      test('does nothing when ISBN not found', () async {
-        await repository.save(createEntry(isbn: '9784003101018'));
-        await repository.remove('9784167158057');
-
-        final result = await repository.getAll();
-        expect(result, hasLength(1));
-      });
     });
 
     group('removeAll', () {

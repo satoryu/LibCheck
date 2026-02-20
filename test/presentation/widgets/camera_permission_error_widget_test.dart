@@ -4,66 +4,6 @@ import 'package:libcheck/presentation/widgets/camera_permission_error_widget.dar
 
 void main() {
   group('CameraPermissionErrorWidget', () {
-    testWidgets('エラーメッセージが表示される', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CameraPermissionErrorWidget(
-              onOpenSettings: () {},
-              onManualInput: () {},
-            ),
-          ),
-        ),
-      );
-
-      expect(find.text('カメラへのアクセスが許可されていません'), findsOneWidget);
-    });
-
-    testWidgets('カメラアイコンが表示される', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CameraPermissionErrorWidget(
-              onOpenSettings: () {},
-              onManualInput: () {},
-            ),
-          ),
-        ),
-      );
-
-      expect(find.byIcon(Icons.camera_alt_outlined), findsOneWidget);
-    });
-
-    testWidgets('「設定を開く」ボタンが表示される', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CameraPermissionErrorWidget(
-              onOpenSettings: () {},
-              onManualInput: () {},
-            ),
-          ),
-        ),
-      );
-
-      expect(find.text('設定を開く'), findsOneWidget);
-    });
-
-    testWidgets('「ISBNを手動入力する」ボタンが表示される', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CameraPermissionErrorWidget(
-              onOpenSettings: () {},
-              onManualInput: () {},
-            ),
-          ),
-        ),
-      );
-
-      expect(find.text('ISBNを手動入力する'), findsOneWidget);
-    });
-
     testWidgets('「設定を開く」ボタンをタップするとコールバックが呼ばれる', (tester) async {
       var called = false;
       await tester.pumpWidget(

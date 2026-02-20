@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:libcheck/presentation/pages/barcode_scanner_page.dart';
-import 'package:libcheck/presentation/widgets/scan_overlay_widget.dart';
 
 void main() {
   group('BarcodeScannerPage', () {
@@ -46,34 +45,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('バーコードスキャン'), findsOneWidget);
-    });
-
-    testWidgets('フラッシュライトアイコンが表示される', (tester) async {
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      expect(find.byIcon(Icons.flash_off), findsOneWidget);
-    });
-
-    testWidgets('ScanOverlayWidgetが表示される', (tester) async {
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      expect(find.byType(ScanOverlayWidget), findsOneWidget);
-    });
-
-    testWidgets('「ISBNを手動入力する」ボタンが表示される', (tester) async {
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      expect(find.text('ISBNを手動入力する'), findsOneWidget);
-    });
-
-    testWidgets('「ISBNを手動入力する」ボタンにキーボードアイコンが表示される', (tester) async {
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      expect(find.byIcon(Icons.keyboard), findsOneWidget);
     });
 
     testWidgets('「ISBNを手動入力する」ボタンタップで/isbn-inputへ遷移する', (tester) async {

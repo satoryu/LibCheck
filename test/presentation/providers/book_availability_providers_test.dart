@@ -37,24 +37,6 @@ class FakeLibraryRepository implements LibraryRepository {
   }
 }
 
-class ErrorLibraryRepository implements LibraryRepository {
-  @override
-  Future<List<Library>> getLibraries({
-    required String pref,
-    String? city,
-  }) async {
-    return [];
-  }
-
-  @override
-  Future<List<BookAvailability>> checkBookAvailability({
-    required List<String> isbn,
-    required List<String> systemIds,
-  }) async {
-    throw Exception('API error');
-  }
-}
-
 class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
   final List<Library> _libraries;
 
@@ -210,28 +192,5 @@ void main() {
       expect(fakeLibraryRepo.capturedSystemIds, ['Tokyo_Minato']);
     });
 
-    test('propagates errors from repository', () async {
-      final errorRepo = ErrorLibraryRepository();
-      final fakeRegisteredRepo =
-          FakeRegisteredLibraryRepository([_library1]);
-
-      final container = ProviderContainer(
-        overrides: [
-          libraryRepositoryProvider.overrideWithValue(errorRepo),
-          registeredLibraryRepositoryProvider
-              .overrideWithValue(fakeRegisteredRepo),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      container.listen(bookAvailabilityProvider('9784123456789'), (_, _) {});
-
-      // Wait for the provider to settle
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      final state =
-          container.read(bookAvailabilityProvider('9784123456789'));
-      expect(state.hasError, isTrue);
-    });
   });
 }

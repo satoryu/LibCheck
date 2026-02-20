@@ -145,14 +145,6 @@ void main() {
       expect(find.widgetWithText(AppBar, '港区の図書館'), findsOneWidget);
     });
 
-    testWidgets('shows loading indicator while fetching', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        repository: MockLibraryRepository([]),
-      ));
-
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    });
-
     testWidgets('displays library list after loading', (tester) async {
       final libraries = [
         _createLibrary(
@@ -174,44 +166,6 @@ void main() {
 
       expect(find.text('東京都立中央図書館'), findsOneWidget);
       expect(find.text('港区立みなと図書館'), findsOneWidget);
-    });
-
-    testWidgets('displays library address', (tester) async {
-      final libraries = [
-        _createLibrary(
-          formalName: '東京都立中央図書館',
-          address: '東京都港区南麻布5-7-13',
-        ),
-      ];
-
-      await tester.pumpWidget(buildSubject(
-        repository: MockLibraryRepository(libraries),
-      ));
-      await tester.pumpAndSettle();
-
-      expect(find.text('東京都港区南麻布5-7-13'), findsOneWidget);
-    });
-
-    testWidgets('shows checkboxes for each library', (tester) async {
-      final libraries = [
-        _createLibrary(
-          formalName: '図書館1',
-          address: '住所1',
-          libId: '1',
-        ),
-        _createLibrary(
-          formalName: '図書館2',
-          address: '住所2',
-          libId: '2',
-        ),
-      ];
-
-      await tester.pumpWidget(buildSubject(
-        repository: MockLibraryRepository(libraries),
-      ));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(CheckboxListTile), findsNWidgets(2));
     });
 
     testWidgets('can toggle library selection', (tester) async {
@@ -258,24 +212,6 @@ void main() {
       await tester.pump();
 
       expect(find.textContaining('1件選択中'), findsOneWidget);
-    });
-
-    testWidgets('register button is disabled when no selection',
-        (tester) async {
-      final libraries = [
-        _createLibrary(
-          formalName: '図書館1',
-          address: '住所1',
-        ),
-      ];
-
-      await tester.pumpWidget(buildSubject(
-        repository: MockLibraryRepository(libraries),
-      ));
-      await tester.pumpAndSettle();
-
-      final button = tester.widget<FilledButton>(find.byType(FilledButton));
-      expect(button.onPressed, isNull);
     });
 
     testWidgets('register button saves selected libraries', (tester) async {

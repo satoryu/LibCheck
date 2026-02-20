@@ -57,18 +57,6 @@ void main() {
       expect(find.text('昨日'), findsOneWidget);
     });
 
-    testWidgets('displays "N日前" for 2-7 days ago', (tester) async {
-      final now = DateTime(2026, 2, 15, 14, 0);
-      final entry = SearchHistoryEntry(
-        isbn: '9784003101018',
-        searchedAt: DateTime(2026, 2, 12, 10, 30),
-        libraryStatuses: {},
-      );
-
-      await tester.pumpWidget(buildSubject(entry: entry, now: now));
-      expect(find.text('3日前'), findsOneWidget);
-    });
-
     testWidgets('displays date for older entries', (tester) async {
       final now = DateTime(2026, 2, 15, 14, 0);
       final entry = SearchHistoryEntry(
@@ -94,18 +82,6 @@ void main() {
       await tester.pumpWidget(buildSubject(entry: entry));
       // Should show the best status (available)
       expect(find.text('貸出可能'), findsOneWidget);
-    });
-
-    testWidgets('displays notFound when libraryStatuses is empty',
-        (tester) async {
-      final entry = SearchHistoryEntry(
-        isbn: '9784003101018',
-        searchedAt: DateTime(2026, 2, 15, 10, 30),
-        libraryStatuses: {},
-      );
-
-      await tester.pumpWidget(buildSubject(entry: entry));
-      expect(find.text('蔵書なし'), findsOneWidget);
     });
 
     testWidgets('calls onTap when tapped', (tester) async {

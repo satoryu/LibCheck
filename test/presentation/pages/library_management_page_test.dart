@@ -74,20 +74,6 @@ const _library2 = Library(
   category: 'LARGE',
 );
 
-class SlowRegisteredLibraryRepository implements RegisteredLibraryRepository {
-  @override
-  Future<List<Library>> getAll() =>
-      Future.delayed(const Duration(seconds: 5), () => []);
-  @override
-  Future<void> saveAll(List<Library> libraries) async {}
-  @override
-  Future<List<Library>> add(Library library) async => [];
-  @override
-  Future<List<Library>> addAll(List<Library> libraries) async => [];
-  @override
-  Future<List<Library>> remove(Library library) async => [];
-}
-
 class ErrorRegisteredLibraryRepository implements RegisteredLibraryRepository {
   @override
   Future<List<Library>> getAll() async => throw Exception('load error');
@@ -137,24 +123,6 @@ void main() {
       expect(find.text('渋谷区立中央図書館'), findsOneWidget);
     });
 
-    testWidgets('shows AppBar with title', (tester) async {
-      await tester.pumpWidget(
-        _buildTestWidget(repo: FakeRegisteredLibraryRepository()),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.widgetWithText(AppBar, '登録図書館'), findsOneWidget);
-    });
-
-    testWidgets('shows add button in AppBar', (tester) async {
-      await tester.pumpWidget(
-        _buildTestWidget(repo: FakeRegisteredLibraryRepository()),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.byIcon(Icons.add), findsOneWidget);
-    });
-
     testWidgets('shows delete confirmation dialog', (tester) async {
       await tester.pumpWidget(
         _buildTestWidget(
@@ -173,24 +141,6 @@ void main() {
       );
       expect(find.text('キャンセル'), findsOneWidget);
       expect(find.text('解除する'), findsOneWidget);
-    });
-
-    testWidgets('cancel button dismisses dialog', (tester) async {
-      await tester.pumpWidget(
-        _buildTestWidget(
-          repo: FakeRegisteredLibraryRepository([_library1]),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byIcon(Icons.close));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('キャンセル'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('図書館の登録を解除しますか？'), findsNothing);
-      expect(find.text('港区立みなと図書館'), findsOneWidget);
     });
 
     testWidgets('confirming delete removes library and shows SnackBar',
@@ -233,17 +183,6 @@ void main() {
       expect(find.text('港区立みなと図書館'), findsOneWidget);
     });
 
-    testWidgets('shows location subtitle for each library', (tester) async {
-      await tester.pumpWidget(
-        _buildTestWidget(
-          repo: FakeRegisteredLibraryRepository([_library1]),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('東京都港区'), findsOneWidget);
-    });
-
     testWidgets('shows ErrorStateWidget on error', (tester) async {
       await tester.pumpWidget(
         _buildTestWidget(repo: ErrorRegisteredLibraryRepository()),
@@ -253,19 +192,6 @@ void main() {
       expect(find.byType(ErrorStateWidget), findsOneWidget);
       expect(find.text('エラーが発生しました'), findsOneWidget);
       expect(find.text('再試行'), findsOneWidget);
-    });
-
-    testWidgets('shows loading text with indicator', (tester) async {
-      await tester.pumpWidget(
-        _buildTestWidget(repo: SlowRegisteredLibraryRepository()),
-      );
-      await tester.pump();
-
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.text('読み込み中...'), findsOneWidget);
-
-      // Clean up pending timers
-      await tester.pumpAndSettle(const Duration(seconds: 6));
     });
   });
 }

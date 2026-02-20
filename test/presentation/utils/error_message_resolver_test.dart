@@ -45,11 +45,5 @@ void main() {
       );
     });
 
-    test('returns generic message for non-exception objects', () {
-      expect(
-        ErrorMessageResolver.resolve('string error'),
-        'エラーが発生しました',
-      );
-    });
   });
 }

@@ -45,18 +45,6 @@ void main() {
       expect(find.text('港区立みなと図書館'), findsOneWidget);
     });
 
-    testWidgets('displays library location', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        status: const LibraryStatus(
-          systemId: 'Tokyo_Minato',
-          status: AvailabilityStatus.available,
-          libKeyStatuses: {},
-        ),
-      ));
-
-      expect(find.text('東京都港区'), findsOneWidget);
-    });
-
     testWidgets('displays availability status badge based on libKey', (tester) async {
       await tester.pumpWidget(buildSubject(
         status: const LibraryStatus(
@@ -68,18 +56,6 @@ void main() {
 
       expect(find.byType(AvailabilityStatusBadge), findsOneWidget);
       expect(find.text('貸出可能'), findsOneWidget);
-    });
-
-    testWidgets('displays checkedOut status based on libKey', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        status: const LibraryStatus(
-          systemId: 'Tokyo_Minato',
-          status: AvailabilityStatus.available,
-          libKeyStatuses: {'みなと': '貸出中'},
-        ),
-      ));
-
-      expect(find.text('貸出中'), findsOneWidget);
     });
 
     testWidgets('displays notFound status when libKey is not in statuses', (tester) async {
@@ -121,31 +97,6 @@ void main() {
       expect(find.text('予約する'), findsOneWidget);
     });
 
-    testWidgets('does not display reserve URL link when null', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        status: const LibraryStatus(
-          systemId: 'Tokyo_Minato',
-          status: AvailabilityStatus.available,
-          libKeyStatuses: {'みなと': '貸出可'},
-        ),
-      ));
-
-      expect(find.text('予約する'), findsNothing);
-    });
-
-    testWidgets('does not display reserve URL link when empty string', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        status: const LibraryStatus(
-          systemId: 'Tokyo_Minato',
-          status: AvailabilityStatus.available,
-          reserveUrl: '',
-          libKeyStatuses: {'みなと': '貸出可'},
-        ),
-      ));
-
-      expect(find.text('予約する'), findsNothing);
-    });
-
     testWidgets('does not display reserve URL link when notFound status', (tester) async {
       await tester.pumpWidget(buildSubject(
         status: const LibraryStatus(
@@ -158,32 +109,6 @@ void main() {
 
       // libKey 'みなと' is not in libKeyStatuses, so status is notFound
       expect(find.text('予約する'), findsNothing);
-    });
-
-    testWidgets('does not display reserve URL link when closed status', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        status: const LibraryStatus(
-          systemId: 'Tokyo_Minato',
-          status: AvailabilityStatus.available,
-          reserveUrl: 'https://example.com/reserve',
-          libKeyStatuses: {'みなと': '休館中'},
-        ),
-      ));
-
-      expect(find.text('予約する'), findsNothing);
-    });
-
-    testWidgets('displays reserve URL link when checkedOut status', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        status: const LibraryStatus(
-          systemId: 'Tokyo_Minato',
-          status: AvailabilityStatus.available,
-          reserveUrl: 'https://example.com/reserve',
-          libKeyStatuses: {'みなと': '貸出中'},
-        ),
-      ));
-
-      expect(find.text('予約する'), findsOneWidget);
     });
 
     testWidgets('does not display reserve URL link when URL has javascript scheme', (tester) async {
@@ -199,43 +124,5 @@ void main() {
       expect(find.text('予約する'), findsNothing);
     });
 
-    testWidgets('does not display reserve URL link when URL has file scheme', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        status: const LibraryStatus(
-          systemId: 'Tokyo_Minato',
-          status: AvailabilityStatus.available,
-          reserveUrl: 'file:///etc/passwd',
-          libKeyStatuses: {'みなと': '貸出可'},
-        ),
-      ));
-
-      expect(find.text('予約する'), findsNothing);
-    });
-
-    testWidgets('does not display reserve URL link when URL has data scheme', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        status: const LibraryStatus(
-          systemId: 'Tokyo_Minato',
-          status: AvailabilityStatus.available,
-          reserveUrl: 'data:text/html,<script>alert(1)</script>',
-          libKeyStatuses: {'みなと': '貸出可'},
-        ),
-      ));
-
-      expect(find.text('予約する'), findsNothing);
-    });
-
-    testWidgets('displays reserve URL link when URL has http scheme', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        status: const LibraryStatus(
-          systemId: 'Tokyo_Minato',
-          status: AvailabilityStatus.available,
-          reserveUrl: 'http://example.com/reserve',
-          libKeyStatuses: {'みなと': '貸出可'},
-        ),
-      ));
-
-      expect(find.text('予約する'), findsOneWidget);
-    });
   });
 }

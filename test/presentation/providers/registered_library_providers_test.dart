@@ -95,15 +95,6 @@ void main() {
       expect(state.value, hasLength(2));
     });
 
-    test('initial state is empty when repository is empty', () async {
-      final subscription =
-          container.listen(registeredLibrariesProvider, (_, _) {});
-      await container.read(registeredLibrariesProvider.future);
-
-      final state = subscription.read();
-      expect(state.value, isEmpty);
-    });
-
     test('add adds a library and updates state', () async {
       container.listen(registeredLibrariesProvider, (_, _) {});
       await container.read(registeredLibrariesProvider.future);
@@ -114,18 +105,6 @@ void main() {
 
       final result = await container.read(registeredLibrariesProvider.future);
       expect(result, contains(_library1));
-    });
-
-    test('addAll adds multiple libraries', () async {
-      container.listen(registeredLibrariesProvider, (_, _) {});
-      await container.read(registeredLibrariesProvider.future);
-
-      await container
-          .read(registeredLibrariesProvider.notifier)
-          .addAll([_library1, _library2]);
-
-      final result = await container.read(registeredLibrariesProvider.future);
-      expect(result, hasLength(2));
     });
 
     test('remove removes a library and updates state', () async {

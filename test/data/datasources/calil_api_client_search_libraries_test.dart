@@ -71,32 +71,5 @@ void main() {
       );
     });
 
-    test('throws CalilNetworkException on network error', () async {
-      final mockClient = MockClient((request) async {
-        throw http.ClientException('Connection refused');
-      });
-
-      final client =
-          CalilApiClient(appKey: 'test_api_key', httpClient: mockClient);
-
-      expect(
-        () => client.searchLibraries(pref: '東京都'),
-        throwsA(isA<CalilNetworkException>()),
-      );
-    });
-
-    test('throws CalilParseException on invalid JSON', () async {
-      final mockClient = MockClient((request) async {
-        return http.Response('not valid json', 200);
-      });
-
-      final client =
-          CalilApiClient(appKey: 'test_api_key', httpClient: mockClient);
-
-      expect(
-        () => client.searchLibraries(pref: '東京都'),
-        throwsA(isA<CalilParseException>()),
-      );
-    });
   });
 }

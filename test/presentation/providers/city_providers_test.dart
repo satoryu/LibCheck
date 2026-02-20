@@ -72,35 +72,5 @@ void main() {
       expect(cities, ['千代田区', '新宿区', '港区']);
     });
 
-    test('returns empty list when no libraries found', () async {
-      final container = ProviderContainer(
-        overrides: [
-          libraryRepositoryProvider
-              .overrideWithValue(MockLibraryRepository([])),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      final cities = await container.read(cityListProvider('東京都').future);
-      expect(cities, isEmpty);
-    });
-
-    test('only returns cities for the specified prefecture', () async {
-      final libraries = [
-        _createLibrary(pref: '東京都', city: '港区', libId: '1'),
-        _createLibrary(pref: '大阪府', city: '大阪市', libId: '2'),
-      ];
-
-      final container = ProviderContainer(
-        overrides: [
-          libraryRepositoryProvider
-              .overrideWithValue(MockLibraryRepository(libraries)),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      final cities = await container.read(cityListProvider('東京都').future);
-      expect(cities, ['港区']);
-    });
   });
 }

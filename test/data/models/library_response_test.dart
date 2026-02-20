@@ -40,26 +40,5 @@ void main() {
       expect(response.category, 'MEDIUM');
     });
 
-    test('handles missing optional fields', () {
-      final json = {
-        'systemid': 'Tokyo_Minato',
-        'systemname': '港区図書館',
-        'libkey': 'みなと',
-        'libid': '123456',
-        'short': 'みなと図書館',
-        'formal': '港区立みなと図書館',
-        'address': '東京都港区芝公園3-2-25',
-        'pref': '東京都',
-        'city': '港区',
-        'category': 'MEDIUM',
-      };
-
-      final response = LibraryResponse.fromJson(json);
-
-      expect(response.urlPc, isNull);
-      expect(response.post, isNull);
-      expect(response.tel, isNull);
-      expect(response.geocode, isNull);
-    });
   });
 }

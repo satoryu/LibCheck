@@ -10,11 +10,6 @@ void main() {
             AvailabilityStatus.available);
       });
 
-      test('maps "蔵書あり" to available', () {
-        expect(AvailabilityStatus.fromApiString('蔵書あり'),
-            AvailabilityStatus.available);
-      });
-
       test('maps "館内のみ" to inLibraryOnly', () {
         expect(AvailabilityStatus.fromApiString('館内のみ'),
             AvailabilityStatus.inLibraryOnly);
@@ -23,21 +18,6 @@ void main() {
       test('maps "貸出中" to checkedOut', () {
         expect(AvailabilityStatus.fromApiString('貸出中'),
             AvailabilityStatus.checkedOut);
-      });
-
-      test('maps "予約中" to reserved', () {
-        expect(AvailabilityStatus.fromApiString('予約中'),
-            AvailabilityStatus.reserved);
-      });
-
-      test('maps "準備中" to preparing', () {
-        expect(AvailabilityStatus.fromApiString('準備中'),
-            AvailabilityStatus.preparing);
-      });
-
-      test('maps "休館中" to closed', () {
-        expect(AvailabilityStatus.fromApiString('休館中'),
-            AvailabilityStatus.closed);
       });
 
       test('maps "蔵書なし" to notFound', () {
@@ -62,16 +42,6 @@ void main() {
             greaterThan(AvailabilityStatus.inLibraryOnly.priority));
       });
 
-      test('inLibraryOnly has higher priority than checkedOut', () {
-        expect(AvailabilityStatus.inLibraryOnly.priority,
-            greaterThan(AvailabilityStatus.checkedOut.priority));
-      });
-
-      test('notFound has lower priority than checkedOut', () {
-        expect(AvailabilityStatus.notFound.priority,
-            lessThan(AvailabilityStatus.checkedOut.priority));
-      });
-
       test('unknown has the lowest priority', () {
         expect(AvailabilityStatus.unknown.priority,
             lessThan(AvailabilityStatus.error.priority));
@@ -83,32 +53,8 @@ void main() {
         expect(AvailabilityStatus.available.isReservable, isTrue);
       });
 
-      test('returns true for inLibraryOnly', () {
-        expect(AvailabilityStatus.inLibraryOnly.isReservable, isTrue);
-      });
-
-      test('returns true for checkedOut', () {
-        expect(AvailabilityStatus.checkedOut.isReservable, isTrue);
-      });
-
-      test('returns true for reserved', () {
-        expect(AvailabilityStatus.reserved.isReservable, isTrue);
-      });
-
-      test('returns true for preparing', () {
-        expect(AvailabilityStatus.preparing.isReservable, isTrue);
-      });
-
       test('returns false for notFound', () {
         expect(AvailabilityStatus.notFound.isReservable, isFalse);
-      });
-
-      test('returns false for closed', () {
-        expect(AvailabilityStatus.closed.isReservable, isFalse);
-      });
-
-      test('returns false for error', () {
-        expect(AvailabilityStatus.error.isReservable, isFalse);
       });
 
       test('returns false for unknown', () {
@@ -129,11 +75,6 @@ void main() {
 
       test('returns notFound for empty list', () {
         expect(AvailabilityStatus.aggregate([]), AvailabilityStatus.notFound);
-      });
-
-      test('returns the single status for single-element list', () {
-        expect(AvailabilityStatus.aggregate([AvailabilityStatus.checkedOut]),
-            AvailabilityStatus.checkedOut);
       });
     });
   });

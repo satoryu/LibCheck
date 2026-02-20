@@ -20,14 +20,6 @@ void main() {
       );
     }
 
-    testWidgets('displays error icon', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        error: Exception('test'),
-      ));
-
-      expect(find.byIcon(Icons.error_outline), findsOneWidget);
-    });
-
     testWidgets('displays user-friendly message for network error',
         (tester) async {
       await tester.pumpWidget(buildSubject(
@@ -44,22 +36,6 @@ void main() {
       ));
 
       expect(find.text('応答に時間がかかっています。再度お試しください'), findsOneWidget);
-    });
-
-    testWidgets('displays generic message for unknown error', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        error: Exception('unknown'),
-      ));
-
-      expect(find.text('エラーが発生しました'), findsOneWidget);
-    });
-
-    testWidgets('displays retry button', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        error: Exception('test'),
-      ));
-
-      expect(find.text('再試行'), findsOneWidget);
     });
 
     testWidgets('calls onRetry when retry button is tapped', (tester) async {

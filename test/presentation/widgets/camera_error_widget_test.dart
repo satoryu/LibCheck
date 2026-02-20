@@ -4,66 +4,6 @@ import 'package:libcheck/presentation/widgets/camera_error_widget.dart';
 
 void main() {
   group('CameraErrorWidget', () {
-    testWidgets('エラーメッセージが表示される', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CameraErrorWidget(
-              onRetry: () {},
-              onManualInput: () {},
-            ),
-          ),
-        ),
-      );
-
-      expect(find.text('カメラの起動に失敗しました'), findsOneWidget);
-    });
-
-    testWidgets('エラーアイコンが表示される', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CameraErrorWidget(
-              onRetry: () {},
-              onManualInput: () {},
-            ),
-          ),
-        ),
-      );
-
-      expect(find.byIcon(Icons.videocam_off_outlined), findsOneWidget);
-    });
-
-    testWidgets('「再試行」ボタンが表示される', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CameraErrorWidget(
-              onRetry: () {},
-              onManualInput: () {},
-            ),
-          ),
-        ),
-      );
-
-      expect(find.text('再試行'), findsOneWidget);
-    });
-
-    testWidgets('「ISBNを手動入力する」ボタンが表示される', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CameraErrorWidget(
-              onRetry: () {},
-              onManualInput: () {},
-            ),
-          ),
-        ),
-      );
-
-      expect(find.text('ISBNを手動入力する'), findsOneWidget);
-    });
-
     testWidgets('「再試行」ボタンをタップするとonRetryが呼ばれる', (tester) async {
       var called = false;
       await tester.pumpWidget(

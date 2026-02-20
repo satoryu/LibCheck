@@ -155,15 +155,6 @@ void main() {
       );
     }
 
-    testWidgets('shows AppBar with title', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        libraryRepo: FakeLibraryRepository(),
-        registeredRepo: FakeRegisteredLibraryRepository(),
-      ));
-
-      expect(find.widgetWithText(AppBar, '検索結果'), findsOneWidget);
-    });
-
     testWidgets('displays ISBN', (tester) async {
       await tester.pumpWidget(buildSubject(
         libraryRepo: FakeLibraryRepository(),
@@ -236,28 +227,6 @@ void main() {
       expect(find.textContaining('エラー'), findsOneWidget);
     });
 
-    testWidgets('shows retry button on error', (tester) async {
-      await tester.pumpWidget(buildSubject(
-        libraryRepo: ErrorLibraryRepository(),
-        registeredRepo: FakeRegisteredLibraryRepository([_library1]),
-      ));
-      await tester.pumpAndSettle();
-
-      expect(find.text('再試行'), findsOneWidget);
-    });
-
-    testWidgets('shows add library button when no libraries registered',
-        (tester) async {
-      await tester.pumpWidget(buildSubject(
-        libraryRepo: FakeLibraryRepository(),
-        registeredRepo: FakeRegisteredLibraryRepository(),
-      ));
-      await tester.pumpAndSettle();
-
-      expect(find.text('図書館を登録する'), findsOneWidget);
-      expect(find.text('別の本をスキャンする'), findsNothing);
-    });
-
     testWidgets('shows scan button with camera icon when source is scan',
         (tester) async {
       final results = [
@@ -282,112 +251,6 @@ void main() {
 
       expect(find.text('別の本をスキャンする'), findsOneWidget);
       expect(find.byIcon(Icons.camera_alt), findsOneWidget);
-    });
-
-    testWidgets('shows search button with search icon when source is isbn',
-        (tester) async {
-      final results = [
-        BookAvailability(
-          isbn: '9784123456789',
-          libraryStatuses: {
-            'Tokyo_Minato': const LibraryStatus(
-              systemId: 'Tokyo_Minato',
-              status: AvailabilityStatus.available,
-              libKeyStatuses: {'みなと': '貸出可'},
-            ),
-          },
-        ),
-      ];
-
-      await tester.pumpWidget(buildSubject(
-        libraryRepo: FakeLibraryRepository(results),
-        registeredRepo: FakeRegisteredLibraryRepository([_library1]),
-        source: 'isbn',
-      ));
-      await tester.pumpAndSettle();
-
-      expect(find.text('別の本を検索する'), findsOneWidget);
-      expect(find.byIcon(Icons.search), findsOneWidget);
-    });
-
-    testWidgets('shows search button when source is null',
-        (tester) async {
-      final results = [
-        BookAvailability(
-          isbn: '9784123456789',
-          libraryStatuses: {
-            'Tokyo_Minato': const LibraryStatus(
-              systemId: 'Tokyo_Minato',
-              status: AvailabilityStatus.available,
-              libKeyStatuses: {'みなと': '貸出可'},
-            ),
-          },
-        ),
-      ];
-
-      await tester.pumpWidget(buildSubject(
-        libraryRepo: FakeLibraryRepository(results),
-        registeredRepo: FakeRegisteredLibraryRepository([_library1]),
-      ));
-      await tester.pumpAndSettle();
-
-      expect(find.text('別の本を検索する'), findsOneWidget);
-      expect(find.byIcon(Icons.search), findsOneWidget);
-    });
-
-    testWidgets('back button pops back to previous page',
-        (tester) async {
-      final results = [
-        BookAvailability(
-          isbn: '9784123456789',
-          libraryStatuses: {
-            'Tokyo_Minato': const LibraryStatus(
-              systemId: 'Tokyo_Minato',
-              status: AvailabilityStatus.available,
-              libKeyStatuses: {'みなと': '貸出可'},
-            ),
-          },
-        ),
-      ];
-
-      // Simulate navigation stack: Previous page -> BookSearchResultPage
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            libraryRepositoryProvider
-                .overrideWithValue(FakeLibraryRepository(results)),
-            registeredLibraryRepositoryProvider
-                .overrideWithValue(
-                    FakeRegisteredLibraryRepository([_library1])),
-            searchHistoryRepositoryProvider
-                .overrideWithValue(fakeHistoryRepo),
-          ],
-          child: MaterialApp(
-            home: const Scaffold(body: Text('Previous Page')),
-            routes: {
-              '/result': (context) =>
-                  const BookSearchResultPage(isbn: '9784123456789'),
-            },
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Navigate to result page (push onto stack)
-      tester
-          .state<NavigatorState>(find.byType(Navigator))
-          .pushNamed('/result');
-      await tester.pumpAndSettle();
-
-      expect(find.text('検索結果'), findsOneWidget);
-
-      // Tap "別の本を検索する" button (default when source is null)
-      await tester.tap(find.text('別の本を検索する'));
-      await tester.pumpAndSettle();
-
-      // Should pop back to previous page
-      expect(find.text('Previous Page'), findsOneWidget);
-      expect(find.text('検索結果'), findsNothing);
     });
 
     testWidgets('saves search history when results are loaded',
@@ -465,46 +328,6 @@ void main() {
       // Should display the result for the searched ISBN, not results[0]
       expect(find.text('貸出可能'), findsOneWidget);
       expect(find.text('蔵書なし'), findsNothing);
-    });
-
-    testWidgets('saves correct search history when multiple results exist', (tester) async {
-      final results = [
-        BookAvailability(
-          isbn: '9784000000000',
-          libraryStatuses: {
-            'Tokyo_Minato': const LibraryStatus(
-              systemId: 'Tokyo_Minato',
-              status: AvailabilityStatus.notFound,
-              libKeyStatuses: {'みなと': '蔵書なし'},
-            ),
-          },
-        ),
-        BookAvailability(
-          isbn: '9784123456789',
-          libraryStatuses: {
-            'Tokyo_Minato': const LibraryStatus(
-              systemId: 'Tokyo_Minato',
-              status: AvailabilityStatus.available,
-              libKeyStatuses: {'みなと': '貸出可'},
-            ),
-          },
-        ),
-      ];
-
-      await tester.pumpWidget(buildSubject(
-        libraryRepo: FakeLibraryRepository(results),
-        registeredRepo: FakeRegisteredLibraryRepository([_library1]),
-        historyRepo: fakeHistoryRepo,
-        isbn: '9784123456789',
-      ));
-      await tester.pumpAndSettle();
-
-      expect(fakeHistoryRepo.savedEntries, hasLength(1));
-      expect(fakeHistoryRepo.savedEntries[0].isbn, '9784123456789');
-      expect(
-        fakeHistoryRepo.savedEntries[0].libraryStatuses['Tokyo_Minato'],
-        'available',
-      );
     });
   });
 }

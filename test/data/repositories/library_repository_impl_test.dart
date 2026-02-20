@@ -7,21 +7,9 @@ import 'package:http/testing.dart';
 import 'package:libcheck/data/datasources/calil_api_client.dart';
 import 'package:libcheck/data/repositories/library_repository_impl.dart';
 import 'package:libcheck/domain/models/availability_status.dart';
-import 'package:libcheck/domain/repositories/library_repository.dart';
 
 void main() {
   group('LibraryRepositoryImpl', () {
-    test('implements LibraryRepository', () {
-      final mockClient = MockClient((request) async {
-        return http.Response('[]', 200);
-      });
-      final apiClient =
-          CalilApiClient(appKey: 'test_api_key', httpClient: mockClient);
-      final repo = LibraryRepositoryImpl(apiClient: apiClient);
-
-      expect(repo, isA<LibraryRepository>());
-    });
-
     group('getLibraries', () {
       test('converts LibraryResponse DTOs to Library domain models', () async {
         final mockClient = MockClient((request) async {

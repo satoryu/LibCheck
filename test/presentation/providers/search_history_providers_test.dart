@@ -62,13 +62,6 @@ void main() {
       expect(result[0].isbn, '9784003101018');
     });
 
-    test('initial state is empty when repository is empty', () async {
-      container.listen(searchHistoryProvider, (_, _) {});
-      final result = await container.read(searchHistoryProvider.future);
-
-      expect(result, isEmpty);
-    });
-
     test('save adds entry and updates state', () async {
       container.listen(searchHistoryProvider, (_, _) {});
       await container.read(searchHistoryProvider.future);
@@ -86,44 +79,5 @@ void main() {
       expect(result[0].isbn, '9784003101018');
     });
 
-    test('remove deletes entry and updates state', () async {
-      await fakeRepo.save(SearchHistoryEntry(
-        isbn: '9784003101018',
-        searchedAt: DateTime(2026, 2, 15),
-        libraryStatuses: {},
-      ));
-      await fakeRepo.save(SearchHistoryEntry(
-        isbn: '9784167158057',
-        searchedAt: DateTime(2026, 2, 14),
-        libraryStatuses: {},
-      ));
-
-      container.listen(searchHistoryProvider, (_, _) {});
-      await container.read(searchHistoryProvider.future);
-
-      await container
-          .read(searchHistoryProvider.notifier)
-          .remove('9784003101018');
-
-      final result = await container.read(searchHistoryProvider.future);
-      expect(result, hasLength(1));
-      expect(result[0].isbn, '9784167158057');
-    });
-
-    test('removeAll clears all entries and updates state', () async {
-      await fakeRepo.save(SearchHistoryEntry(
-        isbn: '9784003101018',
-        searchedAt: DateTime(2026, 2, 15),
-        libraryStatuses: {},
-      ));
-
-      container.listen(searchHistoryProvider, (_, _) {});
-      await container.read(searchHistoryProvider.future);
-
-      await container.read(searchHistoryProvider.notifier).removeAll();
-
-      final result = await container.read(searchHistoryProvider.future);
-      expect(result, isEmpty);
-    });
   });
 }

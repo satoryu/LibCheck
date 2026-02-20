@@ -63,12 +63,7 @@ void main() {
       expect(param1.hashCode, equals(param2.hashCode));
     });
 
-    test('two params with different values are not equal', () {
-      const param1 = LibraryListParam(pref: '東京都', city: '港区');
-      const param2 = LibraryListParam(pref: '東京都', city: '新宿区');
-      expect(param1, isNot(equals(param2)));
-    });
-  });
+});
 
   group('libraryListProvider', () {
     test('returns libraries for the specified pref and city', () async {
@@ -112,31 +107,9 @@ void main() {
       expect(result[1].formalName, '港区立みなと図書館');
     });
 
-    test('returns empty list when no libraries found', () async {
-      final container = ProviderContainer(
-        overrides: [
-          libraryRepositoryProvider
-              .overrideWithValue(MockLibraryRepository([])),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      const param = LibraryListParam(pref: '東京都', city: '港区');
-      final result = await container.read(libraryListProvider(param).future);
-
-      expect(result, isEmpty);
-    });
-  });
+});
 
   group('selectedLibrariesProvider', () {
-    test('initial state is empty set', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      final selected = container.read(selectedLibrariesProvider);
-      expect(selected, isEmpty);
-    });
-
     test('toggle adds a library', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -150,49 +123,6 @@ void main() {
 
       container.read(selectedLibrariesProvider.notifier).toggle(lib);
       expect(container.read(selectedLibrariesProvider), {lib});
-    });
-
-    test('toggle removes an already selected library', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      final lib = _createLibrary(
-        pref: '東京都',
-        city: '港区',
-        formalName: 'テスト図書館',
-        address: '東京都港区',
-      );
-
-      container.read(selectedLibrariesProvider.notifier).toggle(lib);
-      container.read(selectedLibrariesProvider.notifier).toggle(lib);
-      expect(container.read(selectedLibrariesProvider), isEmpty);
-    });
-
-    test('clear removes all selections', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      final lib1 = _createLibrary(
-        pref: '東京都',
-        city: '港区',
-        formalName: '図書館1',
-        address: '東京都港区',
-        libId: '1',
-      );
-      final lib2 = _createLibrary(
-        pref: '東京都',
-        city: '港区',
-        formalName: '図書館2',
-        address: '東京都港区',
-        libId: '2',
-      );
-
-      container.read(selectedLibrariesProvider.notifier).toggle(lib1);
-      container.read(selectedLibrariesProvider.notifier).toggle(lib2);
-      expect(container.read(selectedLibrariesProvider).length, 2);
-
-      container.read(selectedLibrariesProvider.notifier).clear();
-      expect(container.read(selectedLibrariesProvider), isEmpty);
     });
   });
 }

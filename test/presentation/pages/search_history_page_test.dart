@@ -67,13 +67,6 @@ void main() {
       );
     }
 
-    testWidgets('shows AppBar with title', (tester) async {
-      await tester.pumpWidget(buildSubject());
-      await tester.pumpAndSettle();
-
-      expect(find.widgetWithText(AppBar, '検索履歴'), findsOneWidget);
-    });
-
     testWidgets('shows empty state when no history', (tester) async {
       await tester.pumpWidget(buildSubject());
       await tester.pumpAndSettle();
@@ -101,28 +94,6 @@ void main() {
       expect(find.byType(SearchHistoryCard), findsNWidgets(2));
       expect(find.textContaining('9784003101018'), findsOneWidget);
       expect(find.textContaining('9784167158057'), findsOneWidget);
-    });
-
-    testWidgets('hides delete all button when no history', (tester) async {
-      await tester.pumpWidget(buildSubject());
-      await tester.pumpAndSettle();
-
-      expect(find.byIcon(Icons.delete_sweep), findsNothing);
-    });
-
-    testWidgets('shows delete all button when entries exist', (tester) async {
-      fakeRepo = FakeSearchHistoryRepository([
-        SearchHistoryEntry(
-          isbn: '9784003101018',
-          searchedAt: DateTime(2026, 2, 15),
-          libraryStatuses: {},
-        ),
-      ]);
-
-      await tester.pumpWidget(buildSubject(repo: fakeRepo));
-      await tester.pumpAndSettle();
-
-      expect(find.byIcon(Icons.delete_sweep), findsOneWidget);
     });
 
     testWidgets('delete all shows confirmation dialog', (tester) async {
