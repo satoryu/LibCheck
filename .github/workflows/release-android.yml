@@ -56,8 +56,11 @@ jobs:
       - run: flutter pub get
 
       - name: Build AAB
+        env:
+          CALIL_APP_KEY: ${{ secrets.CALIL_APP_KEY }}
         run: |
           flutter build appbundle --release \
+            --dart-define=CALIL_APP_KEY=$CALIL_APP_KEY \
             --build-name=${{ steps.version.outputs.name }} \
             --build-number=${{ github.run_number }}
 
