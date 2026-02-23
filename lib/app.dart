@@ -17,6 +17,7 @@ class LibCheckApp extends ConsumerWidget {
           seedColor: const Color(0xFF00796B),
         ),
         useMaterial3: true,
+        fontFamily: 'BIZUDGothic',
       ),
       routerConfig: router,
     );
