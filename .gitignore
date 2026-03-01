@@ -48,3 +48,6 @@ app.*.map.json
 *.jks
 *.keystore
 key.properties
+
+# Claude Code local settings
+.claude/

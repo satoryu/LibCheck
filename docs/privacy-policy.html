@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>プライバシーポリシー - LibCheck</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 24px 16px;
+      color: #333;
+      line-height: 1.8;
+    }
+    h1 {
+      font-size: 1.6rem;
+      border-bottom: 2px solid #4a90d9;
+      padding-bottom: 8px;
+      color: #1a1a2e;
+    }
+    h2 {
+      font-size: 1.2rem;
+      margin-top: 2rem;
+      color: #1a1a2e;
+    }
+    p, li {
+      font-size: 0.95rem;
+    }
+    ul {
+      padding-left: 1.4em;
+    }
+    .last-updated {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 2rem;
+    }
+    .contact {
+      background: #f5f8fc;
+      border-left: 4px solid #4a90d9;
+      padding: 12px 16px;
+      border-radius: 0 4px 4px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>プライバシーポリシー</h1>
+  <p class="last-updated">最終更新日: 2026年3月1日</p>
+
+  <p>
+    satoryu（以下「開発者」）は、Androidアプリケーション「LibCheck」（以下「本アプリ」）における
+    ユーザーの個人情報の取り扱いについて、以下のとおりプライバシーポリシー（以下「本ポリシー」）を定めます。
+  </p>
+
+  <h2>1. 本アプリについて</h2>
+  <p>
+    LibCheckは、書籍のISBNバーコードをスキャンまたは手動入力することで、
+    ユーザーが登録した図書館における蔵書の貸出状況を確認できるアプリです。
+    図書館情報の検索には、カーリル株式会社が提供する
+    <a href="https://calil.jp/doc/api_ref.html">カーリル図書館API</a>を利用しています。
+  </p>
+
+  <h2>2. 取得する情報</h2>
+  <p>本アプリが取得・利用する情報は以下のとおりです。</p>
+
+  <h3>2-1. カメラ</h3>
+  <p>
+    書籍のISBNバーコードをスキャンするため、カメラの使用許可を求めます。
+    カメラで撮影した映像はバーコード認識にのみ使用され、画像や動画として保存・送信されることはありません。
+  </p>
+
+  <h3>2-2. 端末内に保存するデータ</h3>
+  <p>以下のデータは、ユーザーの端末内にのみ保存されます。外部サーバーへの送信は行いません。</p>
+  <ul>
+    <li><strong>登録図書館リスト</strong>: ユーザーが登録した図書館の名称・システムIDなど</li>
+    <li><strong>検索履歴</strong>: 検索したISBN・書籍名・検索日時（最大100件）</li>
+  </ul>
+
+  <h3>2-3. カーリル図書館APIへの送信データ</h3>
+  <p>
+    蔵書確認・図書館検索の際、以下の情報をカーリル図書館APIに送信します。
+    個人を特定できる情報は一切含まれません。
+  </p>
+  <ul>
+    <li>書籍のISBN（蔵書確認時）</li>
+    <li>図書館のシステムID（蔵書確認時）</li>
+    <li>都道府県名・市区町村名（図書館検索時）</li>
+    <li>APIキー（開発者がカーリルから取得したもの）</li>
+  </ul>
+  <p>
+    カーリル図書館APIにおける情報の取り扱いについては、
+    <a href="https://calil.jp/doc/api_terms.html">カーリルの利用規約</a>をご参照ください。
+  </p>
+
+  <h2>3. 情報の利用目的</h2>
+  <p>取得した情報は、以下の目的のみに使用します。</p>
+  <ul>
+    <li>図書館の蔵書・貸出状況の検索・表示</li>
+    <li>登録図書館の管理・表示</li>
+    <li>検索履歴の保存・表示</li>
+    <li>アプリの動作改善</li>
+  </ul>
+
+  <h2>4. 情報の第三者提供</h2>
+  <p>
+    開発者は、以下の場合を除き、ユーザーの情報を第三者に提供しません。
+  </p>
+  <ul>
+    <li>法令に基づく場合</li>
+    <li>人の生命・身体・財産の保護のため、本人の同意を得ることが困難な場合</li>
+  </ul>
+  <p>
+    なお、カーリル図書館APIへのデータ送信は、本アプリの機能提供に必要な範囲内での利用であり、
+    上記2-3に記載のとおり個人情報は含まれません。
+  </p>
+
+  <h2>5. データの保管と削除</h2>
+  <p>
+    登録図書館リストおよび検索履歴は、ユーザーの端末内にのみ保存されます。
+    アプリ内の操作（検索履歴の削除・図書館の登録解除）またはアプリのアンインストールにより、
+    これらのデータは完全に削除されます。
+  </p>
+
+  <h2>6. 広告・アナリティクス</h2>
+  <p>
+    本アプリは広告を表示せず、Google Analytics等のアナリティクスSDKを使用していません。
+  </p>
+
+  <h2>7. 未成年者のプライバシー</h2>
+  <p>
+    本アプリは13歳未満のお子様を対象としておらず、13歳未満の方から意図的に個人情報を収集することはありません。
+  </p>
+
+  <h2>8. 本ポリシーの変更</h2>
+  <p>
+    開発者は、必要に応じて本ポリシーを変更することがあります。
+    変更後のポリシーは、本ページに掲載した時点から効力を生じるものとします。
+    重要な変更を行う場合は、アプリのアップデートノートでお知らせします。
+  </p>
+
+  <h2>9. お問い合わせ</h2>
+  <div class="contact">
+    <p>
+      本ポリシーに関するご質問・ご意見は、下記のGitHubリポジトリのIssueよりお問い合わせください。
+    </p>
+    <p>
+      <strong>GitHub</strong>:
+      <a href="https://github.com/satoryu/LibCheck/issues">https://github.com/satoryu/LibCheck/issues</a>
+    </p>
+  </div>
+
+</body>
+</html>
