@@ -20,7 +20,6 @@ class LibCheckApp extends ConsumerWidget {
         fontFamily: 'BIZUDGothic',
       ),
       routerConfig: router,
-      debugShowCheckedModeBanner: false,
     );
   }
 }
