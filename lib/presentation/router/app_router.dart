@@ -22,6 +22,7 @@ class _RouterNotifier extends ChangeNotifier {
 
 final routerProvider = Provider<GoRouter>((ref) {
   final notifier = _RouterNotifier(ref);
+  ref.onDispose(notifier.dispose);
   return GoRouter(
     initialLocation: '/',
     refreshListenable: notifier,

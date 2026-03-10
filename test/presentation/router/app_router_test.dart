@@ -40,19 +40,6 @@ class FakeSearchHistoryRepository implements SearchHistoryRepository {
   Future<void> removeAll() async {}
 }
 
-class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
-  @override
-  Future<List<Library>> getAll() async => [];
-  @override
-  Future<void> saveAll(List<Library> libraries) async {}
-  @override
-  Future<List<Library>> add(Library library) async => [];
-  @override
-  Future<List<Library>> addAll(List<Library> libraries) async => [];
-  @override
-  Future<List<Library>> remove(Library library) async => [];
-}
-
 final _fakeLibrary = Library(
   systemId: 'Tokyo_Pref',
   systemName: '東京都立図書館',
@@ -66,18 +53,22 @@ final _fakeLibrary = Library(
   category: '都道府県立',
 );
 
-class FakeRegisteredLibraryRepositoryWithData
-    implements RegisteredLibraryRepository {
+class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
+  FakeRegisteredLibraryRepository([List<Library>? libraries])
+      : _libraries = libraries ?? const [];
+
+  final List<Library> _libraries;
+
   @override
-  Future<List<Library>> getAll() async => [_fakeLibrary];
+  Future<List<Library>> getAll() async => _libraries;
   @override
   Future<void> saveAll(List<Library> libraries) async {}
   @override
-  Future<List<Library>> add(Library library) async => [_fakeLibrary];
+  Future<List<Library>> add(Library library) async => _libraries;
   @override
-  Future<List<Library>> addAll(List<Library> libraries) async => [_fakeLibrary];
+  Future<List<Library>> addAll(List<Library> libraries) async => _libraries;
   @override
-  Future<List<Library>> remove(Library library) async => [];
+  Future<List<Library>> remove(Library library) async => _libraries;
 }
 
 void main() {
@@ -88,7 +79,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           registeredLibraryRepositoryProvider.overrideWithValue(
-            FakeRegisteredLibraryRepositoryWithData(),
+            FakeRegisteredLibraryRepository([_fakeLibrary]),
           ),
         ],
       );
@@ -138,14 +129,17 @@ void main() {
 
       expect(find.widgetWithText(AppBar, '登録図書館'), findsOneWidget);
       expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.text('図書館が登録されていません'), findsOneWidget);
+      expect(find.text('図書館を登録する'), findsOneWidget);
     });
 
     testWidgets('tapping library tab navigates to library management page',
         (tester) async {
       final container = ProviderContainer(
         overrides: [
-          registeredLibraryRepositoryProvider
-              .overrideWithValue(FakeRegisteredLibraryRepository()),
+          registeredLibraryRepositoryProvider.overrideWithValue(
+            FakeRegisteredLibraryRepository([_fakeLibrary]),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -172,8 +166,9 @@ void main() {
         (tester) async {
       final container = ProviderContainer(
         overrides: [
-          registeredLibraryRepositoryProvider
-              .overrideWithValue(FakeRegisteredLibraryRepository()),
+          registeredLibraryRepositoryProvider.overrideWithValue(
+            FakeRegisteredLibraryRepository([_fakeLibrary]),
+          ),
           searchHistoryRepositoryProvider
               .overrideWithValue(FakeSearchHistoryRepository()),
         ],
@@ -202,8 +197,9 @@ void main() {
         (tester) async {
       final container = ProviderContainer(
         overrides: [
-          registeredLibraryRepositoryProvider
-              .overrideWithValue(FakeRegisteredLibraryRepository()),
+          registeredLibraryRepositoryProvider.overrideWithValue(
+            FakeRegisteredLibraryRepository([_fakeLibrary]),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -230,8 +226,9 @@ void main() {
         (tester) async {
       final container = ProviderContainer(
         overrides: [
-          registeredLibraryRepositoryProvider
-              .overrideWithValue(FakeRegisteredLibraryRepository()),
+          registeredLibraryRepositoryProvider.overrideWithValue(
+            FakeRegisteredLibraryRepository([_fakeLibrary]),
+          ),
           libraryRepositoryProvider
               .overrideWithValue(FakeLibraryRepository()),
           searchHistoryRepositoryProvider
