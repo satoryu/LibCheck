@@ -10,8 +10,11 @@ class LibCheckApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
 
+    const isScreenshotMode = bool.fromEnvironment('SCREENSHOT_MODE');
+
     return MaterialApp.router(
       title: 'LibCheck',
+      debugShowCheckedModeBanner: !isScreenshotMode,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF00796B),
