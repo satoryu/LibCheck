@@ -11,7 +11,7 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    testWidgets('displays HomePage as home', (tester) async {
+    testWidgets('図書館未登録時は登録図書館画面を表示する', (tester) async {
       final prefs = await SharedPreferences.getInstance();
       await tester.pumpWidget(
         ProviderScope(
@@ -23,7 +23,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('LibCheck'), findsOneWidget);
+      expect(find.text('登録図書館'), findsOneWidget);
     });
   });
 }
