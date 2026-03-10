@@ -78,6 +78,17 @@ In review phase, you must focus on the following aspects:
 - Security
 - Maintainability
 
+When issues are found during code review, do not dismiss them solely because they fall below a scoring threshold. Any issue flagged with high confidence (e.g. resource leaks, unclear test intent, code duplication, insufficient assertions) must be evaluated and fixed before merging.
+
+## On-Device Testing
+
+When the Test Plan includes on-device verification items, you must perform the verification yourself using an emulator or simulator. Do not leave on-device testing to the user unless the device environment is unavailable. Steps:
+
+1. Launch an emulator (`flutter emulators --launch <id>`)
+2. Build and install the app (`flutter build apk --debug` then install, or `flutter run`)
+3. Verify each on-device acceptance criterion manually using the mobile MCP tools
+4. Check off the verified items in the PR Test Plan
+
 ## Merging
 
-Do not merge a PR if there are unchecked items in its Test Plan. For items that cannot be verified by automated tests (e.g. on-device testing), ask the user to confirm and get their approval before merging.
+Do not merge a PR if there are unchecked items in its Test Plan. For items that cannot be verified by automated tests (e.g. on-device testing), perform the verification yourself first. Only ask the user for approval if the device environment is genuinely unavailable.
