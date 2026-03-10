@@ -53,14 +53,43 @@ class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
   Future<List<Library>> remove(Library library) async => [];
 }
 
+final _fakeLibrary = Library(
+  systemId: 'Tokyo_Pref',
+  systemName: '東京都立図書館',
+  libKey: 'Tokyo_Pref',
+  libId: '1',
+  shortName: '東京都立図書館',
+  formalName: '東京都立中央図書館',
+  address: '東京都港区南麻布9-26-1',
+  pref: '東京都',
+  city: '港区',
+  category: '都道府県立',
+);
+
+class FakeRegisteredLibraryRepositoryWithData
+    implements RegisteredLibraryRepository {
+  @override
+  Future<List<Library>> getAll() async => [_fakeLibrary];
+  @override
+  Future<void> saveAll(List<Library> libraries) async {}
+  @override
+  Future<List<Library>> add(Library library) async => [_fakeLibrary];
+  @override
+  Future<List<Library>> addAll(List<Library> libraries) async => [_fakeLibrary];
+  @override
+  Future<List<Library>> remove(Library library) async => [];
+}
+
 void main() {
   group('AppRouter', () {
-    testWidgets('navigates to home page at / with BottomNavigationBar',
+    testWidgets(
+        '図書館登録済みの場合は/でホーム画面を表示する',
         (tester) async {
       final container = ProviderContainer(
         overrides: [
-          registeredLibraryRepositoryProvider
-              .overrideWithValue(FakeRegisteredLibraryRepository()),
+          registeredLibraryRepositoryProvider.overrideWithValue(
+            FakeRegisteredLibraryRepositoryWithData(),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -82,6 +111,33 @@ void main() {
       expect(find.text('ホーム'), findsOneWidget);
       expect(find.text('図書館'), findsOneWidget);
       expect(find.text('履歴'), findsOneWidget);
+    });
+
+    testWidgets(
+        '図書館未登録の場合は/にアクセスすると/libraryへリダイレクトされる',
+        (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          registeredLibraryRepositoryProvider
+              .overrideWithValue(FakeRegisteredLibraryRepository()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(AppBar, '登録図書館'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsOneWidget);
     });
 
     testWidgets('tapping library tab navigates to library management page',

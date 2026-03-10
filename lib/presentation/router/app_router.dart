@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,10 +12,27 @@ import 'package:libcheck/presentation/pages/prefecture_selection_page.dart';
 import 'package:libcheck/presentation/pages/city_selection_page.dart';
 import 'package:libcheck/presentation/pages/isbn_input_page.dart';
 import 'package:libcheck/presentation/pages/library_list_page.dart';
+import 'package:libcheck/presentation/providers/registered_library_providers.dart';
+
+class _RouterNotifier extends ChangeNotifier {
+  _RouterNotifier(Ref ref) {
+    ref.listen(registeredLibrariesProvider, (_, __) => notifyListeners());
+  }
+}
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final notifier = _RouterNotifier(ref);
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: notifier,
+    redirect: (context, state) {
+      final libraries = ref.read(registeredLibrariesProvider);
+      return libraries.maybeWhen(
+        data: (libs) =>
+            (libs.isEmpty && state.matchedLocation == '/') ? '/library' : null,
+        orElse: () => null,
+      );
+    },
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
