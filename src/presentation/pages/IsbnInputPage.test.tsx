@@ -27,7 +27,7 @@ describe('IsbnInputPage', () => {
   it('有効なISBN-13入力時に「有効なISBNです」と表示される', async () => {
     const { user } = renderRouteWithProviders('/isbn-input');
 
-    const input = await screen.findByRole('spinbutton');
+    const input = await screen.findByRole('textbox');
     await user.type(input, '9784873117584');
 
     expect(await screen.findByText('有効なISBNです')).toBeInTheDocument();
@@ -36,7 +36,7 @@ describe('IsbnInputPage', () => {
   it('有効なISBN-13入力時に検索ボタンが有効になる', async () => {
     const { user } = renderRouteWithProviders('/isbn-input');
 
-    const input = await screen.findByRole('spinbutton');
+    const input = await screen.findByRole('textbox');
     await user.type(input, '9784873117584');
 
     expect(
@@ -47,7 +47,7 @@ describe('IsbnInputPage', () => {
   it('無効なISBN入力時にエラーメッセージが表示される', async () => {
     const { user } = renderRouteWithProviders('/isbn-input');
 
-    const input = await screen.findByRole('spinbutton');
+    const input = await screen.findByRole('textbox');
     await user.type(input, '9784873117585');
 
     expect(
@@ -58,7 +58,7 @@ describe('IsbnInputPage', () => {
   it('有効なISBN入力後に検索ボタンで/result/:isbnへ遷移する', async () => {
     const { user } = renderRouteWithProviders('/isbn-input');
 
-    const input = await screen.findByRole('spinbutton');
+    const input = await screen.findByRole('textbox');
     await user.type(input, '9784873117584');
 
     await user.click(await screen.findByRole('button', { name: '検索する' }));
@@ -78,7 +78,7 @@ describe('IsbnInputPage', () => {
   it('ハイフン付きISBN入力後の遷移でハイフンが除去される', async () => {
     const { user } = renderRouteWithProviders('/isbn-input');
 
-    const input = await screen.findByRole('spinbutton');
+    const input = await screen.findByRole('textbox');
     await user.type(input, '978-4-87311-758-4');
 
     await user.click(await screen.findByRole('button', { name: '検索する' }));

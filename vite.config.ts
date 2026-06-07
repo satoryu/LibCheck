@@ -35,8 +35,18 @@ export default defineConfig(({ mode }) => {
     // Vitest configuration (read at runtime by vitest; not part of vite's UserConfig type).
     test: {
       globals: true,
-      environment: "jsdom",
+      // Custom env = jsdom + native AbortController restored (see custom-env.ts);
+      // required because Node 25's undici Request rejects jsdom's AbortSignal.
+      environment: "./src/test/custom-env.ts",
       setupFiles: "./src/test/setup.ts",
+      poolOptions: {
+        // Node 25 ships a native (but non-functional without --localstorage-file)
+        // `localStorage`, which shadows jsdom's Storage and breaks tests. Disable
+        // it so vitest installs jsdom's working Storage instead.
+        forks: {
+          execArgv: ["--no-experimental-webstorage"],
+        },
+      },
     },
   };
 });

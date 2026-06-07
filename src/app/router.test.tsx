@@ -166,11 +166,11 @@ describe('AppRouter', () => {
   it('navigates to search result page at /result/:isbn', async () => {
     renderRouterAt('/result/9784123456789', depsWithRegistered([fakeLibrary]));
 
-    await waitFor(() => {
-      expect(screen.getByText('検索結果')).toBeInTheDocument();
-    });
+    await screen.findByText('検索結果');
+    // The ISBN line renders only after the registered-libraries query resolves,
+    // so wait for it rather than asserting synchronously.
     expect(
-      screen.getByText((content) => content.includes('9784123456789')),
+      await screen.findByText((content) => content.includes('9784123456789')),
     ).toBeInTheDocument();
   });
 });

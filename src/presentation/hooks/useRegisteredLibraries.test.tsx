@@ -75,7 +75,11 @@ const library2: Library = {
 
 function createWrapper(deps: AppDependencies) {
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
+    // `notifyOnChangeProps: "all"` bypasses React Query v5's tracked-props
+    // optimisation. Without it, a setQueryData update after a mutation does not
+    // re-render here because only `isSuccess` was accessed before the mutation,
+    // so `data` changes go unnotified and waitFor times out.
+    defaultOptions: { queries: { retry: false, notifyOnChangeProps: "all" } },
   });
   return function Wrapper({ children }: { children: React.ReactNode }) {
     return (
