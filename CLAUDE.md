@@ -2,8 +2,9 @@
 
 ## Tech Stacks
 
-- Flutter / Dart
+- React 18 / TypeScript / Vite
 - [カーリル 図書館API](https://calil.jp/doc/api_ref.html)
+- Azure Static Web Apps（静的配信 + Azure Functions による API プロキシ）
 
 ## Workflow
 
@@ -50,12 +51,18 @@ You must complete each task in order and check them off as you complete them.
 You must follow TDD (Test-Driven Development) principles when implementing the tasks.
 This means you must write todos to complete the task first, then write a test that fails, and finally implement the code to make the test pass. Then refactor the code if necessary.
 
+The codebase follows a Clean Architecture layout under `src/` (`domain` / `data` / `presentation`).
+Keep dependencies pointing inward: `presentation` and `data` may depend on `domain`, but `domain` must not depend on the outer layers.
+
 ## Testing
 
-Tests are written using `flutter_test`. You can run the tests using the following command:
+Tests are written with [Vitest](https://vitest.dev/) and [Testing Library](https://testing-library.com/). You can run them using the following commands:
 
 ```bash
-flutter test
+npm test          # run the whole suite once
+npm run test:watch # watch mode
+
+npx tsc -b        # type-check (also runs as part of `npm run build`)
 ```
 
 ## Branching Strategy
@@ -80,15 +87,15 @@ In review phase, you must focus on the following aspects:
 
 When issues are found during code review, do not dismiss them solely because they fall below a scoring threshold. Any issue flagged with high confidence (e.g. resource leaks, unclear test intent, code duplication, insufficient assertions) must be evaluated and fixed before merging.
 
-## On-Device Testing
+## In-Browser Testing
 
-When the Test Plan includes on-device verification items, you must perform the verification yourself using an emulator or simulator. Do not leave on-device testing to the user unless the device environment is unavailable. Steps:
+When the Test Plan includes manual verification items (UI behavior, camera/barcode scanning, navigation), you must perform the verification yourself in a browser. Do not leave it to the user unless the browser environment is genuinely unavailable. Steps:
 
-1. Launch an emulator (`flutter emulators --launch <id>`)
-2. Build and install the app (`flutter build apk --debug` then install, or `flutter run`)
-3. Verify each on-device acceptance criterion manually using the mobile MCP tools
-4. Check off the verified items in the PR Test Plan
+1. Start the dev server (`npm run dev`, default `http://localhost:5173`), or emulate the production setup with `npm run swa:start`.
+2. Open the app in a browser and verify each acceptance criterion manually (use the webapp-testing / Playwright tools when available).
+3. For camera/barcode features, verify graceful handling when camera access is denied or unavailable.
+4. Check off the verified items in the PR Test Plan.
 
 ## Merging
 
-Do not merge a PR if there are unchecked items in its Test Plan. For items that cannot be verified by automated tests (e.g. on-device testing), perform the verification yourself first. Only ask the user for approval if the device environment is genuinely unavailable.
+Do not merge a PR if there are unchecked items in its Test Plan. For items that cannot be verified by automated tests (e.g. in-browser verification), perform the verification yourself first. Only ask the user for approval if the environment is genuinely unavailable.

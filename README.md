@@ -1,76 +1,103 @@
 # LibCheck
 
-カメラでISBNのバーコードを撮影し、普段利用している図書館に蔵書があるかどうかを確認するモバイルアプリケーション。
+カメラでISBNのバーコードを撮影し、普段利用している図書館に蔵書があるかどうかを確認するWebアプリケーション。
 
-## 対応OS
+## 対応環境
 
-Android
+カメラを利用できるモダンブラウザ（スマートフォン・PC）。HTTPS もしくは `localhost` 上で動作します。
 
 ## 技術スタック
 
-- Flutter 3.x（Dart 3.x）
+- React 18 / TypeScript / [Vite](https://vitejs.dev/)
 - [カーリル 図書館API](https://calil.jp/doc/api_ref.html)
-- Riverpod（状態管理）
-- GoRouter（画面遷移）
-- SharedPreferences（ローカルストレージ）
-- mobile_scanner（バーコード読み取り）
+- [MUI](https://mui.com/)（UI コンポーネント / `@emotion`）
+- [TanStack Query](https://tanstack.com/query)（サーバ状態・非同期データ管理）
+- [React Router](https://reactrouter.com/)（画面遷移）
+- `localStorage`（ローカルストレージ）
+- [@zxing/browser](https://github.com/zxing-js/browser)（バーコード読み取り）
+- [notistack](https://notistack.com/)（スナックバー通知）
+- [Azure Static Web Apps](https://learn.microsoft.com/azure/static-web-apps/) + Azure Functions（API プロキシ）
 
 ## プロジェクト構成
 
 Clean Architecture に基づく3層構成。
 
 ```
-lib/
-├── main.dart                 # エントリーポイント
-├── app.dart                  # MaterialApp 定義
-├── domain/                   # ドメイン層
-│   ├── models/               # ドメインモデル
-│   ├── repositories/         # リポジトリインターフェース
-│   ├── data/                 # ドメインデータ（都道府県等）
-│   └── utils/                # ISBN バリデーション等
-├── data/                     # データ層
-│   ├── datasources/          # API クライアント
-│   ├── repositories/         # リポジトリ実装
-│   ├── models/               # レスポンスモデル
-│   ├── providers/            # データ層プロバイダ
-│   └── exceptions/           # カスタム例外
-└── presentation/             # プレゼンテーション層
-    ├── pages/                # 画面
-    ├── widgets/              # 共通ウィジェット
-    ├── providers/            # UI 状態プロバイダ
-    ├── router/               # GoRouter 設定
-    └── utils/                # エラーメッセージ解決等
+.
+├── index.html                  # エントリーHTML
+├── src/
+│   ├── main.tsx                # エントリーポイント
+│   ├── App.tsx                 # アプリケーションルート
+│   ├── app/                    # ルーター・DI（dependencies）
+│   ├── domain/                 # ドメイン層
+│   │   ├── models/             # ドメインモデル
+│   │   ├── repositories/       # リポジトリインターフェース
+│   │   ├── data/               # ドメインデータ（都道府県等）
+│   │   └── utils/              # ISBN バリデーション等
+│   ├── data/                   # データ層
+│   │   ├── datasources/        # API クライアント
+│   │   ├── repositories/       # リポジトリ実装
+│   │   ├── models/             # レスポンスモデル
+│   │   ├── providers/          # データ層プロバイダ
+│   │   └── exceptions/         # カスタム例外
+│   └── presentation/           # プレゼンテーション層
+│       ├── pages/              # 画面
+│       ├── widgets/            # 共通ウィジェット
+│       ├── hooks/              # UI 状態フック
+│       ├── theme/              # テーマ・配色
+│       └── utils/              # エラーメッセージ解決等
+├── public/
+│   └── staticwebapp.config.json # SWA ルーティング設定
+└── api/                        # Azure Functions（/api/calil プロキシ）
 ```
+
+カーリル API の `appkey` は **サーバ側でのみ** 注入され、クライアントのバンドルには含まれません。
+詳細は [`DEPLOY.md`](./DEPLOY.md) を参照してください。
 
 ## セットアップ
 
 ```bash
 # 依存パッケージのインストール
-flutter pub get
+npm install
 ```
+
+## 開発サーバ
+
+```bash
+cp .env.local.example .env.local   # CALIL_APP_KEY=... を記入
+npm run dev                        # http://localhost:5173
+```
+
+本番と同一構成（静的配信 + Functions API）で確認したい場合は `npm run swa:start` を利用します。
+手順の詳細は [`DEPLOY.md`](./DEPLOY.md) を参照してください。
 
 ## テスト
 
 ```bash
-# ユニットテスト・ウィジェットテスト
-flutter test
+# ユニットテスト・コンポーネントテスト（Vitest + Testing Library）
+npm test
 
-# E2E テスト（実機またはエミュレータが必要）
-flutter test integration_test/app_test.dart
+# ウォッチモード
+npm run test:watch
 
-# 静的解析
-flutter analyze
+# 型チェック
+npx tsc -b
 ```
 
 ## ビルド
 
 ```bash
-# Android APK
-flutter build apk
+# 型チェック + プロダクションビルド（出力先: dist/）
+npm run build
 
-# Android App Bundle
-flutter build appbundle
+# ビルド成果物のプレビュー
+npm run preview
 ```
+
+## デプロイ
+
+`main` への push / PR で `.github/workflows/azure-static-web-apps.yml` が Azure Static Web Apps へ自動デプロイします。
+リソース作成・シークレット登録・手動デプロイの手順は [`DEPLOY.md`](./DEPLOY.md) を参照してください。
 
 ## コントリビューション
 
@@ -86,16 +113,16 @@ GitHub Flow を採用。
 1. GitHub Issue を作成、または既存の Issue を確認する
 2. `main` から `feature/[ISSUE番号]-[短い説明]` ブランチを作成する
 3. 実装する（テストも忘れずに）
-4. `flutter test` と `flutter analyze` が通ることを確認する
+4. `npm test` と `npx tsc -b` が通ることを確認する
 5. PR を作成し、コードレビューを受ける
 6. CI と Test Plan の全項目が完了したらマージする
 
 ### コーディング規約
 
-- **アーキテクチャ**: Clean Architecture（domain / data / presentation の3層）
-- **状態管理**: Riverpod の `AsyncNotifier` パターン
-- **テスト**: TDD を原則とする。`flutter_test` でユニットテスト・ウィジェットテストを作成
-- **静的解析**: `flutter analyze` で警告が出ない状態を維持する
+- **アーキテクチャ**: Clean Architecture（domain / data / presentation の3層）。依存の向きは内側（domain）へ
+- **状態管理**: TanStack Query によるサーバ状態管理 + カスタムフック
+- **テスト**: TDD を原則とする。Vitest + Testing Library でユニットテスト・コンポーネントテストを作成
+- **型チェック**: `npx tsc -b` でエラーが出ない状態を維持する
 
 ### コードレビューの観点
 
@@ -107,13 +134,6 @@ GitHub Flow を採用。
 
 ### PR のマージ条件
 
-- CI（`flutter analyze` + `flutter test`）が通っていること
+- CI（型チェック + `npm test`）が通っていること
 - Test Plan の全項目がチェック済みであること
-- 実機確認が必要な項目はメンテナーの承認を得ること
-
-## CI
-
-GitHub Actions で PR 作成時・main ブランチへの push 時に以下を自動実行:
-
-- `flutter analyze`
-- `flutter test`
+- ブラウザでの手動確認が必要な項目はメンテナーの承認を得ること
