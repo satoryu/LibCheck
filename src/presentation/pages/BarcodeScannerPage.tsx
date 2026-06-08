@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { enqueueSnackbar } from 'notistack';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import type { IScannerControls } from '@zxing/browser';
+import { BarcodeFormat, DecodeHintType } from '@zxing/library';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -12,7 +14,7 @@ import FlashOnIcon from '@mui/icons-material/FlashOn';
 import FlashOffIcon from '@mui/icons-material/FlashOff';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 
-import { isbnValidator } from '@/domain/utils/isbnValidator';
+import { interpretScannedBarcode } from '@/presentation/utils/scanInterpreter';
 import { CameraErrorWidget } from '@/presentation/widgets/CameraErrorWidget';
 import { CameraPermissionErrorWidget } from '@/presentation/widgets/CameraPermissionErrorWidget';
 import { ScanOverlayWidget } from '@/presentation/widgets/ScanOverlayWidget';
@@ -31,6 +33,8 @@ export function BarcodeScannerPage(): JSX.Element {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   const isProcessingRef = useRef(false);
+  // ISBN以外のバーコード（価格コード等）を読んだ際の通知をスロットルするための時刻。
+  const lastNonIsbnNoticeRef = useRef(0);
 
   const [errorType, setErrorType] = useState<CameraErrorType | null>(null);
   const [isFlashOn, setIsFlashOn] = useState(false);
@@ -57,12 +61,25 @@ export function BarcodeScannerPage(): JSX.Element {
 
     const handleDecoded = (rawValue: string): void => {
       if (isProcessingRef.current) return;
-      const normalized = isbnValidator.normalizeIsbn(rawValue);
-      if (isbnValidator.isValidIsbn13(normalized)) {
+      // eslint-disable-next-line no-console
+      console.debug('[scan] decoded:', rawValue);
+      const interpretation = interpretScannedBarcode(rawValue);
+      if (interpretation.kind === 'isbn') {
         isProcessingRef.current = true;
         navigator.vibrate?.(50);
         stopCamera();
-        navigate(`/result/${normalized}?source=scan`);
+        navigate(`/result/${interpretation.isbn}?source=scan`);
+        return;
+      }
+      // ISBN以外（日本の書籍下段の価格・分類コード `192…` 等）を読み取った場合。
+      // 読み取りは継続したまま、上段のISBNバーコードを映すよう促す。
+      // 同じコードを毎フレーム読むため、通知は一定間隔に絞る。
+      const now = Date.now();
+      if (now - lastNonIsbnNoticeRef.current > 3000) {
+        lastNonIsbnNoticeRef.current = now;
+        enqueueSnackbar('ISBNのバーコード（978で始まる上段）を映してください', {
+          variant: 'info',
+        });
       }
     };
 
@@ -79,7 +96,13 @@ export function BarcodeScannerPage(): JSX.Element {
       try {
         const video = videoRef.current;
         if (video === null) return;
-        const reader = new BrowserMultiFormatReader();
+        // 書籍のISBNバーコードはEAN-13。対象フォーマットをEAN-13に絞ることで
+        // フレーム毎のデコード負荷を下げて認識を速め、TRY_HARDERで斜めや
+        // 低解像度のカメラ映像でも読み取りやすくする。
+        const hints = new Map<DecodeHintType, unknown>();
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.EAN_13]);
+        hints.set(DecodeHintType.TRY_HARDER, true);
+        const reader = new BrowserMultiFormatReader(hints);
         const controls = await reader.decodeFromVideoDevice(
           undefined,
           video,

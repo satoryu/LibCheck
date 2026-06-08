@@ -9,6 +9,13 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const calilAppKey = env.CALIL_APP_KEY ?? "";
 
+  // `--no-experimental-webstorage` only exists on Node 22+. On Node 22/24/25/26 a
+  // native (but non-functional) `localStorage` shadows jsdom's Storage and breaks
+  // tests, so we disable it. On Node 20 the flag does not exist and passing it
+  // crashes the test worker ("bad option"), so omit it there.
+  const nodeMajor = Number(process.versions.node.split(".")[0]);
+  const testExecArgv = nodeMajor >= 22 ? ["--no-experimental-webstorage"] : [];
+
   return {
     plugins: [react()],
     resolve: {
@@ -40,11 +47,10 @@ export default defineConfig(({ mode }) => {
       environment: "./src/test/custom-env.ts",
       setupFiles: "./src/test/setup.ts",
       poolOptions: {
-        // Node 25 ships a native (but non-functional without --localstorage-file)
-        // `localStorage`, which shadows jsdom's Storage and breaks tests. Disable
-        // it so vitest installs jsdom's working Storage instead.
+        // See `testExecArgv` above: disables Node 22+'s native localStorage so
+        // vitest installs jsdom's working Storage; empty on Node 20.
         forks: {
-          execArgv: ["--no-experimental-webstorage"],
+          execArgv: testExecArgv,
         },
       },
     },
