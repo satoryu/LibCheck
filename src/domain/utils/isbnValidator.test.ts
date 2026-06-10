@@ -67,9 +67,7 @@ describe('IsbnValidator', () => {
     test('小文字xを含む有効なISBN-10はエラーなし', () => {
       expect(isbnValidator.getValidationMessage('080442957x')).toBeNull();
     });
-  });
 
-  describe('getValidationMessage', () => {
     test('空文字列の場合はnullを返す', () => {
       expect(isbnValidator.getValidationMessage('')).toBeNull();
     });
