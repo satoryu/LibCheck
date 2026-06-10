@@ -26,6 +26,10 @@ jobs:
           app_location: "/"
           api_location: "api"
           output_location: "dist"
+          # デプロイトークン未設定の間は CI を失敗させず、デプロイのみスキップする。
+          # Azure 側のトークンを AZURE_STATIC_WEB_APPS_API_TOKEN に設定すれば
+          # デプロイが有効になる。
+          skip_deploy_on_missing_secrets: true
 
   close_pull_request:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -37,3 +41,5 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           action: close
+          # 同上: トークン未設定の間はクローズ処理をスキップして失敗させない。
+          skip_deploy_on_missing_secrets: true
