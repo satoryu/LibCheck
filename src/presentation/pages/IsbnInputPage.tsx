@@ -52,10 +52,9 @@ export function IsbnInputPage(): React.ReactElement {
           value={value}
           onChange={(event) => setValue(event.target.value)}
           // ISBN はハイフン区切りで入力されることがあり、ISBN-10 のチェック
-          // ディジットは 'X' になり得る。type="number" ではこれらを入力できない
-          // ため text 入力にし、モバイルでは数値キーボードを表示する。
+          // ディジットは 'X' になり得る。type="number" や inputMode="numeric"
+          // ではこれらを入力できなくなるため、制約のない text 入力にする。
           type="text"
-          slotProps={{ htmlInput: { inputMode: 'numeric' } }}
           label="ISBN (13桁 または 10桁)"
           error={errorText !== null}
           helperText={errorText ?? undefined}

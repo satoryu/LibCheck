@@ -144,12 +144,17 @@ export function BarcodeScannerPage(): JSX.Element {
   };
 
   const toggleFlash = async (): Promise<void> => {
+    const controls = controlsRef.current;
+    // トーチ非対応端末では switchTorch が存在しない。その場合に state を更新
+    // すると、実際には切り替わっていないのにアイコンだけ点灯してしまうため、
+    // 切り替えに成功したときのみ state を更新する。
+    if (controls?.switchTorch === undefined) return;
     const next = !isFlashOn;
     try {
-      await controlsRef.current?.switchTorch?.(next);
+      await controls.switchTorch(next);
       setIsFlashOn(next);
     } catch {
-      // best-effort: torch may be unsupported
+      // best-effort: torch may be unsupported or fail at runtime
     }
   };
 

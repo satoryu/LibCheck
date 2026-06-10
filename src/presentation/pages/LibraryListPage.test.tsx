@@ -1,11 +1,20 @@
 import { describe, expect, test } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SnackbarProvider } from 'notistack';
+import { ThemeProvider } from '@mui/material/styles';
+import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 
 import type { BookAvailability } from '@/domain/models/bookAvailability';
 import type { Library } from '@/domain/models/library';
 import { librariesEqual } from '@/domain/models/library';
 import type { LibraryRepository } from '@/domain/repositories/libraryRepository';
 import type { RegisteredLibraryRepository } from '@/domain/repositories/registeredLibraryRepository';
+import { theme } from '@/theme';
+import { DependenciesProvider } from '@/app/dependencies';
+import { SelectedLibrariesProvider } from '@/presentation/hooks/useSelectedLibraries';
+import { routes } from '@/app/router';
 import { renderRouteWithProviders, makeFakeDeps } from '@/test/testUtils';
 
 class MockLibraryRepository implements LibraryRepository {
@@ -202,5 +211,64 @@ describe('LibraryListPage', () => {
     // Loading state is rendered synchronously before the query resolves.
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
     expect(screen.getByText('図書館を検索中...')).toBeInTheDocument();
+  });
+
+  test('does not carry the selection over to another city', async () => {
+    // 港区で選択 → 登録せずに渋谷区の一覧へ遷移すると、前の選択が残ったまま
+    // 別の街の図書館を誤登録してしまう不具合の回帰テスト。
+    const libraries = [
+      createLibrary({
+        formalName: '港区図書館',
+        address: '港区の住所',
+        libId: 'a',
+        city: '港区',
+      }),
+      createLibrary({
+        formalName: '渋谷区図書館',
+        address: '渋谷区の住所',
+        libId: 'b',
+        city: '渋谷区',
+      }),
+    ];
+    const router = createMemoryRouter(routes, {
+      initialEntries: ['/library/add/東京都/港区'],
+    });
+    const deps = makeFakeDeps({
+      libraryRepository: new MockLibraryRepository(libraries),
+      registeredLibraryRepository: new FakeRegisteredLibraryRepository(),
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <DependenciesProvider value={deps}>
+        <QueryClientProvider client={queryClient}>
+          <SnackbarProvider>
+            <ThemeProvider theme={theme}>
+              <SelectedLibrariesProvider>
+                <RouterProvider router={router} />
+              </SelectedLibrariesProvider>
+            </ThemeProvider>
+          </SnackbarProvider>
+        </QueryClientProvider>
+      </DependenciesProvider>,
+    );
+    const user = userEvent.setup();
+
+    // 港区で1件選択する。
+    await user.click(await screen.findByText('港区図書館'));
+    expect(screen.getByText(/1件選択中/)).toBeInTheDocument();
+
+    // 登録せずに別の市区町村の一覧へ遷移する（同一ルートのパラメータ変更）。
+    await act(async () => {
+      await router.navigate('/library/add/東京都/渋谷区');
+    });
+
+    // 前の選択は持ち越されておらず、登録ボタンは無効のまま。
+    expect(await screen.findByText('渋谷区図書館')).toBeInTheDocument();
+    expect(screen.queryByText(/選択中/)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /選択した図書館を登録する/ }),
+    ).toBeDisabled();
   });
 });

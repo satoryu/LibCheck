@@ -23,8 +23,10 @@ function isValidIsbn10(isbn: string): boolean {
     if (digit === null) return false;
     sum += digit * (10 - i);
   }
+  // ISBN-10 のチェックディジットは 'X'(=10) になり得る。小文字 'x' も許容する。
   const lastChar = digits[9];
-  const lastValue = lastChar === 'X' ? 10 : parseDigit(lastChar);
+  const lastValue =
+    lastChar === 'X' || lastChar === 'x' ? 10 : parseDigit(lastChar);
   if (lastValue === null) return false;
   sum += lastValue;
   return sum % 11 === 0;
@@ -36,9 +38,9 @@ function isValidIsbn(isbn: string): boolean {
   return isValidIsbn13(normalized) || isValidIsbn10(normalized);
 }
 
-/** ハイフンを除去して正規化 */
+/** ハイフンを除去し、ISBN-10 のチェックディジット 'x' を大文字 'X' に正規化 */
 function normalizeIsbn(isbn: string): string {
-  return isbn.replace(/-/g, '');
+  return isbn.replace(/-/g, '').toUpperCase();
 }
 
 /**

@@ -37,11 +37,35 @@ describe('IsbnValidator', () => {
     test('チェックディジットが不正なISBN-10を拒否する', () => {
       expect(isbnValidator.isValidIsbn10('4873117586')).toBe(false);
     });
+
+    test('チェックディジットが大文字XのISBN-10を受け入れる', () => {
+      expect(isbnValidator.isValidIsbn10('080442957X')).toBe(true);
+    });
+
+    test('チェックディジットが小文字xのISBN-10を受け入れる', () => {
+      expect(isbnValidator.isValidIsbn10('080442957x')).toBe(true);
+    });
+  });
+
+  describe('isValidIsbn', () => {
+    test('小文字xを含むISBN-10を有効と判定する', () => {
+      expect(isbnValidator.isValidIsbn('080442957x')).toBe(true);
+    });
   });
 
   describe('normalizeIsbn', () => {
     test('空文字列はそのまま返す', () => {
       expect(isbnValidator.normalizeIsbn('')).toBe('');
+    });
+
+    test('小文字xを大文字Xに正規化する', () => {
+      expect(isbnValidator.normalizeIsbn('080442957x')).toBe('080442957X');
+    });
+  });
+
+  describe('getValidationMessage', () => {
+    test('小文字xを含む有効なISBN-10はエラーなし', () => {
+      expect(isbnValidator.getValidationMessage('080442957x')).toBeNull();
     });
   });
 

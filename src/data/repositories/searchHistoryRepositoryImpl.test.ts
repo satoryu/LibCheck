@@ -54,6 +54,25 @@ describe("SearchHistoryRepositoryImpl", () => {
       const result = await repository.getAll();
       expect(result).toHaveLength(0);
     });
+
+    it("skips a single corrupt entry instead of dropping the whole history", async () => {
+      // 1エントリの破損で全履歴が失われ、次の save で静かに上書き全消失する
+      // のを防ぐ。壊れたエントリだけスキップし、正常なものは保持する。
+      const valid = {
+        isbn: "9784003101018",
+        searchedAt: new Date(2026, 1, 15).toISOString(),
+        libraryStatuses: { Tokyo_Chiyoda: "available" },
+      };
+      const corrupt = { isbn: 123 }; // searchedAt 欠落・isbn が数値で fromJson が throw
+      await fakeStorage.setString(
+        "search_history",
+        JSON.stringify([valid, corrupt]),
+      );
+
+      const result = await repository.getAll();
+      expect(result).toHaveLength(1);
+      expect(result[0].isbn).toBe("9784003101018");
+    });
   });
 
   describe("save", () => {

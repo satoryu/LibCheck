@@ -1,13 +1,14 @@
 /**
  * 検索履歴の1エントリ。
  *
- * `libraryStatuses` は `{systemId: enumName}` の形式で保存される。
- * Value は AvailabilityStatus の enum 名（"available", "checkedOut" 等）。
+ * `libraryStatuses` は `{libraryKey: enumName}` の形式で保存される。
+ * Key は登録分館ごとに一意な libraryKey、Value は AvailabilityStatus の
+ * enum 名（"available", "checkedOut" 等）。集約表示では Value のみを使う。
  */
 export interface SearchHistoryEntry {
   isbn: string;
   searchedAt: Date;
-  /** 図書館システムIDごとの蔵書状態。Value は AvailabilityStatus の enum 名文字列。 */
+  /** 登録分館（libraryKey）ごとの蔵書状態。Value は AvailabilityStatus の enum 名文字列。 */
   libraryStatuses: Record<string, string>;
 }
 

@@ -233,9 +233,43 @@ describe('BookSearchResultPage', () => {
       expect(historyRepo.savedEntries).toHaveLength(1);
     });
     expect(historyRepo.savedEntries[0].isbn).toBe('9784123456789');
-    expect(historyRepo.savedEntries[0].libraryStatuses['Tokyo_Minato']).toBe(
-      'available',
-    );
+    expect(
+      Object.values(historyRepo.savedEntries[0].libraryStatuses),
+    ).toEqual(['available']);
+  });
+
+  test('saves the registered branch status, not the system-wide aggregate', async () => {
+    // library1 は Tokyo_Minato の「みなと」分館のみ登録。同システムの別分館
+    // 「三田」が貸出可でも、結果画面は登録分館「みなと」の貸出中を表示する。
+    // 履歴も画面と一致するよう、システム集約(available)ではなく登録分館の
+    // 状態(checkedOut)を保存しなければならない。
+    const results: BookAvailability[] = [
+      {
+        isbn: '9784123456789',
+        libraryStatuses: {
+          Tokyo_Minato: {
+            systemId: 'Tokyo_Minato',
+            // システム集約は available（三田が貸出可のため）。
+            status: AvailabilityStatus.available,
+            libKeyStatuses: { みなと: '貸出中', 三田: '貸出可' },
+          },
+        },
+      },
+    ];
+    const historyRepo = new FakeSearchHistoryRepository();
+
+    renderSubject({
+      libraryRepo: new FakeLibraryRepository(results),
+      registeredRepo: new FakeRegisteredLibraryRepository([library1]),
+      historyRepo,
+    });
+
+    await waitFor(() => {
+      expect(historyRepo.savedEntries).toHaveLength(1);
+    });
+    expect(
+      Object.values(historyRepo.savedEntries[0].libraryStatuses),
+    ).toEqual(['checkedOut']);
   });
 
   test('does not save search history on error', async () => {

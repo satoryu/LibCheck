@@ -22,6 +22,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import type { BookAvailability } from '@/domain/models/bookAvailability';
 import type { Library } from '@/domain/models/library';
 import { libraryKey } from '@/domain/models/library';
+import { statusForLibKey } from '@/domain/models/libraryStatus';
 import { APP_COLORS } from '@/presentation/theme/appColors';
 import { resolveErrorMessage } from '@/presentation/utils/errorMessageResolver';
 import { useBookAvailability } from '@/presentation/hooks/useBookAvailability';
@@ -47,6 +48,7 @@ export function BookSearchResultPage(): JSX.Element {
   const registeredQuery = useRegisteredLibraries();
   const availabilityQuery = useBookAvailability(isbn);
   const { save } = useSearchHistoryMutations();
+  const registeredLibraries = registeredQuery.data;
 
   const findResultForIsbn = (
     results: BookAvailability[],
@@ -61,15 +63,22 @@ export function BookSearchResultPage(): JSX.Element {
     const result = findResultForIsbn(results);
     if (result === undefined) return;
     if (savedIsbnRef.current === isbn) return;
+    // 登録図書館が未解決のうちは保存しない（次回 effect で保存される）。
+    if (registeredLibraries === undefined) return;
     savedIsbnRef.current = isbn;
 
-    // enum名（"available", "checkedOut" 等）で保存する。
-    // API日本語文字列ではなくenum名を使用することで、API仕様変更の影響を受けない。
+    // 結果画面は登録分館ごとに statusForLibKey の状態を表示する。履歴も画面と
+    // 一致させるため、システム全体の集約ではなく登録分館単位の状態を保存する。
+    // キーは分館単位で一意な libraryKey、値は enum名（"available" 等）。
+    // API日本語文字列ではなく enum名を使うことで API 仕様変更の影響を受けない。
     const statuses: Record<string, string> = {};
-    for (const [systemId, libraryStatus] of Object.entries(
-      result.libraryStatuses,
-    )) {
-      statuses[systemId] = libraryStatus.status;
+    for (const library of registeredLibraries) {
+      const systemStatus = result.libraryStatuses[library.systemId];
+      if (systemStatus === undefined) continue;
+      statuses[libraryKey(library)] = statusForLibKey(
+        systemStatus,
+        library.libKey,
+      );
     }
     void save({
       isbn,
@@ -77,7 +86,12 @@ export function BookSearchResultPage(): JSX.Element {
       libraryStatuses: statuses,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availabilityQuery.isSuccess, availabilityQuery.data, isbn]);
+  }, [
+    availabilityQuery.isSuccess,
+    availabilityQuery.data,
+    registeredLibraries,
+    isbn,
+  ]);
 
   const handleRetry = (): void => {
     void queryClient.invalidateQueries({

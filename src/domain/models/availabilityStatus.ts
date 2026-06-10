@@ -81,10 +81,15 @@ export function aggregateAvailability(
   );
 }
 
+/**
+ * enum 名から AvailabilityStatus へ変換する。未知の名前は unknown を返す。
+ *
+ * 永続化された検索履歴には旧仕様や破損による未知のステータス名が含まれ得る。
+ * throw すると履歴ページ全体がクラッシュするため、未知の値は unknown に倒す。
+ */
 export function availabilityFromName(name: string): AvailabilityStatus {
   const values = Object.values(AvailabilityStatus) as string[];
-  if (values.includes(name)) {
-    return name as AvailabilityStatus;
-  }
-  throw new Error(`Unknown AvailabilityStatus name: "${name}"`);
+  return values.includes(name)
+    ? (name as AvailabilityStatus)
+    : AvailabilityStatus.unknown;
 }

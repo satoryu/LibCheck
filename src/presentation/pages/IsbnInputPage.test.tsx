@@ -75,6 +75,27 @@ describe('IsbnInputPage', () => {
     expect(await screen.findByText('バーコードスキャン')).toBeInTheDocument();
   });
 
+  it('数値キーボードに固定せずX・ハイフンを入力できる', () => {
+    // inputMode を numeric に固定すると、モバイルで ISBN-10 のチェック
+    // ディジット X やハイフンが入力できなくなる回帰を防ぐ。
+    renderRouteWithProviders('/isbn-input');
+
+    const input = screen.getByRole('textbox');
+    expect(input.getAttribute('inputmode')).not.toBe('numeric');
+  });
+
+  it('末尾Xを含むISBN-10入力後の遷移でXが保持される', async () => {
+    const { user } = renderRouteWithProviders('/isbn-input');
+
+    const input = await screen.findByRole('textbox');
+    // 小文字 x で入力しても大文字 X に正規化されて遷移する。
+    await user.type(input, '080442957x');
+
+    await user.click(await screen.findByRole('button', { name: '検索する' }));
+
+    expect(await screen.findByText('ISBN: 080442957X')).toBeInTheDocument();
+  });
+
   it('ハイフン付きISBN入力後の遷移でハイフンが除去される', async () => {
     const { user } = renderRouteWithProviders('/isbn-input');
 

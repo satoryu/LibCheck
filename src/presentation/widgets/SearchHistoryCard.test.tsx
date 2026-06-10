@@ -79,6 +79,23 @@ describe('SearchHistoryCard', () => {
     expect(screen.getByText('貸出可能')).toBeInTheDocument();
   });
 
+  test('renders without crashing when a stored status name is unknown', () => {
+    // 永続化された履歴に旧仕様や破損による未知のステータス名が含まれていても
+    // 例外で履歴ページ全体がクラッシュしないこと。未知は「不明」として扱う。
+    const entry: SearchHistoryEntry = {
+      isbn: '9784003101018',
+      searchedAt: new Date(2026, 1, 15, 10, 30),
+      libraryStatuses: {
+        Tokyo_Chiyoda: 'totally_unexpected_value',
+      },
+    };
+
+    expect(() =>
+      renderWithProviders(<SearchHistoryCard entry={entry} onTap={() => {}} />),
+    ).not.toThrow();
+    expect(screen.getByText('不明')).toBeInTheDocument();
+  });
+
   test('calls onTap when tapped', async () => {
     const onTap = vi.fn();
     const entry: SearchHistoryEntry = {

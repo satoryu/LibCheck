@@ -52,15 +52,25 @@ export class SearchHistoryRepositoryImpl implements SearchHistoryRepository {
     const jsonString = await this.localStorage.getString(STORAGE_KEY);
     if (jsonString === null) return [];
 
+    let parsed: unknown;
     try {
-      const parsed: unknown = JSON.parse(jsonString);
-      if (!Array.isArray(parsed)) return [];
-      return parsed.map((e) =>
-        searchHistoryEntryFromJson(e as Record<string, unknown>),
-      );
+      parsed = JSON.parse(jsonString);
     } catch {
       return [];
     }
+    if (!Array.isArray(parsed)) return [];
+
+    // 壊れた1エントリで全履歴を失わないよう、エントリ単位で変換を試み、
+    // 失敗したものだけスキップする（全体を破棄すると次の save で全消失する）。
+    const entries: SearchHistoryEntry[] = [];
+    for (const e of parsed) {
+      try {
+        entries.push(searchHistoryEntryFromJson(e as Record<string, unknown>));
+      } catch {
+        // 破損エントリはスキップ。
+      }
+    }
+    return entries;
   }
 
   private async saveAll(entries: SearchHistoryEntry[]): Promise<void> {

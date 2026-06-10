@@ -26,5 +26,17 @@ describe('LibraryStatus', () => {
 
       expect(statusForLibKey(status, 'しば')).toBe(AvailabilityStatus.notFound);
     });
+
+    test('returns error for missing libKey when the system errored', () => {
+      // システム検索がエラーのとき libkey は空になる。蔵書なし(notFound)では
+      // なく error を返し、利用者に「検索失敗」を正しく伝える。
+      const status: LibraryStatus = {
+        systemId: 'Tokyo_Minato',
+        status: AvailabilityStatus.error,
+        libKeyStatuses: {},
+      };
+
+      expect(statusForLibKey(status, 'みなと')).toBe(AvailabilityStatus.error);
+    });
   });
 });

@@ -90,6 +90,33 @@ describe("LibraryRepositoryImpl", () => {
       expect(libraryStatus.status).toBe(AvailabilityStatus.available);
     });
 
+    it("maps a system-level Error status to AvailabilityStatus.error", async () => {
+      // カーリルはシステム側の検索失敗時に status: "Error"（libkey 空）を返す。
+      // 蔵書なし(notFound)ではなく error として扱う。
+      const apiClient = makeClient({
+        session: "abc123",
+        continue: 0,
+        books: {
+          "9784774142230": {
+            Tokyo_Minato: {
+              status: "Error",
+              reserveurl: "",
+            },
+          },
+        },
+      });
+      const repo = new LibraryRepositoryImpl({ apiClient });
+
+      const results = await repo.checkBookAvailability({
+        isbn: ["9784774142230"],
+        systemIds: ["Tokyo_Minato"],
+      });
+
+      const libraryStatus = results[0].libraryStatuses["Tokyo_Minato"];
+      expect(libraryStatus.status).toBe(AvailabilityStatus.error);
+      expect(libraryStatus.libKeyStatuses).toEqual({});
+    });
+
     it("aggregates statuses correctly with multiple libKeys", async () => {
       const apiClient = makeClient({
         session: "abc123",

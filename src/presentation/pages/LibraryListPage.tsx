@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { enqueueSnackbar } from 'notistack';
 import AppBar from '@mui/material/AppBar';
@@ -33,6 +34,14 @@ export function LibraryListPage(): JSX.Element {
   const librariesQuery = useLibraryList({ pref, city });
   const { selected, isSelected, toggle, clear } = useSelectedLibraries();
   const { addAll } = useRegisteredLibraryMutations();
+
+  // 選択状態はこの市区町村の一覧での一時的なもの。pref/city が変わったとき
+  // （初回マウント含む）に必ずクリアし、別の街の選択が持ち越されて誤登録
+  // されるのを防ぐ。同一ルートでパラメータだけ変わる遷移ではアンマウント
+  // されないため、アンマウントではなく pref/city 依存でクリアする。
+  useEffect(() => {
+    clear();
+  }, [pref, city, clear]);
 
   const handleRegister = async (): Promise<void> => {
     if (selected.length === 0) return;

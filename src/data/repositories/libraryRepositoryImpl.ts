@@ -1,5 +1,6 @@
 import { CalilApiClient } from '@/data/datasources/calilApiClient';
 import {
+  AvailabilityStatus,
   aggregateAvailability,
   availabilityFromApiString,
 } from '@/domain/models/availabilityStatus';
@@ -54,10 +55,15 @@ export class LibraryRepositoryImpl implements LibraryRepository {
       const libraryStatuses: Record<string, LibraryStatus> = {};
       for (const [systemId, bookSystemStatus] of Object.entries(systems)) {
         const libKeyStatuses = bookSystemStatus.libKeys;
-        const statuses = Object.values(libKeyStatuses).map(
-          availabilityFromApiString,
-        );
-        const aggregatedStatus = aggregateAvailability(statuses);
+        // システム側で検索が失敗すると status は "Error" になり libkey は空で
+        // 返る。この場合 libkey 集約では notFound(蔵書なし) になってしまい
+        // 「検索失敗」と「蔵書なし」が区別できないため、明示的に error とする。
+        const aggregatedStatus =
+          bookSystemStatus.status === 'Error'
+            ? AvailabilityStatus.error
+            : aggregateAvailability(
+                Object.values(libKeyStatuses).map(availabilityFromApiString),
+              );
 
         libraryStatuses[systemId] = {
           systemId,
