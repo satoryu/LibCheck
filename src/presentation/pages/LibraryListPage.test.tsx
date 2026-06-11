@@ -192,6 +192,26 @@ describe('LibraryListPage', () => {
     expect(registeredRepo.libs[0].formalName).toBe('図書館1');
   });
 
+  test('navigates to home after registration', async () => {
+    // 登録完了後の自然な次アクションはバーコードスキャン/ISBN入力なので、
+    // 市区町村選択に戻るのではなくトップへ遷移する。
+    const libraries = [
+      createLibrary({ formalName: '図書館1', address: '住所1', libId: '1' }),
+    ];
+
+    const { user } = renderPage(
+      new MockLibraryRepository(libraries),
+      new FakeRegisteredLibraryRepository(),
+    );
+
+    await user.click(await screen.findByText('図書館1'));
+    await user.click(
+      screen.getByRole('button', { name: /選択した図書館を登録する/ }),
+    );
+
+    expect(await screen.findByText('バーコードでスキャン')).toBeInTheDocument();
+  });
+
   test('shows ErrorStateWidget on failure', async () => {
     renderPage(
       new ErrorLibraryRepository(),

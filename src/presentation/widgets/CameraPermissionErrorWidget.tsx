@@ -1,17 +1,24 @@
 import KeyboardIcon from '@mui/icons-material/Keyboard';
-import SettingsIcon from '@mui/icons-material/Settings';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import CameraAltOutlinedIcon from '@mui/icons-material/CameraAltOutlined';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
 export interface CameraPermissionErrorWidgetProps {
-  onOpenSettings: () => void;
+  onRetry: () => void;
   onManualInput: () => void;
 }
 
+/**
+ * カメラ許可が得られていないときの警告表示。
+ *
+ * Web ではアプリから OS/ブラウザの設定画面を開けないため、ブラウザ側での
+ * 許可手順を案内し、「再試行」で getUserMedia を再実行して許可ダイアログの
+ * 再表示（未決定の場合）を促す。
+ */
 export function CameraPermissionErrorWidget({
-  onOpenSettings,
+  onRetry,
   onManualInput,
 }: CameraPermissionErrorWidgetProps): JSX.Element {
   return (
@@ -39,16 +46,17 @@ export function CameraPermissionErrorWidget({
         </Typography>
         <Box sx={{ height: 8 }} />
         <Typography variant="body2" align="center">
-          バーコードをスキャンするには、設定からカメラへのアクセスを許可してください。
+          バーコードをスキャンするには、ブラウザの設定でカメラへのアクセスを許可してください。
+          アドレスバーのカメラアイコン、またはサイトの設定から変更できます。
         </Typography>
         <Box sx={{ height: 32 }} />
         <Button
           fullWidth
           variant="contained"
-          startIcon={<SettingsIcon />}
-          onClick={onOpenSettings}
+          startIcon={<RefreshIcon />}
+          onClick={onRetry}
         >
-          設定を開く
+          再試行
         </Button>
         <Box sx={{ height: 12 }} />
         <Button

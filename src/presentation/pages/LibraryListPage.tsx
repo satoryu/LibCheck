@@ -48,7 +48,9 @@ export function LibraryListPage(): JSX.Element {
     await addAll([...selected]);
     clear();
     enqueueSnackbar('図書館を登録しました');
-    navigate(-1);
+    // 登録完了後の自然な次アクションはバーコードスキャン/ISBN入力なので、
+    // 市区町村選択に戻るのではなくトップへ遷移する。
+    navigate('/');
   };
 
   const renderBody = (): JSX.Element => {

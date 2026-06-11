@@ -169,9 +169,7 @@ export function BarcodeScannerPage(): JSX.Element {
           </Toolbar>
         </AppBar>
         <CameraPermissionErrorWidget
-          onOpenSettings={() => {
-            // Web ではアプリ設定を直接開けないため no-op。
-          }}
+          onRetry={retryCamera}
           onManualInput={goManualInput}
         />
       </Box>

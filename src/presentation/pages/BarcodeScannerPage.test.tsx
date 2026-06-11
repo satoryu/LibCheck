@@ -3,18 +3,23 @@ import { act, screen, waitFor } from '@testing-library/react';
 
 import { renderRouteWithProviders } from '@/test/testUtils';
 
-// カメラ起動を伴うフラッシュのテスト用に @zxing/browser をモックする。
-// decodeFromVideoDevice が返す controls を差し替えてトーチ対応/非対応を再現する。
+// カメラ起動を伴うテスト用に @zxing/browser をモックする。
+// decodeFromVideoDevice が返す controls を差し替えてトーチ対応/非対応を再現し、
+// startError を設定するとカメラ起動失敗（許可拒否等）を再現する。
 const zxingMock = vi.hoisted(() => ({
   controls: {
     stop: () => {},
     switchTorch: undefined as undefined | ((on: boolean) => Promise<void>),
   },
+  startError: undefined as unknown,
 }));
 
 vi.mock('@zxing/browser', () => ({
   BrowserMultiFormatReader: class {
     async decodeFromVideoDevice(): Promise<typeof zxingMock.controls> {
+      if (zxingMock.startError !== undefined) {
+        throw zxingMock.startError;
+      }
       return zxingMock.controls;
     }
   },
@@ -65,6 +70,72 @@ describe('BarcodeScannerPage', () => {
   });
 });
 
+describe('BarcodeScannerPage カメラ許可', () => {
+  let originalMediaDevices: PropertyDescriptor | undefined;
+
+  beforeEach(() => {
+    originalMediaDevices = Object.getOwnPropertyDescriptor(
+      navigator,
+      'mediaDevices',
+    );
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: () => Promise.resolve({}) },
+    });
+    zxingMock.controls.switchTorch = undefined;
+    zxingMock.startError = undefined;
+  });
+
+  afterEach(() => {
+    zxingMock.startError = undefined;
+    if (originalMediaDevices) {
+      Object.defineProperty(navigator, 'mediaDevices', originalMediaDevices);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (navigator as any).mediaDevices;
+    }
+  });
+
+  test('許可されていない場合は警告を表示し許可を促す', async () => {
+    // カメラ許可が拒否されると getUserMedia は NotAllowedError を投げる。
+    zxingMock.startError = Object.assign(new Error('Permission denied'), {
+      name: 'NotAllowedError',
+    });
+
+    renderRouteWithProviders('/scan');
+
+    expect(
+      await screen.findByText('カメラへのアクセスが許可されていません'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/ブラウザの設定でカメラへのアクセスを許可/),
+    ).toBeInTheDocument();
+    // 許可を促す導線として再試行ボタンを表示する（押すと許可ダイアログが再表示される）。
+    expect(screen.getByRole('button', { name: /再試行/ })).toBeInTheDocument();
+  });
+
+  test('再試行で許可されるとカメラ画面に復帰する', async () => {
+    zxingMock.startError = Object.assign(new Error('Permission denied'), {
+      name: 'NotAllowedError',
+    });
+
+    const { user } = renderRouteWithProviders('/scan');
+
+    const retryButton = await screen.findByRole('button', { name: /再試行/ });
+
+    // ユーザーがブラウザ設定で許可した後に再試行する。
+    zxingMock.startError = undefined;
+    await user.click(retryButton);
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText('カメラへのアクセスが許可されていません'),
+      ).not.toBeInTheDocument();
+    });
+    expect(screen.getByLabelText('flash')).toBeInTheDocument();
+  });
+});
+
 describe('BarcodeScannerPage フラッシュ', () => {
   let originalMediaDevices: PropertyDescriptor | undefined;
 
@@ -79,6 +150,7 @@ describe('BarcodeScannerPage フラッシュ', () => {
       value: { getUserMedia: () => Promise.resolve({}) },
     });
     zxingMock.controls.switchTorch = undefined;
+    zxingMock.startError = undefined;
   });
 
   afterEach(() => {
