@@ -48,9 +48,8 @@ export function LibraryListPage(): JSX.Element {
     await addAll([...selected]);
     clear();
     enqueueSnackbar('図書館を登録しました');
-    // 登録完了後の自然な次アクションはバーコードスキャン/ISBN入力なので、
-    // 市区町村選択に戻るのではなくトップへ遷移する。
-    navigate('/');
+    // 登録完了後は登録図書館の管理画面へ遷移し、登録結果を確認できるようにする。
+    navigate('/library');
   };
 
   const renderBody = (): JSX.Element => {

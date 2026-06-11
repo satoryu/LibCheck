@@ -192,9 +192,8 @@ describe('LibraryListPage', () => {
     expect(registeredRepo.libs[0].formalName).toBe('図書館1');
   });
 
-  test('navigates to home after registration', async () => {
-    // 登録完了後の自然な次アクションはバーコードスキャン/ISBN入力なので、
-    // 市区町村選択に戻るのではなくトップへ遷移する。
+  test('navigates to the library management page after registration', async () => {
+    // 登録完了後は登録図書館の管理画面へ遷移し、登録結果を確認できるようにする。
     const libraries = [
       createLibrary({ formalName: '図書館1', address: '住所1', libId: '1' }),
     ];
@@ -209,7 +208,9 @@ describe('LibraryListPage', () => {
       screen.getByRole('button', { name: /選択した図書館を登録する/ }),
     );
 
-    expect(await screen.findByText('バーコードでスキャン')).toBeInTheDocument();
+    // 管理画面の AppBar タイトル「登録図書館」と登録した図書館が表示される。
+    expect(await screen.findByText('登録図書館')).toBeInTheDocument();
+    expect(await screen.findByText('図書館1')).toBeInTheDocument();
   });
 
   test('shows ErrorStateWidget on failure', async () => {
