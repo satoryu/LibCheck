@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { CssBaseline, ThemeProvider } from '@mui/material';
+import { CssBaseline, GlobalStyles, ThemeProvider } from '@mui/material';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from 'react-router-dom';
 import { SnackbarProvider } from 'notistack';
@@ -35,7 +35,18 @@ export function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <SnackbarProvider>
+          {/* モバイル幅では画面下部固定の BottomNavigation とスナックバーが
+              重なってタブのタップをブロックするため、上部に表示する。
+              さらに AppBar(56px) のタイトル・戻る・フラッシュの各ボタンを
+              覆わないよう、表示位置を AppBar の直下までオフセットする。 */}
+          <GlobalStyles
+            styles={{
+              '.notistack-SnackbarContainer': { top: '64px !important' },
+            }}
+          />
+          <SnackbarProvider
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          >
             <SelectedLibrariesProvider>
               <RouterProvider router={router} />
             </SelectedLibrariesProvider>

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { screen } from '@testing-library/react';
 
 import { makeFakeDeps, renderRouteWithProviders } from '@/test/testUtils';
@@ -59,6 +59,11 @@ function depsWith(repository: LibraryRepository): AppDependencies {
 }
 
 describe('CitySelectionPage', () => {
+  afterEach(() => {
+    // テストで模擬した履歴インデックスをリセットする。
+    window.history.replaceState(null, '');
+  });
+
   it('renders AppBar with prefecture name', async () => {
     renderRouteWithProviders('/library/add/東京都', {
       deps: depsWith(mockLibraryRepository([])),
@@ -101,6 +106,22 @@ describe('CitySelectionPage', () => {
     expect(screen.getByText('港区')).toBeInTheDocument();
     expect(screen.queryByText('新宿区')).not.toBeInTheDocument();
     expect(screen.queryByText('千代田区')).not.toBeInTheDocument();
+  });
+
+  it('戻るボタンで都道府県選択画面へ戻る', async () => {
+    const { user } = renderRouteWithProviders('/library/add', {
+      deps: depsWith(mockLibraryRepository([])),
+    });
+
+    await user.click(await screen.findByText('東京都'));
+    expect(await screen.findByText('東京都の市区町村')).toBeInTheDocument();
+
+    // createMemoryRouter は window.history を更新しないため、
+    // 遷移済みの履歴インデックスを模擬する。
+    window.history.replaceState({ idx: 1 }, '');
+    await user.click(screen.getByRole('button', { name: '戻る' }));
+
+    expect(await screen.findByText('都道府県を選択')).toBeInTheDocument();
   });
 
   it('shows ErrorStateWidget on failure', async () => {

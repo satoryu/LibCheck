@@ -5,12 +5,10 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CircularProgress from '@mui/material/CircularProgress';
-import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import AddIcon from '@mui/icons-material/Add';
 import BookIcon from '@mui/icons-material/Book';
@@ -29,6 +27,7 @@ import { useBookAvailability } from '@/presentation/hooks/useBookAvailability';
 import { useRegisteredLibraries } from '@/presentation/hooks/useRegisteredLibraries';
 import { useSearchHistoryMutations } from '@/presentation/hooks/useSearchHistory';
 import { LibraryAvailabilityCard } from '@/presentation/widgets/LibraryAvailabilityCard';
+import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
 
 /**
  * 蔵書検索結果画面。
@@ -116,7 +115,9 @@ export function BookSearchResultPage(): JSX.Element {
       <Button
         variant="outlined"
         startIcon={isScan ? <CameraAltIcon /> : <SearchIcon />}
-        onClick={() => navigate(-1)}
+        // 履歴に依存する navigate(-1) は直アクセス時に行き止まりになるため、
+        // ラベルと一致する明示的な遷移先に移動する。
+        onClick={() => navigate(isScan ? '/scan' : '/isbn-input')}
         sx={{ width: '100%' }}
       >
         {isScan ? '別の本をスキャンする' : '別の本を検索する'}
@@ -259,13 +260,7 @@ export function BookSearchResultPage(): JSX.Element {
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div">
-            検索結果
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <SubPageAppBar title="検索結果" />
       {renderBody()}
     </Box>
   );

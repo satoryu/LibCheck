@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { enqueueSnackbar } from 'notistack';
-import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
@@ -10,7 +9,6 @@ import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
 import { libraryKey } from '@/domain/models/library';
@@ -18,6 +16,7 @@ import { useLibraryList } from '@/presentation/hooks/useLibraryList';
 import { useRegisteredLibraryMutations } from '@/presentation/hooks/useRegisteredLibraries';
 import { useSelectedLibraries } from '@/presentation/hooks/useSelectedLibraries';
 import { ErrorStateWidget } from '@/presentation/widgets/ErrorStateWidget';
+import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
 
 /**
  * 図書館一覧画面。
@@ -133,13 +132,7 @@ export function LibraryListPage(): JSX.Element {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div">
-            {`${city}の図書館`}
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <SubPageAppBar title={`${city}の図書館`} />
       {renderBody()}
     </Box>
   );

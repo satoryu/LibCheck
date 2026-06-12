@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { closeSnackbar, enqueueSnackbar } from 'notistack';
 
+import { App } from '@/App';
 import type { Library } from '@/domain/models/library';
 import type { RegisteredLibraryRepository } from '@/domain/repositories/registeredLibraryRepository';
 import { makeFakeDeps, renderRouteWithProviders } from '@/test/testUtils';
@@ -41,6 +43,40 @@ describe('LibCheckApp', () => {
 
     await waitFor(() => {
       expect(screen.getByText('登録図書館')).toBeInTheDocument();
+    });
+  });
+
+  it('スナックバーはボトムナビゲーションと重ならないよう上部（top-center）に表示される', async () => {
+    // App.tsx の SnackbarProvider 設定そのものを検証したいので、
+    // testUtils のプロバイダーではなく実際の <App /> をレンダリングする。
+    window.history.replaceState(null, '', '/');
+    render(<App />);
+
+    // ルーターと登録図書館クエリの初期化（空 → /library リダイレクト）を待つ。
+    await waitFor(() => {
+      expect(screen.getByText('登録図書館')).toBeInTheDocument();
+    });
+
+    // notistack v3 のモジュールレベル API でスナックバーを表示する。
+    act(() => {
+      enqueueSnackbar('テスト通知');
+    });
+    const message = await screen.findByText('テスト通知');
+
+    const container = message.closest('.notistack-SnackbarContainer');
+    expect(container).not.toBeNull();
+
+    // notistack はクラス名がハッシュ化されているため、計算済みスタイルで
+    // anchorOrigin を検証する（top 配置なら top が、bottom 配置なら bottom が
+    // px 値で設定される）。
+    const style = window.getComputedStyle(container as HTMLElement);
+    expect(style.top).toMatch(/^\d+px$/);
+    expect(style.bottom).toBe('');
+    // horizontal: 'center' は left: 50% (+ translateX(-50%)) で表現される。
+    expect(style.left).toBe('50%');
+
+    act(() => {
+      closeSnackbar();
     });
   });
 });

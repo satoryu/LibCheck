@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  AppBar,
-  Toolbar,
   Typography,
   Box,
   TextField,
@@ -10,6 +8,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { isbnValidator } from '@/domain/utils/isbnValidator';
+import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
 
 /**
  * ISBN手動入力画面。
@@ -37,13 +36,7 @@ export function IsbnInputPage(): React.ReactElement {
 
   return (
     <Box>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div">
-            ISBN入力
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <SubPageAppBar title="ISBN入力" />
       <Box sx={{ p: 2 }}>
         <Typography variant="h6">ISBNを入力してください</Typography>
         <Box sx={{ height: 16 }} />

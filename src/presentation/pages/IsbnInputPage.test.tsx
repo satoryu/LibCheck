@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { screen } from '@testing-library/react';
 
-import { renderRouteWithProviders } from '@/test/testUtils';
+import { makeFakeDeps, renderRouteWithProviders } from '@/test/testUtils';
+import type { Library } from '@/domain/models/library';
 
 /**
  * Port of `test/presentation/pages/isbn_input_page_test.dart`.
@@ -10,7 +11,27 @@ import { renderRouteWithProviders } from '@/test/testUtils';
  * `/result/:isbn` (the `BookSearchResultPage` renders both the "検索結果" AppBar
  * title and an `ISBN: <isbn>` line, mirroring the Flutter stub route).
  */
+// ホーム画面を表示するために登録しておく図書館
+// （登録0件だとホームは /library へリダイレクトされる）。
+const sampleLibrary: Library = {
+  systemId: 'system1',
+  systemName: 'テスト図書館システム',
+  libKey: 'key1',
+  libId: 'id1',
+  shortName: 'テスト図書館',
+  formalName: 'テスト図書館',
+  address: '東京都港区',
+  pref: '東京都',
+  city: '港区',
+  category: 'MEDIUM',
+};
+
 describe('IsbnInputPage', () => {
+  afterEach(() => {
+    // テストで模擬した履歴インデックスをリセットする。
+    window.history.replaceState(null, '');
+  });
+
   it('AppBarに「ISBN入力」と表示される', async () => {
     renderRouteWithProviders('/isbn-input');
 
@@ -73,6 +94,32 @@ describe('IsbnInputPage', () => {
     await user.click(await screen.findByText('バーコードスキャンへ'));
 
     expect(await screen.findByText('バーコードスキャン')).toBeInTheDocument();
+  });
+
+  it('ホームから遷移後、戻るボタンでホームへ戻る', async () => {
+    const deps = makeFakeDeps();
+    await deps.registeredLibraryRepository.add(sampleLibrary);
+    const { user } = renderRouteWithProviders('/', { deps });
+
+    await user.click(await screen.findByText('ISBNを入力'));
+    expect(await screen.findByText('ISBN入力')).toBeInTheDocument();
+
+    // createMemoryRouter は window.history を更新しないため、
+    // 遷移済みの履歴インデックスを模擬する。
+    window.history.replaceState({ idx: 1 }, '');
+    await user.click(screen.getByRole('button', { name: '戻る' }));
+
+    expect(await screen.findByText('LibCheck')).toBeInTheDocument();
+  });
+
+  it('履歴が無いとき戻るボタンでホームへ遷移する', async () => {
+    const deps = makeFakeDeps();
+    await deps.registeredLibraryRepository.add(sampleLibrary);
+    const { user } = renderRouteWithProviders('/isbn-input', { deps });
+
+    await user.click(await screen.findByRole('button', { name: '戻る' }));
+
+    expect(await screen.findByText('LibCheck')).toBeInTheDocument();
   });
 
   it('数値キーボードに固定せずX・ハイフンを入力できる', () => {

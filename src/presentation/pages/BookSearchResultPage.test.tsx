@@ -208,6 +208,59 @@ describe('BookSearchResultPage', () => {
     expect(screen.getByTestId('CameraAltIcon')).toBeInTheDocument();
   });
 
+  test('source=scan のとき「別の本をスキャンする」でスキャン画面へ遷移する', async () => {
+    const results: BookAvailability[] = [
+      {
+        isbn: '9784123456789',
+        libraryStatuses: {
+          Tokyo_Minato: {
+            systemId: 'Tokyo_Minato',
+            status: AvailabilityStatus.available,
+            libKeyStatuses: { みなと: '貸出可' },
+          },
+        },
+      },
+    ];
+
+    const { user } = renderSubject({
+      libraryRepo: new FakeLibraryRepository(results),
+      registeredRepo: new FakeRegisteredLibraryRepository([library1]),
+      source: 'scan',
+    });
+
+    await user.click(await screen.findByText('別の本をスキャンする'));
+
+    // jsdom にはカメラが無いためスキャン画面はエラーフォールバックを表示するが、
+    // AppBar タイトル「バーコードスキャン」で遷移先を判定できる。
+    expect(await screen.findByText('バーコードスキャン')).toBeInTheDocument();
+  });
+
+  test('直アクセス（履歴なし・source なし）でも「別の本を検索する」でISBN入力画面へ遷移する', async () => {
+    // renderRouteWithProviders は /result/:isbn を初期ルートにするため、
+    // 遷移履歴の無いURL直アクセスを再現できる（navigate(-1) では行き止まりになるケース）。
+    const results: BookAvailability[] = [
+      {
+        isbn: '9784123456789',
+        libraryStatuses: {
+          Tokyo_Minato: {
+            systemId: 'Tokyo_Minato',
+            status: AvailabilityStatus.available,
+            libKeyStatuses: { みなと: '貸出可' },
+          },
+        },
+      },
+    ];
+
+    const { user } = renderSubject({
+      libraryRepo: new FakeLibraryRepository(results),
+      registeredRepo: new FakeRegisteredLibraryRepository([library1]),
+    });
+
+    await user.click(await screen.findByText('別の本を検索する'));
+
+    expect(await screen.findByText('ISBN入力')).toBeInTheDocument();
+  });
+
   test('saves search history when results are loaded', async () => {
     const results: BookAvailability[] = [
       {
