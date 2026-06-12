@@ -1,0 +1,48 @@
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+
+import { APP_COLORS } from '@/presentation/theme/appColors';
+import { resolveErrorMessage } from '@/presentation/utils/errorMessageResolver';
+
+export interface ErrorStateWidgetProps {
+  error: unknown;
+  onRetry: () => void;
+}
+
+export function ErrorStateWidget({
+  error,
+  onRetry,
+}: ErrorStateWidgetProps): JSX.Element {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100%',
+      }}
+    >
+      <Box
+        sx={{
+          p: 3,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <ErrorOutlineIcon sx={{ fontSize: 48, color: APP_COLORS.error }} />
+        <Box sx={{ height: 16 }} />
+        <Typography variant="body1" align="center">
+          {resolveErrorMessage(error)}
+        </Typography>
+        <Box sx={{ height: 16 }} />
+        <Button variant="contained" onClick={onRetry}>
+          再試行
+        </Button>
+      </Box>
+    </Box>
+  );
+}

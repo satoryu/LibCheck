@@ -13,14 +13,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: subosito/flutter-action@v2
+      - uses: actions/setup-node@v4
         with:
-          channel: stable
+          node-version: '22'
+          cache: 'npm'
 
-      - run: flutter pub get
+      - run: npm ci
 
-      - name: Analyze
-        run: flutter analyze --no-fatal-infos
+      - name: Type check
+        run: npx tsc -b
 
       - name: Test
-        run: flutter test
+        run: npm test
