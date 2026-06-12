@@ -64,7 +64,14 @@ npm run swa:start    # build → swa start dist --api-location api(既定 http:/
 
 ### 2. デプロイトークン
 GitHub リポジトリの Secrets に `AZURE_STATIC_WEB_APPS_API_TOKEN`(SWA の Deployment token)を登録。
-`main` への push / PR で `.github/workflows/azure-static-web-apps.yml` が自動デプロイします。
+`main` へのマージ(push)で `.github/workflows/azure-static-web-apps.yml` が本番環境へ自動デプロイ
+します(手動実行も workflow_dispatch で可能)。PR 時の検証(型チェック・テスト)は `ci.yml` が
+行います。
+
+現在のデプロイ先リソース:
+
+- リソースグループ: `rg-libcheck` (East Asia)
+- Static Web App: `libcheck` (Free プラン)
 
 ### 手動デプロイ(任意, SWA CLI)
 ```bash
