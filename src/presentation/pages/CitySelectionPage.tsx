@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  AppBar,
   Box,
   CircularProgress,
   InputAdornment,
@@ -9,13 +8,13 @@ import {
   ListItemButton,
   ListItemText,
   TextField,
-  Toolbar,
   Typography,
 } from '@mui/material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SearchIcon from '@mui/icons-material/Search';
 import { useCityList } from '@/presentation/hooks/useCityList';
 import { ErrorStateWidget } from '@/presentation/widgets/ErrorStateWidget';
+import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
 
 /**
  * 市区町村選択ページ。
@@ -103,11 +102,7 @@ export function CitySelectionPage() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6">{`${pref}の市区町村`}</Typography>
-        </Toolbar>
-      </AppBar>
+      <SubPageAppBar title={`${pref}の市区町村`} />
       <Box sx={{ flexGrow: 1, overflow: 'auto' }}>{renderBody()}</Box>
     </Box>
   );

@@ -4,12 +4,9 @@ import { enqueueSnackbar } from 'notistack';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import type { IScannerControls } from '@zxing/browser';
 import { BarcodeFormat, DecodeHintType } from '@zxing/library';
-import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import FlashOffIcon from '@mui/icons-material/FlashOff';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
@@ -18,6 +15,7 @@ import { interpretScannedBarcode } from '@/presentation/utils/scanInterpreter';
 import { CameraErrorWidget } from '@/presentation/widgets/CameraErrorWidget';
 import { CameraPermissionErrorWidget } from '@/presentation/widgets/CameraPermissionErrorWidget';
 import { ScanOverlayWidget } from '@/presentation/widgets/ScanOverlayWidget';
+import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
 
 type CameraErrorType = 'permission' | 'error';
 
@@ -161,13 +159,7 @@ export function BarcodeScannerPage(): JSX.Element {
   if (errorType === 'permission') {
     return (
       <Box sx={{ minHeight: '100vh' }}>
-        <AppBar position="static">
-          <Toolbar>
-            <Typography variant="h6" component="div">
-              バーコードスキャン
-            </Typography>
-          </Toolbar>
-        </AppBar>
+        <SubPageAppBar title="バーコードスキャン" />
         <CameraPermissionErrorWidget
           onRetry={retryCamera}
           onManualInput={goManualInput}
@@ -179,13 +171,7 @@ export function BarcodeScannerPage(): JSX.Element {
   if (errorType === 'error') {
     return (
       <Box sx={{ minHeight: '100vh' }}>
-        <AppBar position="static">
-          <Toolbar>
-            <Typography variant="h6" component="div">
-              バーコードスキャン
-            </Typography>
-          </Toolbar>
-        </AppBar>
+        <SubPageAppBar title="バーコードスキャン" />
         <CameraErrorWidget
           onRetry={retryCamera}
           onManualInput={goManualInput}
@@ -198,11 +184,9 @@ export function BarcodeScannerPage(): JSX.Element {
     <Box
       sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}
     >
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            バーコードスキャン
-          </Typography>
+      <SubPageAppBar
+        title="バーコードスキャン"
+        trailing={
           <IconButton
             color="inherit"
             aria-label="flash"
@@ -212,8 +196,8 @@ export function BarcodeScannerPage(): JSX.Element {
           >
             {isFlashOn ? <FlashOnIcon /> : <FlashOffIcon />}
           </IconButton>
-        </Toolbar>
-      </AppBar>
+        }
+      />
       <Box sx={{ position: 'relative', flex: 1, backgroundColor: '#000' }}>
         <video
           ref={videoRef}
