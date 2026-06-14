@@ -9,6 +9,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import { amazonCoverImageUrl, amazonProductUrl } from '@/domain/utils/amazonUrls';
 import { APP_COLORS } from '@/presentation/theme/appColors';
+import { AMAZON_ASSOCIATE_TAG } from '@/presentation/config/amazonAffiliate';
 
 export interface BookMetadataCardProps {
   isbn: string;
@@ -17,6 +18,11 @@ export interface BookMetadataCardProps {
   openBdCoverUrl?: string;
   /** タイトル取得中はスケルトンを表示する。 */
   isLoadingTitle?: boolean;
+  /**
+   * Amazon アソシエイトタグ。既定はビルド時設定値（ローカルは空＝通常リンク）。
+   * 設定されている場合はリンクに `tag=` を付与し、規約に基づく開示文を表示する。
+   */
+  associateTag?: string;
 }
 
 const COVER_WIDTH = 96;
@@ -33,8 +39,10 @@ export function BookMetadataCard({
   title,
   openBdCoverUrl,
   isLoadingTitle = false,
+  associateTag = AMAZON_ASSOCIATE_TAG,
 }: BookMetadataCardProps): JSX.Element {
-  const productUrl = amazonProductUrl(isbn);
+  const productUrl = amazonProductUrl(isbn, associateTag);
+  const showAffiliateDisclosure = associateTag.trim().length > 0;
 
   // 試行する書影URL候補（Amazon 優先、無ければ OpenBD）。
   const coverCandidates = useMemo(() => {
@@ -135,6 +143,18 @@ export function BookMetadataCard({
           >
             Amazonで見る
           </Button>
+          {showAffiliateDisclosure && (
+            <>
+              <Box sx={{ height: 8 }} />
+              <Typography
+                data-testid="affiliate-disclosure"
+                variant="caption"
+                color="text.secondary"
+              >
+                ※Amazonのアソシエイトとして、LibCheckは適格販売により収入を得ています。
+              </Typography>
+            </>
+          )}
         </Box>
       </Box>
     </Card>

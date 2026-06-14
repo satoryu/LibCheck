@@ -27,6 +27,27 @@ describe('amazonUrls', () => {
         'https://www.amazon.co.jp/s?k=9791032305690',
       );
     });
+
+    test('アソシエイトタグを渡すと /dp/ に tag= を付与する', () => {
+      expect(amazonProductUrl('9784873117584', 'libcheck-22')).toBe(
+        'https://www.amazon.co.jp/dp/4873117585?tag=libcheck-22',
+      );
+    });
+
+    test('アソシエイトタグを渡すと検索URLにも tag= を付与する', () => {
+      expect(amazonProductUrl('9791032305690', 'libcheck-22')).toBe(
+        'https://www.amazon.co.jp/s?k=9791032305690&tag=libcheck-22',
+      );
+    });
+
+    test('空のアソシエイトタグは通常リンクを返す', () => {
+      expect(amazonProductUrl('9784873117584', '')).toBe(
+        'https://www.amazon.co.jp/dp/4873117585',
+      );
+      expect(amazonProductUrl('9784873117584', '   ')).toBe(
+        'https://www.amazon.co.jp/dp/4873117585',
+      );
+    });
   });
 
   describe('amazonCoverImageUrl', () => {

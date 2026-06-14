@@ -12,14 +12,20 @@ import { isbnValidator } from '@/domain/utils/isbnValidator';
  *
  * ISBN-10 が導出できれば `/dp/{ISBN-10}`、できない（979始まり等）場合は
  * ISBN 文字列での検索 URL にフォールバックする。
+ *
+ * `associateTag` を渡すと Amazon アソシエイト（アフィリエイト）タグ `tag=` を
+ * 付与する。空・未指定なら通常リンクを返す（ローカル開発では未指定＝通常リンク）。
  */
-export function amazonProductUrl(isbn: string): string {
+export function amazonProductUrl(isbn: string, associateTag?: string): string {
+  const tag = associateTag?.trim();
   const isbn10 = isbnValidator.isbn13to10(isbn);
   if (isbn10 !== null) {
-    return `https://www.amazon.co.jp/dp/${isbn10}`;
+    const base = `https://www.amazon.co.jp/dp/${isbn10}`;
+    return tag ? `${base}?tag=${encodeURIComponent(tag)}` : base;
   }
   const normalized = isbnValidator.normalizeIsbn(isbn);
-  return `https://www.amazon.co.jp/s?k=${encodeURIComponent(normalized)}`;
+  const base = `https://www.amazon.co.jp/s?k=${encodeURIComponent(normalized)}`;
+  return tag ? `${base}&tag=${encodeURIComponent(tag)}` : base;
 }
 
 /**

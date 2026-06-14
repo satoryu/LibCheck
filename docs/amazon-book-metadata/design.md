@@ -22,8 +22,13 @@ flowchart TD
 ### Domain
 - `utils/isbn13to10`（`isbnValidator` に追加）: ISBN-13(978) → ISBN-10。979/不正は null。
 - `utils/amazonUrls`（新規・純粋関数）:
-  - `amazonProductUrl(isbn)`: `/dp/{isbn10}`、導出不可なら `/s?k={isbn13}`。
+  - `amazonProductUrl(isbn, associateTag?)`: `/dp/{isbn10}`、導出不可なら `/s?k={isbn13}`。`associateTag` 指定時は `tag=` を付与（アフィリエイト）。
   - `amazonCoverImageUrl(isbn)`: Amazon CDN URL、導出不可なら null。
+
+### アフィリエイト（環境切替）
+- アソシエイトタグはビルド時環境変数 `VITE_AMAZON_ASSOCIATE_TAG`（公開値）で管理。`src/presentation/config/amazonAffiliate.ts` が読み取り、`BookMetadataCard` の既定 `associateTag` に渡す。
+- ローカル開発（未設定）→ 通常リンク・開示文なし。本番ビルド（デプロイワークフローが GitHub リポジトリ変数 `AMAZON_ASSOCIATE_TAG` を `VITE_AMAZON_ASSOCIATE_TAG` として注入）→ アフィリエイトリンク・開示文表示。
+- タグは URL に現れる公開値のため Secret ではなく Variable／`VITE_` で管理（Calil app key とは性質が異なる）。
 - `models/bookMetadata`（新規）: OpenBD 由来のフィールド（title/author/publisher/coverImageUrl）。
 - `repositories/bookMetadataRepository`（新規）: `getByIsbn(isbn): Promise<BookMetadata | null>`。
 

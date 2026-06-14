@@ -67,4 +67,29 @@ describe('BookMetadataCard', () => {
 
     expect(screen.getByText('タイトル情報を取得できませんでした')).toBeInTheDocument();
   });
+
+  test('アソシエイトタグ指定時はリンクに tag= を付与し開示文を表示する', () => {
+    render(
+      <BookMetadataCard
+        isbn="9784873117584"
+        title="リーダブルコード"
+        associateTag="libcheck-22"
+      />,
+    );
+
+    const link = screen.getByRole('link', { name: /Amazonで見る/ });
+    expect(link).toHaveAttribute(
+      'href',
+      'https://www.amazon.co.jp/dp/4873117585?tag=libcheck-22',
+    );
+    expect(screen.getByTestId('affiliate-disclosure')).toBeInTheDocument();
+  });
+
+  test('アソシエイトタグ未指定（既定・空）時は通常リンクで開示文を表示しない', () => {
+    render(<BookMetadataCard isbn="9784873117584" title="リーダブルコード" />);
+
+    const link = screen.getByRole('link', { name: /Amazonで見る/ });
+    expect(link).toHaveAttribute('href', 'https://www.amazon.co.jp/dp/4873117585');
+    expect(screen.queryByTestId('affiliate-disclosure')).not.toBeInTheDocument();
+  });
 });
