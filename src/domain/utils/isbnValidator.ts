@@ -44,6 +44,39 @@ function normalizeIsbn(isbn: string): string {
 }
 
 /**
+ * ISBN-13 を ISBN-10 へ変換する。
+ *
+ * - 978 始まりの ISBN-13: 中央9桁から mod11 でチェックディジット（10→'X'）を再計算して返す。
+ * - 979 始まりの ISBN-13: 対応する ISBN-10 が存在しないため null。
+ * - 既に ISBN-10 の入力: 有効なら正規化して返し、無効なら null。
+ * - それ以外（桁数不正・非数字を含む等）: null。
+ *
+ * Amazon の書影URL・`/dp/` リンクは ISBN-10(=書籍のASIN) を必要とするため用いる。
+ */
+function isbn13to10(isbn: string): string | null {
+  const digits = normalizeIsbn(isbn);
+
+  if (digits.length === 10) {
+    return isValidIsbn10(digits) ? digits : null;
+  }
+  if (digits.length !== 13) return null;
+  // ISBN-13 は全桁が数字（チェックディジットも含め 'X' は使わない）。
+  for (let i = 0; i < 13; i++) {
+    if (parseDigit(digits[i]) === null) return null;
+  }
+  // 979 始まりは ISBN-10 を持たない。
+  if (!digits.startsWith('978')) return null;
+
+  const core = digits.slice(3, 12); // 中央9桁（ISBN-10 のチェックディジットを除く部分）
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += (parseDigit(core[i]) as number) * (10 - i);
+  }
+  const check = (11 - (sum % 11)) % 11;
+  return core + (check === 10 ? 'X' : String(check));
+}
+
+/**
  * 入力値に対するバリデーションメッセージを返す。
  * null の場合はエラーなし（有効または入力途中）。
  */
@@ -81,5 +114,6 @@ export const isbnValidator = {
   isValidIsbn10,
   isValidIsbn,
   normalizeIsbn,
+  isbn13to10,
   getValidationMessage,
 };

@@ -100,4 +100,34 @@ describe('IsbnValidator', () => {
       );
     });
   });
+
+  describe('isbn13to10', () => {
+    test('978始まりのISBN-13をISBN-10へ変換する', () => {
+      expect(isbnValidator.isbn13to10('9784873117584')).toBe('4873117585');
+    });
+
+    test('チェックディジットがXになるISBN-13を変換する', () => {
+      // ISBN-13 9780804429573 -> ISBN-10 080442957X
+      expect(isbnValidator.isbn13to10('9780804429573')).toBe('080442957X');
+    });
+
+    test('ハイフン付きISBN-13も変換できる', () => {
+      expect(isbnValidator.isbn13to10('978-4-87311-758-4')).toBe('4873117585');
+    });
+
+    test('既にISBN-10ならそのまま正規化して返す', () => {
+      expect(isbnValidator.isbn13to10('4-87311-758-5')).toBe('4873117585');
+      expect(isbnValidator.isbn13to10('080442957x')).toBe('080442957X');
+    });
+
+    test('979始まりのISBN-13はISBN-10を持たないためnullを返す', () => {
+      expect(isbnValidator.isbn13to10('9791032305690')).toBeNull();
+    });
+
+    test('不正な入力はnullを返す', () => {
+      expect(isbnValidator.isbn13to10('')).toBeNull();
+      expect(isbnValidator.isbn13to10('12345')).toBeNull();
+      expect(isbnValidator.isbn13to10('978487311758A')).toBeNull();
+    });
+  });
 });
