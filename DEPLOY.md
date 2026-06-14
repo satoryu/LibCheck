@@ -52,6 +52,10 @@ npm run swa:start    # build → swa start dist --api-location api(既定 http:/
 
 ## デプロイ(Azure Static Web Apps)
 
+> インフラ(リソースグループ / Static Web App / アプリ設定)は **Bicep でコード管理**しています(#75)。
+> リソースの作成・更新は `infra/`(Bicep)を参照してください → [infra/README.md](infra/README.md)。
+> 以下の手順 1 は初期の手動作成記録で、現在は `infra/` の `what-if` / `create` で再現できます。
+
 ### 1. リソース作成 & キー登録
 1. Azure ポータルで **Static Web App** を作成(GitHub 連携)。
 2. 作成時のビルド設定(または `.github/workflows/azure-static-web-apps.yml` に反映済み):

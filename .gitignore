@@ -36,3 +36,6 @@ swa-cli.config.json
 # Claude Code local settings
 .claude/
 .vite/
+
+# Bicep compiled output
+infra/*.json
