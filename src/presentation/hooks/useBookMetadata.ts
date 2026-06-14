@@ -18,5 +18,8 @@ export function useBookMetadata(
     queryKey: ['bookMetadata', isbn],
     enabled: isbn.length > 0,
     queryFn: () => deps.bookMetadataRepository.getByIsbn(isbn),
+    // 補助情報のため、外部APIの障害時はリトライを最小限にして速やかに
+    // フォールバック表示へ移行する（該当なしは null 解決で error ではない）。
+    retry: 1,
   });
 }
