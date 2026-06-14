@@ -388,6 +388,43 @@ describe('BookSearchResultPage', () => {
     expect(screen.queryByText('蔵書なし')).not.toBeInTheDocument();
   });
 
+  test('貸出可能の図書館が蔵書なしより上に表示される（在庫状況順ソート）', async () => {
+    // 登録順は library1(港区=蔵書なし) → library2(渋谷=貸出可) だが、
+    // 結果画面では貸出可の渋谷が上位に来る。
+    const results: BookAvailability[] = [
+      {
+        isbn: '9784123456789',
+        libraryStatuses: {
+          Tokyo_Minato: {
+            systemId: 'Tokyo_Minato',
+            status: AvailabilityStatus.notFound,
+            libKeyStatuses: { みなと: '蔵書なし' },
+          },
+          Tokyo_Shibuya: {
+            systemId: 'Tokyo_Shibuya',
+            status: AvailabilityStatus.available,
+            libKeyStatuses: { しぶや: '貸出可' },
+          },
+        },
+      },
+    ];
+
+    renderSubject({
+      libraryRepo: new FakeLibraryRepository(results),
+      registeredRepo: new FakeRegisteredLibraryRepository([library1, library2]),
+      isbn: '9784123456789',
+    });
+
+    const shibuya = await screen.findByText('渋谷区立中央図書館');
+    const minato = await screen.findByText('港区立みなと図書館');
+
+    // 渋谷（貸出可）が港区（蔵書なし）より DOM 上で前に出る。
+    expect(
+      shibuya.compareDocumentPosition(minato) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   test('書籍メタデータ（タイトル・書影・Amazonリンク）を表示する', async () => {
     const results: BookAvailability[] = [
       {

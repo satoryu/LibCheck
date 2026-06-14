@@ -27,6 +27,7 @@ import { useBookAvailability } from '@/presentation/hooks/useBookAvailability';
 import { useBookMetadata } from '@/presentation/hooks/useBookMetadata';
 import { useRegisteredLibraries } from '@/presentation/hooks/useRegisteredLibraries';
 import { useSearchHistoryMutations } from '@/presentation/hooks/useSearchHistory';
+import { sortLibrariesByAvailability } from '@/presentation/utils/sortLibrariesByAvailability';
 import { BookMetadataCard } from '@/presentation/widgets/BookMetadataCard';
 import { LibraryAvailabilityCard } from '@/presentation/widgets/LibraryAvailabilityCard';
 import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
@@ -231,7 +232,7 @@ export function BookSearchResultPage(): JSX.Element {
         <Typography variant="subtitle1">蔵書状況</Typography>
         <Box sx={{ height: 8 }} />
         {results.length > 0 ? (
-          libraries.map((library) => {
+          sortLibrariesByAvailability(libraries, result).map((library) => {
             const status = result?.libraryStatuses[library.systemId];
             if (status === undefined) return null;
             return (
