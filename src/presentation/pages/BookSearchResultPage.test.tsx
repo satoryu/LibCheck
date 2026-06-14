@@ -8,7 +8,13 @@ import type { SearchHistoryEntry } from '@/domain/models/searchHistoryEntry';
 import type { LibraryRepository } from '@/domain/repositories/libraryRepository';
 import type { RegisteredLibraryRepository } from '@/domain/repositories/registeredLibraryRepository';
 import type { SearchHistoryRepository } from '@/domain/repositories/searchHistoryRepository';
-import { renderRouteWithProviders, makeFakeDeps } from '@/test/testUtils';
+import type { BookMetadataRepository } from '@/domain/repositories/bookMetadataRepository';
+import type { BookMetadata } from '@/domain/models/bookMetadata';
+import {
+  renderRouteWithProviders,
+  makeFakeDeps,
+  FakeBookMetadataRepository,
+} from '@/test/testUtils';
 
 class FakeLibraryRepository implements LibraryRepository {
   constructor(private readonly result: BookAvailability[] = []) {}
@@ -93,10 +99,17 @@ const library2: Library = {
   category: 'LARGE',
 };
 
+class ThrowingBookMetadataRepository implements BookMetadataRepository {
+  async getByIsbn(): Promise<BookMetadata | null> {
+    throw new Error('OpenBD network error');
+  }
+}
+
 interface SubjectOptions {
   libraryRepo: LibraryRepository;
   registeredRepo: RegisteredLibraryRepository;
   historyRepo?: SearchHistoryRepository;
+  metadataRepo?: BookMetadataRepository;
   isbn?: string;
   source?: string;
 }
@@ -110,6 +123,8 @@ function renderSubject(opts: SubjectOptions) {
       registeredLibraryRepository: opts.registeredRepo,
       searchHistoryRepository:
         opts.historyRepo ?? new FakeSearchHistoryRepository(),
+      bookMetadataRepository:
+        opts.metadataRepo ?? new FakeBookMetadataRepository(),
     }),
   });
 }
@@ -371,5 +386,68 @@ describe('BookSearchResultPage', () => {
     // Should display the result for the searched ISBN, not results[0].
     expect(await screen.findByText('貸出可能')).toBeInTheDocument();
     expect(screen.queryByText('蔵書なし')).not.toBeInTheDocument();
+  });
+
+  test('書籍メタデータ（タイトル・書影・Amazonリンク）を表示する', async () => {
+    const results: BookAvailability[] = [
+      {
+        isbn: '9784873117584',
+        libraryStatuses: {
+          Tokyo_Minato: {
+            systemId: 'Tokyo_Minato',
+            status: AvailabilityStatus.available,
+            libKeyStatuses: { みなと: '貸出可' },
+          },
+        },
+      },
+    ];
+
+    renderSubject({
+      libraryRepo: new FakeLibraryRepository(results),
+      registeredRepo: new FakeRegisteredLibraryRepository([library1]),
+      metadataRepo: new FakeBookMetadataRepository({
+        '9784873117584': {
+          isbn: '9784873117584',
+          title: 'リーダブルコード',
+        },
+      }),
+      isbn: '9784873117584',
+    });
+
+    expect(await screen.findByText('リーダブルコード')).toBeInTheDocument();
+    const link = screen.getByRole('link', { name: /Amazonで見る/ });
+    expect(link).toHaveAttribute(
+      'href',
+      'https://www.amazon.co.jp/dp/4873117585',
+    );
+    expect(screen.getByTestId('book-cover')).toBeInTheDocument();
+  });
+
+  test('メタデータ取得が失敗しても蔵書状況は表示される', async () => {
+    const results: BookAvailability[] = [
+      {
+        isbn: '9784873117584',
+        libraryStatuses: {
+          Tokyo_Minato: {
+            systemId: 'Tokyo_Minato',
+            status: AvailabilityStatus.available,
+            libKeyStatuses: { みなと: '貸出可' },
+          },
+        },
+      },
+    ];
+
+    renderSubject({
+      libraryRepo: new FakeLibraryRepository(results),
+      registeredRepo: new FakeRegisteredLibraryRepository([library1]),
+      metadataRepo: new ThrowingBookMetadataRepository(),
+      isbn: '9784873117584',
+    });
+
+    // メタデータ失敗時もカード自体（Amazonリンク）と蔵書状況は表示される。
+    expect(await screen.findByText('貸出可能')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /Amazonで見る/ }),
+    ).toBeInTheDocument();
   });
 });

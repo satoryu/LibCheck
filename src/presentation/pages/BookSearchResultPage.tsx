@@ -24,8 +24,10 @@ import { statusForLibKey } from '@/domain/models/libraryStatus';
 import { APP_COLORS } from '@/presentation/theme/appColors';
 import { resolveErrorMessage } from '@/presentation/utils/errorMessageResolver';
 import { useBookAvailability } from '@/presentation/hooks/useBookAvailability';
+import { useBookMetadata } from '@/presentation/hooks/useBookMetadata';
 import { useRegisteredLibraries } from '@/presentation/hooks/useRegisteredLibraries';
 import { useSearchHistoryMutations } from '@/presentation/hooks/useSearchHistory';
+import { BookMetadataCard } from '@/presentation/widgets/BookMetadataCard';
 import { LibraryAvailabilityCard } from '@/presentation/widgets/LibraryAvailabilityCard';
 import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
 
@@ -46,6 +48,7 @@ export function BookSearchResultPage(): JSX.Element {
 
   const registeredQuery = useRegisteredLibraries();
   const availabilityQuery = useBookAvailability(isbn);
+  const metadataQuery = useBookMetadata(isbn);
   const { save } = useSearchHistoryMutations();
   const registeredLibraries = registeredQuery.data;
 
@@ -110,6 +113,21 @@ export function BookSearchResultPage(): JSX.Element {
     </Card>
   );
 
+  // 書影・タイトル・Amazonリンク。書影とリンクは ISBN から導出するため、
+  // タイトル取得（OpenBD）が失敗・未取得でも常に表示できる。メタデータ取得の
+  // 失敗はページ全体のエラー表示には波及させない（中核機能の蔵書状況は無影響）。
+  const bookMetadataSection = (
+    <>
+      <Box sx={{ height: 16 }} />
+      <BookMetadataCard
+        isbn={isbn}
+        title={metadataQuery.data?.title}
+        openBdCoverUrl={metadataQuery.data?.coverImageUrl}
+        isLoadingTitle={metadataQuery.isLoading}
+      />
+    </>
+  );
+
   const scanAnotherButton = (
     <Box sx={{ width: '100%' }}>
       <Button
@@ -141,6 +159,7 @@ export function BookSearchResultPage(): JSX.Element {
   const errorState = (error: unknown): JSX.Element => (
     <Box sx={{ p: 2 }}>
       {isbnSection}
+      {bookMetadataSection}
       <Box sx={{ height: 24 }} />
       <Box
         sx={{
@@ -165,6 +184,7 @@ export function BookSearchResultPage(): JSX.Element {
   const loadingState = (
     <Box sx={{ p: 2 }}>
       {isbnSection}
+      {bookMetadataSection}
       <Box sx={{ height: 24 }} />
       <Box sx={{ display: 'flex', justifyContent: 'center' }}>
         <CircularProgress />
@@ -206,6 +226,7 @@ export function BookSearchResultPage(): JSX.Element {
     return (
       <Box sx={{ p: 2 }}>
         {isbnSection}
+        {bookMetadataSection}
         <Box sx={{ height: 24 }} />
         <Typography variant="subtitle1">蔵書状況</Typography>
         <Box sx={{ height: 8 }} />

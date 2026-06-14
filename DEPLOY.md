@@ -68,6 +68,13 @@ GitHub リポジトリの Secrets に `AZURE_STATIC_WEB_APPS_API_TOKEN`(SWA の 
 します(手動実行も workflow_dispatch で可能)。PR 時の検証(型チェック・テスト)は `ci.yml` が
 行います。
 
+### 3. Amazon アソシエイトタグ(任意)
+書籍検索結果の「Amazonで見る」リンクをアフィリエイトリンクにする場合、GitHub リポジトリの
+**Variables**(Secrets ではなく Variables)に `AMAZON_ASSOCIATE_TAG`(例: `libcheck-22`)を登録します。
+本番ビルド時に `VITE_AMAZON_ASSOCIATE_TAG` として注入され、リンクに `tag=` が付与されます。
+未設定なら通常リンクのまま。タグは URL に現れる公開値のため Secret ではなく Variable で管理します。
+ローカル開発(`.env.local` 未設定)では常に通常リンクになります。
+
 現在のデプロイ先リソース:
 
 - リソースグループ: `rg-libcheck` (East Asia)

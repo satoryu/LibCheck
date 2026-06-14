@@ -19,6 +19,10 @@ jobs:
           submodules: true
       - name: Build And Deploy
         uses: Azure/static-web-apps-deploy@v1
+        env:
+          # Amazon アソシエイトタグ（公開値）。リポジトリ変数 AMAZON_ASSOCIATE_TAG に
+          # 設定すると本番ビルドのリンクに付与される。未設定なら通常リンクのまま。
+          VITE_AMAZON_ASSOCIATE_TAG: ${{ vars.AMAZON_ASSOCIATE_TAG }}
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}

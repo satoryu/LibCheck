@@ -3,19 +3,24 @@ import type { LocalStorageRepository } from "@/domain/repositories/localStorageR
 import type { LibraryRepository } from "@/domain/repositories/libraryRepository";
 import type { RegisteredLibraryRepository } from "@/domain/repositories/registeredLibraryRepository";
 import type { SearchHistoryRepository } from "@/domain/repositories/searchHistoryRepository";
+import type { BookMetadataRepository } from "@/domain/repositories/bookMetadataRepository";
 import { CalilApiClient } from "@/data/datasources/calilApiClient";
 import { CALIL_API_CONFIG } from "@/data/datasources/calilApiConfig";
+import { OpenBdApiClient } from "@/data/datasources/openBdApiClient";
 import { WebLocalStorageRepository } from "@/data/repositories/localStorageRepositoryImpl";
 import { LibraryRepositoryImpl } from "@/data/repositories/libraryRepositoryImpl";
 import { RegisteredLibraryRepositoryImpl } from "@/data/repositories/registeredLibraryRepositoryImpl";
 import { SearchHistoryRepositoryImpl } from "@/data/repositories/searchHistoryRepositoryImpl";
+import { BookMetadataRepositoryImpl } from "@/data/repositories/bookMetadataRepositoryImpl";
 
 export interface AppDependencies {
   localStorageRepository: LocalStorageRepository;
   calilApiClient: CalilApiClient;
+  openBdApiClient: OpenBdApiClient;
   libraryRepository: LibraryRepository;
   registeredLibraryRepository: RegisteredLibraryRepository;
   searchHistoryRepository: SearchHistoryRepository;
+  bookMetadataRepository: BookMetadataRepository;
 }
 
 export function createDefaultDependencies(): AppDependencies {
@@ -23,6 +28,7 @@ export function createDefaultDependencies(): AppDependencies {
   const calilApiClient = new CalilApiClient({
     appKey: CALIL_API_CONFIG.appKey,
   });
+  const openBdApiClient = new OpenBdApiClient();
   const libraryRepository = new LibraryRepositoryImpl({
     apiClient: calilApiClient,
   });
@@ -32,13 +38,16 @@ export function createDefaultDependencies(): AppDependencies {
   const searchHistoryRepository = new SearchHistoryRepositoryImpl(
     localStorageRepository,
   );
+  const bookMetadataRepository = new BookMetadataRepositoryImpl(openBdApiClient);
 
   return {
     localStorageRepository,
     calilApiClient,
+    openBdApiClient,
     libraryRepository,
     registeredLibraryRepository,
     searchHistoryRepository,
+    bookMetadataRepository,
   };
 }
 

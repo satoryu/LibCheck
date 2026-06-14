@@ -14,7 +14,10 @@ import {
 import { SelectedLibrariesProvider } from "@/presentation/hooks/useSelectedLibraries";
 import { routes } from "@/app/router";
 import type { LocalStorageRepository } from "@/domain/repositories/localStorageRepository";
+import type { BookMetadata } from "@/domain/models/bookMetadata";
+import type { BookMetadataRepository } from "@/domain/repositories/bookMetadataRepository";
 import { CalilApiClient } from "@/data/datasources/calilApiClient";
+import { OpenBdApiClient } from "@/data/datasources/openBdApiClient";
 import { LibraryRepositoryImpl } from "@/data/repositories/libraryRepositoryImpl";
 import { RegisteredLibraryRepositoryImpl } from "@/data/repositories/registeredLibraryRepositoryImpl";
 import { SearchHistoryRepositoryImpl } from "@/data/repositories/searchHistoryRepositoryImpl";
@@ -47,6 +50,18 @@ export class FakeLocalStorageRepository implements LocalStorageRepository {
   }
 }
 
+/**
+ * 既定では該当なし(null)を返す書籍メタデータリポジトリ。
+ * コンストラクタに ISBN→BookMetadata のマップを渡すと該当を返す。
+ */
+export class FakeBookMetadataRepository implements BookMetadataRepository {
+  constructor(private readonly byIsbn: Record<string, BookMetadata> = {}) {}
+
+  async getByIsbn(isbn: string): Promise<BookMetadata | null> {
+    return this.byIsbn[isbn] ?? null;
+  }
+}
+
 export function makeFakeDeps(
   overrides?: Partial<AppDependencies>,
 ): AppDependencies {
@@ -72,13 +87,26 @@ export function makeFakeDeps(
   const searchHistoryRepository =
     overrides?.searchHistoryRepository ??
     new SearchHistoryRepositoryImpl(localStorageRepository);
+  const openBdApiClient =
+    overrides?.openBdApiClient ??
+    new OpenBdApiClient({
+      fetchFn: async () =>
+        new Response("[null]", {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+    });
+  const bookMetadataRepository =
+    overrides?.bookMetadataRepository ?? new FakeBookMetadataRepository();
 
   return {
     localStorageRepository,
     calilApiClient,
+    openBdApiClient,
     libraryRepository,
     registeredLibraryRepository,
     searchHistoryRepository,
+    bookMetadataRepository,
   };
 }
 
