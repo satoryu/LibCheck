@@ -37,9 +37,19 @@ infra/
   export CALIL_APP_KEY="$(python3 -c "import json;print(json.load(open('api/local.settings.json'))['Values']['CALIL_APP_KEY'])")"
   ```
 
-## 手動デプロイ手順（CI 化でもそのまま使えるコマンド）
+## デプロイスコープ
 
-> 以下の `what-if` / `create` の 2 コマンドが手動・CI 共通の中核。CI 化の際は「az login を OIDC に置き換える」「`CALIL_APP_KEY` を GitHub Secret から渡す」だけで同じコマンドを使える。
+リソースグループスコープでデプロイする（最小権限）。リソースグループ `rg-libcheck`
+は一度きりのブートストラップで作成済み（IaC では作成しない）。
+
+```bash
+# ブートストラップ（初回のみ・作成済み）
+az group create --name rg-libcheck --location eastasia
+```
+
+## 手動デプロイ手順（CI でも同じコマンドを使う）
+
+> 以下の `what-if` / `create` の 2 コマンドが手動・CI 共通の中核。CI では「`az login` を OIDC に置き換える」「`CALIL_APP_KEY` を GitHub Secret から渡す」だけで同じコマンドを使う（`.github/workflows/infra.yml`）。
 
 ### 1. ビルド / リント
 
@@ -50,8 +60,8 @@ az bicep build --file infra/main.bicep
 ### 2. what-if（差分プレビュー・適用前に必須）
 
 ```bash
-az deployment sub what-if \
-  --location eastasia \
+az deployment group what-if \
+  --resource-group rg-libcheck \
   --template-file infra/main.bicep \
   --parameters infra/main.bicepparam
 ```
@@ -62,8 +72,8 @@ az deployment sub what-if \
 ### 3. apply（適用）
 
 ```bash
-az deployment sub create \
-  --location eastasia \
+az deployment group create \
+  --resource-group rg-libcheck \
   --template-file infra/main.bicep \
   --parameters infra/main.bicepparam
 ```
@@ -85,28 +95,47 @@ az deployment sub create \
 - 既存リソースと同名・同 location・同 SKU を宣言するため、`create` は in-place 更新（冪等）。
 - 初回適用前は必ず `what-if` で差分を確認すること。
 
-## CI 自動適用の今後方針（#75 では未実装・整理のみ）
+## CI 自動適用（`.github/workflows/infra.yml`）
 
-OIDC 整備後に GitHub Actions へ載せる。手動手順との差分は **認証** と **シークレットの渡し方** のみ。
+OIDC（パスワードレス）で Azure にログインして適用する。アプリ配信ワークフロー
+（azure-static-web-apps.yml）とは責務を分離している。
 
-1. **認証**: Azure AD でフェデレーション資格情報（OIDC）またはサービスプリンシパルを作成し、`AZURE_CLIENT_ID` / `AZURE_TENANT_ID` / `AZURE_SUBSCRIPTION_ID` を GitHub に登録。
-   ```yaml
-   permissions:
-     id-token: write
-     contents: read
-   steps:
-     - uses: azure/login@v2
-       with:
-         client-id: ${{ secrets.AZURE_CLIENT_ID }}
-         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-   ```
-2. **what-if（PR / `infra/**` 変更時）→ apply（`main` 反映時）**:
-   ```yaml
-   - name: what-if
-     run: az deployment sub what-if --location eastasia --template-file infra/main.bicep --parameters infra/main.bicepparam
-     env:
-       CALIL_APP_KEY: ${{ secrets.CALIL_APP_KEY }}
-   ```
-   apply は `az deployment sub create ...` を同様に。`CALIL_APP_KEY` は GitHub Secret から `env` で渡す。
-3. アプリ配信ワークフロー（azure-static-web-apps.yml）とは別ワークフローにし、責務を分離する。
+| トリガー | 動作 |
+|---|---|
+| `pull_request`（`infra/**`） | **what-if** のみ（差分プレビュー・読み取り） |
+| `push: main`（`infra/**`） | **apply**（`production` 環境の承認ゲート経由） |
+| `workflow_dispatch` | **apply**（同上・初回/再適用/手動） |
+
+`production` 環境に **required reviewers** を設定しているため、main 反映後も承認操作を
+してから apply が実行される（本番リソースの誤適用防止）。
+
+### 一度きりのセットアップ（実施済み・再現用メモ）
+
+```bash
+# 1) GitHub OIDC 用の App 登録 + サービスプリンシパル
+az ad app create --display-name libcheck-github-oidc          # → appId(=AZURE_CLIENT_ID)
+az ad sp create --id <appId>
+
+# 2) フェデレーション資格情報（トリガーごとに subject を登録）
+#    - PR の what-if 用 : repo:satoryu/LibCheck:pull_request
+#    - apply 用(環境)   : repo:satoryu/LibCheck:environment:production
+az ad app federated-credential create --id <appId> --parameters '{
+  "name":"github-pull-request","issuer":"https://token.actions.githubusercontent.com",
+  "subject":"repo:satoryu/LibCheck:pull_request","audiences":["api://AzureADTokenExchange"]}'
+az ad app federated-credential create --id <appId> --parameters '{
+  "name":"github-env-production","issuer":"https://token.actions.githubusercontent.com",
+  "subject":"repo:satoryu/LibCheck:environment:production","audiences":["api://AzureADTokenExchange"]}'
+
+# 3) 最小権限のロール割当（rg-libcheck のみ）
+az role assignment create --assignee <appId> --role Contributor \
+  --scope /subscriptions/<subId>/resourceGroups/rg-libcheck
+
+# 4) GitHub 側: Secrets と Environment
+gh secret set AZURE_CLIENT_ID --body <appId>
+gh secret set AZURE_TENANT_ID --body <tenantId>
+gh secret set AZURE_SUBSCRIPTION_ID --body <subId>
+gh secret set CALIL_APP_KEY --body <calil-app-key>     # @secure() パラメータへ
+# production 環境 + required reviewers は gh api で作成済み
+```
+
+> シークレットは GitHub Secrets に保存し、ワークフローでは `env:` 経由で `@secure()` パラメータへ渡す。OIDC のためクライアントシークレット（パスワード）は発行しない。

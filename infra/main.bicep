@@ -1,10 +1,10 @@
-targetScope = 'subscription'
+// リソースグループスコープでデプロイする（最小権限：CI 用 ID は rg-libcheck の
+// Contributor のみで足りる）。RG 自体は一度きりのブートストラップで作成済みのため、
+// ここでは作成しない。
+targetScope = 'resourceGroup'
 
 @description('リソースのリージョン')
 param location string = 'eastasia'
-
-@description('リソースグループ名')
-param resourceGroupName string = 'rg-libcheck'
 
 @description('Static Web App の名前')
 param staticWebAppName string = 'libcheck'
@@ -19,14 +19,8 @@ param branch string = 'main'
 @secure()
 param calilAppKey string
 
-resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
-  name: resourceGroupName
-  location: location
-}
-
 module staticWebApp 'modules/staticWebApp.bicep' = {
   name: 'staticWebApp'
-  scope: rg
   params: {
     name: staticWebAppName
     location: location

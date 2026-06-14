@@ -28,13 +28,14 @@ Issue: #75
 ## Constraints
 - ARM の SWA アプリ設定（`appsettings`）は**全置換**。よってデプロイ時は毎回 `CALIL_APP_KEY` を渡す運用とする。
 - 本番デプロイ（アプリ配信）は既存の GitHub Actions（デプロイトークン方式）を継続。Bicep はインフラ構成を管理し、アプリ配信ワークフローには干渉しない。
-- CI からの自動適用には Azure への OIDC / サービスプリンシパル設定（Azure AD 側作業）が必要なため、**今回は手動適用**とし、CI 自動適用は後続（方針のみ整理）。
+- CI 自動適用は **OIDC（パスワードレス）+ 最小権限（`rg-libcheck` の Contributor のみ）+ `production` 環境の承認ゲート**で実装する。デプロイは RG スコープ（`az deployment group`）。
 
 ## Acceptance Criteria
 - AC-1: `infra/` 配下の Bicep が `az bicep build` を通る。
 - AC-2: `az deployment sub what-if` を実行すると、既存リソースに対して破壊的変更が無い（差分が無い or 意図した差分のみ）ことを確認できる。
 - AC-3: `CALIL_APP_KEY` を環境変数から注入する形で、値がリポジトリに含まれない。
-- AC-4: README/DEPLOY 等に手動デプロイ手順と CI 自動適用の今後方針が記載される。
+- AC-4: README/DEPLOY 等に手動デプロイ手順と CI 自動適用（OIDC・承認ゲート・OIDCセットアップ）が記載される。
+- AC-5: PR（`infra/**` 変更）で what-if ジョブが OIDC ログインしてグリーンになる。
 
 ## User Stories
 - US-1: 開発者として、インフラ構成をコードで把握・再現したい。手動操作の属人性をなくしたい。
