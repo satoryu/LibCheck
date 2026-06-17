@@ -39,3 +39,6 @@ swa-cli.config.json
 
 # Bicep compiled output
 infra/*.json
+
+# Cloudflare Pages local secrets (wrangler pages dev)
+.dev.vars

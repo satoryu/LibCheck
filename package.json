@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "swa:start": "npm run build && swa start dist --api-location api"
+    "pages:dev": "npm run build && npx wrangler pages dev"
   },
   "dependencies": {
     "@emotion/react": "^11.0.0",
@@ -25,7 +25,6 @@
     "react-router-dom": "^7.0.0"
   },
   "devDependencies": {
-    "@azure/static-web-apps-cli": "^2.0.2",
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^16.0.0",
     "@testing-library/user-event": "^14.0.0",
