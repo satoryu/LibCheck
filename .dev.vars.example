@@ -1,0 +1,4 @@
+# Copy to `.dev.vars` (gitignored) for local Pages Functions emulation
+# via `npm run pages:dev` (wrangler pages dev). Read by the Calil proxy
+# function as `env.CALIL_APP_KEY`.
+CALIL_APP_KEY=your_calil_app_key_here

@@ -1,0 +1,4 @@
+# SPA フォールバック: 未知パスは index.html を 200 で返す。
+# 既存の静的アセットは Pages が優先配信し、/api/* は Pages Functions が
+# 先に処理するため、それらはフォールバックされない。
+/*    /index.html   200
