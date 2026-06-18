@@ -2,3 +2,10 @@
 # via `npm run pages:dev` (wrangler pages dev). Read by the Calil proxy
 # function as `env.CALIL_APP_KEY`.
 CALIL_APP_KEY=your_calil_app_key_here
+
+# (任意) 認証モック。'1' のとき /api/me がモックトークンを受理する（dev 専用）。
+# 本番 Pages 環境には設定しないこと。
+# AUTH_MOCK=1
+
+# (任意) Google OAuth クライアント ID。/api/me が ID トークンの aud 検証に使う。
+# GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com

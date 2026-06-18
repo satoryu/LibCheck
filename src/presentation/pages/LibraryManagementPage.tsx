@@ -28,6 +28,7 @@ import {
   useRegisteredLibraryMutations,
 } from '@/presentation/hooks/useRegisteredLibraries';
 import { ErrorStateWidget } from '@/presentation/widgets/ErrorStateWidget';
+import { AuthButton } from '@/presentation/widgets/AuthButton';
 
 /**
  * 登録図書館の管理ページ。
@@ -156,6 +157,7 @@ export function LibraryManagementPage() {
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             登録図書館
           </Typography>
+          <AuthButton />
           <IconButton
             color="inherit"
             aria-label="追加"

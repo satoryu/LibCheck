@@ -12,6 +12,8 @@ import {
   type AppDependencies,
 } from "@/app/dependencies";
 import { SelectedLibrariesProvider } from "@/presentation/hooks/useSelectedLibraries";
+import { AuthProvider } from "@/presentation/auth/AuthProvider";
+import type { User } from "@/domain/models/user";
 import { routes } from "@/app/router";
 import type { LocalStorageRepository } from "@/domain/repositories/localStorageRepository";
 import type { BookMetadata } from "@/domain/models/bookMetadata";
@@ -122,6 +124,7 @@ export interface RenderWithProvidersOptions {
   deps?: AppDependencies;
   route?: string;
   queryClient?: QueryClient;
+  authUser?: User | null;
 }
 
 export interface RenderWithProvidersResult extends RenderResult {
@@ -143,9 +146,11 @@ export function renderWithProviders(
       <QueryClientProvider client={queryClient}>
         <SnackbarProvider>
           <ThemeProvider theme={theme}>
-            <SelectedLibrariesProvider>
-              <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
-            </SelectedLibrariesProvider>
+            <AuthProvider initialUser={options?.authUser ?? null}>
+              <SelectedLibrariesProvider>
+                <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+              </SelectedLibrariesProvider>
+            </AuthProvider>
           </ThemeProvider>
         </SnackbarProvider>
       </QueryClientProvider>
@@ -163,6 +168,7 @@ export function renderWithProviders(
 export interface RenderRouteOptions {
   deps?: AppDependencies;
   queryClient?: QueryClient;
+  authUser?: User | null;
 }
 
 export function renderRouteWithProviders(
@@ -178,9 +184,11 @@ export function renderRouteWithProviders(
       <QueryClientProvider client={queryClient}>
         <SnackbarProvider>
           <ThemeProvider theme={theme}>
-            <SelectedLibrariesProvider>
-              <RouterProvider router={router} />
-            </SelectedLibrariesProvider>
+            <AuthProvider initialUser={options?.authUser ?? null}>
+              <SelectedLibrariesProvider>
+                <RouterProvider router={router} />
+              </SelectedLibrariesProvider>
+            </AuthProvider>
           </ThemeProvider>
         </SnackbarProvider>
       </QueryClientProvider>

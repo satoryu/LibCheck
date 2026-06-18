@@ -12,6 +12,7 @@ import {
   type AppDependencies,
 } from '@/app/dependencies';
 import { SelectedLibrariesProvider } from '@/presentation/hooks/useSelectedLibraries';
+import { AuthProvider } from '@/presentation/auth/AuthProvider';
 import { routes } from '@/app/router';
 import type { BookAvailability } from '@/domain/models/bookAvailability';
 import type { Library } from '@/domain/models/library';
@@ -84,9 +85,11 @@ function renderRouterAt(
       <QueryClientProvider client={queryClient}>
         <SnackbarProvider>
           <ThemeProvider theme={theme}>
-            <SelectedLibrariesProvider>
-              <RouterProvider router={router} />
-            </SelectedLibrariesProvider>
+            <AuthProvider>
+              <SelectedLibrariesProvider>
+                <RouterProvider router={router} />
+              </SelectedLibrariesProvider>
+            </AuthProvider>
           </ThemeProvider>
         </SnackbarProvider>
       </QueryClientProvider>

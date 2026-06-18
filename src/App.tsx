@@ -3,6 +3,7 @@ import { CssBaseline, GlobalStyles, ThemeProvider } from '@mui/material';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from 'react-router-dom';
 import { SnackbarProvider } from 'notistack';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 import {
   DependenciesProvider,
@@ -12,6 +13,8 @@ import { createAppRouter } from '@/app/router';
 import { makeQueryClient } from '@/queryClient';
 import { theme } from '@/theme';
 import { SelectedLibrariesProvider } from '@/presentation/hooks/useSelectedLibraries';
+import { AuthProvider } from '@/presentation/auth/AuthProvider';
+import { googleClientId } from '@/data/datasources/authConfig';
 
 /**
  * Root application component.
@@ -29,6 +32,13 @@ export function App() {
   const dependencies = useMemo(() => createDefaultDependencies(), []);
   const queryClient = useMemo(() => makeQueryClient(), []);
   const router = useMemo(() => createAppRouter(), []);
+  const clientId = googleClientId();
+
+  const routedTree = (
+    <SelectedLibrariesProvider>
+      <RouterProvider router={router} />
+    </SelectedLibrariesProvider>
+  );
 
   return (
     <DependenciesProvider value={dependencies}>
@@ -47,9 +57,17 @@ export function App() {
           <SnackbarProvider
             anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           >
-            <SelectedLibrariesProvider>
-              <RouterProvider router={router} />
-            </SelectedLibrariesProvider>
+            <AuthProvider>
+              {/* クライアント ID がある場合のみ GIS を有効化（無い/モック時は
+                  AuthButton 側でログインUIを出さない or モックに切替）。 */}
+              {clientId.length > 0 ? (
+                <GoogleOAuthProvider clientId={clientId}>
+                  {routedTree}
+                </GoogleOAuthProvider>
+              ) : (
+                routedTree
+              )}
+            </AuthProvider>
           </SnackbarProvider>
         </ThemeProvider>
       </QueryClientProvider>
