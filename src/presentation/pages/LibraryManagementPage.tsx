@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import {
-  AppBar,
   Box,
   Button,
   CircularProgress,
@@ -11,11 +10,11 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Fab,
   IconButton,
   List,
   ListItem,
   ListItemText,
-  Toolbar,
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -28,7 +27,6 @@ import {
   useRegisteredLibraryMutations,
 } from '@/presentation/hooks/useRegisteredLibraries';
 import { ErrorStateWidget } from '@/presentation/widgets/ErrorStateWidget';
-import { AuthButton } from '@/presentation/widgets/AuthButton';
 
 /**
  * 登録図書館の管理ページ。
@@ -150,24 +148,23 @@ export function LibraryManagementPage() {
     );
   };
 
+  const hasLibraries = (registeredLibraries.data ?? []).length > 0;
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            登録図書館
-          </Typography>
-          <AuthButton />
-          <IconButton
-            color="inherit"
-            aria-label="追加"
-            onClick={() => navigate('/library/add')}
-          >
-            <AddIcon />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
       <Box sx={{ flexGrow: 1, overflow: 'auto' }}>{renderBody()}</Box>
+
+      {/* 登録がある時の追加導線（空状態は本文の CTA を使う）。 */}
+      {hasLibraries && (
+        <Fab
+          color="primary"
+          aria-label="図書館を追加"
+          onClick={() => navigate('/library/add')}
+          sx={{ position: 'fixed', right: 16, bottom: 72 }}
+        >
+          <AddIcon />
+        </Fab>
+      )}
 
       <Dialog
         open={pendingDelete !== null}

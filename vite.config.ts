@@ -42,6 +42,13 @@ export default defineConfig(({ mode }) => {
     // Vitest configuration (read at runtime by vitest; not part of vite's UserConfig type).
     test: {
       globals: true,
+      // 認証関連の env をテストでは明示的に空にする（ローカルの .env.local の
+      // VITE_GOOGLE_CLIENT_ID 等がテストへ漏れて AuthButton が GoogleLogin を
+      // 描画し GoogleOAuthProvider 不在でクラッシュするのを防ぐ）。
+      env: {
+        VITE_GOOGLE_CLIENT_ID: '',
+        VITE_AUTH_MOCK: '',
+      },
       // Custom env = jsdom + native AbortController restored (see custom-env.ts);
       // required because Node 25's undici Request rejects jsdom's AbortSignal.
       environment: "./src/test/custom-env.ts",

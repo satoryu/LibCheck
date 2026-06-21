@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  AppBar,
   Box,
   Button,
   CircularProgress,
@@ -11,7 +10,6 @@ import {
   DialogContentText,
   DialogTitle,
   IconButton,
-  Toolbar,
   Typography,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -123,22 +121,16 @@ export function SearchHistoryPage() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            検索履歴
-          </Typography>
-          {hasEntries && (
-            <IconButton
-              color="inherit"
-              aria-label="全履歴を削除"
-              onClick={() => setDeleteAllOpen(true)}
-            >
-              <DeleteSweepIcon />
-            </IconButton>
-          )}
-        </Toolbar>
-      </AppBar>
+      {hasEntries && (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: 1, pt: 1 }}>
+          <IconButton
+            aria-label="全履歴を削除"
+            onClick={() => setDeleteAllOpen(true)}
+          >
+            <DeleteSweepIcon />
+          </IconButton>
+        </Box>
+      )}
       <Box sx={{ flexGrow: 1, overflow: 'auto' }}>{renderBody()}</Box>
 
       <Dialog open={deleteAllOpen} onClose={() => setDeleteAllOpen(false)}>
