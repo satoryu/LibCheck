@@ -5,6 +5,7 @@ dist
 tsconfig.tsbuildinfo
 vite.config.js
 vite.config.d.ts
+vite-dev-persistence.d.ts
 /coverage/
 
 # Azure Functions (API) local secrets & build artifacts
@@ -42,3 +43,6 @@ infra/*.json
 
 # Cloudflare Pages local secrets (wrangler pages dev)
 .dev.vars
+
+# Local dev D1 (node:sqlite)
+.dev.d1.sqlite*

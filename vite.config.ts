@@ -1,71 +1,7 @@
-import { defineConfig, loadEnv, type Plugin } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
-import type { IncomingMessage, ServerResponse } from "node:http";
-
-/**
- * dev サーバ専用: 保護 API（登録図書館・検索履歴）をメモリ実装で代替する。
- * 本番では Cloudflare Pages Functions + D1 が担うが、`npm run dev`（Vite）は
- * Functions を起動しないため、認証モックでローカル開発を成立させる目的で用意する。
- * 認証は dev のため Authorization ヘッダの有無のみ確認（再起動で消える）。
- */
-function devPersistenceApiPlugin(): Plugin {
-  let registeredLibraries: unknown[] = [];
-  let searchHistory: unknown[] = [];
-
-  const readJson = (req: IncomingMessage): Promise<Record<string, unknown>> =>
-    new Promise((resolve) => {
-      let data = "";
-      req.on("data", (c) => (data += c));
-      req.on("end", () => {
-        try {
-          resolve(JSON.parse(data || "{}"));
-        } catch {
-          resolve({});
-        }
-      });
-    });
-
-  const handler =
-    (kind: "libraries" | "entries") =>
-    async (req: IncomingMessage, res: ServerResponse) => {
-      if (!req.headers.authorization) {
-        res.statusCode = 401;
-        res.end("unauthorized");
-        return;
-      }
-      res.setHeader("content-type", "application/json");
-      res.setHeader("cache-control", "no-store");
-      const payload = () =>
-        kind === "libraries"
-          ? { libraries: registeredLibraries }
-          : { entries: searchHistory };
-      if (req.method === "GET") {
-        res.end(JSON.stringify(payload()));
-        return;
-      }
-      if (req.method === "PUT") {
-        const body = await readJson(req);
-        if (kind === "libraries") {
-          registeredLibraries = Array.isArray(body.libraries) ? body.libraries : [];
-        } else {
-          searchHistory = Array.isArray(body.entries) ? body.entries : [];
-        }
-        res.end(JSON.stringify(payload()));
-        return;
-      }
-      res.statusCode = 405;
-      res.end();
-    };
-
-  return {
-    name: "dev-persistence-api",
-    configureServer(server) {
-      server.middlewares.use("/api/registered-libraries", handler("libraries"));
-      server.middlewares.use("/api/search-history", handler("entries"));
-    },
-  };
-}
+import { devPersistencePlugin } from "./vite-dev-persistence";
 
 export default defineConfig(({ mode }) => {
   // Load ALL env vars (empty prefix), including the non-`VITE_` CALIL_APP_KEY.
@@ -82,7 +18,7 @@ export default defineConfig(({ mode }) => {
   const testExecArgv = nodeMajor >= 22 ? ["--no-experimental-webstorage"] : [];
 
   return {
-    plugins: [react(), devPersistenceApiPlugin()],
+    plugins: [react(), devPersistencePlugin()],
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
