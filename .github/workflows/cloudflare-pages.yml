@@ -25,6 +25,8 @@ jobs:
         env:
           # Amazon アソシエイトタグ（公開値）。リポジトリ変数から本番ビルドに注入。
           VITE_AMAZON_ASSOCIATE_TAG: ${{ vars.AMAZON_ASSOCIATE_TAG }}
+          # Google OAuth クライアント ID（公開値）。GIS のログインに使う。
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
         run: npm run build
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

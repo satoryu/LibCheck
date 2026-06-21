@@ -9,6 +9,10 @@ interface ImportMetaEnv {
   // Amazon associate (affiliate) tag. Public value embedded in outbound links.
   // Unset locally → normal links; injected at production build. See amazonAffiliate.ts.
   readonly VITE_AMAZON_ASSOCIATE_TAG?: string;
+  // Google OAuth client ID (public; GIS needs no client secret). See authConfig.ts.
+  readonly VITE_GOOGLE_CLIENT_ID?: string;
+  // Dev-only auth mock toggle ("true"). Gated by import.meta.env.DEV. See authConfig.ts.
+  readonly VITE_AUTH_MOCK?: string;
 }
 
 interface ImportMeta {

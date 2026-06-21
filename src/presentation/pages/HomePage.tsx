@@ -1,7 +1,5 @@
 import { useNavigate, Navigate } from 'react-router-dom';
 import {
-  AppBar,
-  Toolbar,
   Typography,
   Box,
   Button,
@@ -12,8 +10,6 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import { useRegisteredLibraries } from '@/presentation/hooks/useRegisteredLibraries';
-
-const APP_TITLE = 'LibCheck';
 
 /**
  * ホーム画面。
@@ -48,13 +44,6 @@ export function HomePage(): React.ReactElement {
 
   return (
     <Box>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div">
-            {APP_TITLE}
-          </Typography>
-        </Toolbar>
-      </AppBar>
       <Box
         sx={{
           display: 'flex',
