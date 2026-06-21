@@ -1,3 +1,15 @@
 name = "libcheck"
 compatibility_date = "2026-06-01"
 pages_build_output_dir = "dist"
+
+# Google OAuth クライアント ID（公開値）。保護 API（/api/me 等）の aud 検証に使う。
+[vars]
+GOOGLE_CLIENT_ID = "434187355070-5qkchsdkqb6q61kvn3206mu09k73d3hd.apps.googleusercontent.com"
+
+# 登録図書館・検索履歴の永続化先（#74）。env.DB として Functions から参照。
+# CALIL_APP_KEY はシークレットのため wrangler.toml には置かず、Pages の
+# シークレット設定（ダッシュボード / wrangler pages secret）で管理する。
+[[d1_databases]]
+binding = "DB"
+database_name = "libcheck"
+database_id = "ba647dce-2a7a-4e0e-88f9-349dce14ce51"
