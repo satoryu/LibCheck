@@ -1,7 +1,8 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import type { User } from '@/domain/models/user';
+import { setAuthToken } from '@/data/datasources/authTokenStore';
 
 export interface AuthContextValue {
   /** ログイン中のユーザー。未ログインは null。 */
@@ -34,15 +35,24 @@ export function AuthProvider({
   const [user, setUser] = useState<User | null>(initialUser);
   const [idToken, setIdToken] = useState<string | null>(initialIdToken);
 
+  // 現在の ID トークンを AuthTokenStore に同期（サーバー版リポジトリが参照）。
+  useEffect(() => {
+    setAuthToken(idToken);
+  }, [idToken]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       idToken,
       signIn: (nextUser, nextToken) => {
+        // トークンは同期的に反映する（再レンダー後のクエリが古い/未設定トークンを
+        // 読むのを防ぐ。effect 同期はマウント時の initialIdToken 用）。
+        setAuthToken(nextToken);
         setUser(nextUser);
         setIdToken(nextToken);
       },
       signOut: () => {
+        setAuthToken(null);
         setUser(null);
         setIdToken(null);
       },

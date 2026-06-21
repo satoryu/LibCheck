@@ -52,9 +52,10 @@ describe('LibCheckApp', () => {
     window.history.replaceState(null, '', '/');
     render(<App />);
 
-    // ルーターと登録図書館クエリの初期化（空 → /library リダイレクト）を待つ。
+    // 必須ログインのため未ログインではログイン画面が表示される。
+    // SnackbarProvider はゲートの外側にあるため、この状態でも通知は出せる。
     await waitFor(() => {
-      expect(screen.getByText('登録図書館')).toBeInTheDocument();
+      expect(screen.getByText(/ログインすると/)).toBeInTheDocument();
     });
 
     // notistack v3 のモジュールレベル API でスナックバーを表示する。
