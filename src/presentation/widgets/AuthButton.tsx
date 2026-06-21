@@ -1,6 +1,9 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { GoogleLogin } from '@react-oauth/google';
 
 import { useAuth } from '@/presentation/auth/AuthProvider';
@@ -24,13 +27,20 @@ export function AuthButton(): JSX.Element | null {
 
   if (user) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
         <Typography variant="body2" sx={{ color: 'inherit' }}>
           {user.name ?? user.email ?? 'ログイン中'}
         </Typography>
-        <Button color="inherit" size="small" onClick={signOut}>
-          サインアウト
-        </Button>
+        <Tooltip title="サインアウト">
+          <IconButton
+            color="inherit"
+            size="small"
+            aria-label="サインアウト"
+            onClick={signOut}
+          >
+            <LogoutIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Box>
     );
   }
