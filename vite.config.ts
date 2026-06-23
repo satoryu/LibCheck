@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
+import { devPersistencePlugin } from "./vite-dev-persistence";
 
 export default defineConfig(({ mode }) => {
   // Load ALL env vars (empty prefix), including the non-`VITE_` CALIL_APP_KEY.
@@ -17,7 +18,7 @@ export default defineConfig(({ mode }) => {
   const testExecArgv = nodeMajor >= 22 ? ["--no-experimental-webstorage"] : [];
 
   return {
-    plugins: [react()],
+    plugins: [react(), devPersistencePlugin()],
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),

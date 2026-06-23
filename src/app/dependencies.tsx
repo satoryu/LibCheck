@@ -7,10 +7,12 @@ import type { BookMetadataRepository } from "@/domain/repositories/bookMetadataR
 import { CalilApiClient } from "@/data/datasources/calilApiClient";
 import { CALIL_API_CONFIG } from "@/data/datasources/calilApiConfig";
 import { OpenBdApiClient } from "@/data/datasources/openBdApiClient";
+import { RegisteredLibraryApiClient } from "@/data/datasources/registeredLibraryApiClient";
+import { SearchHistoryApiClient } from "@/data/datasources/searchHistoryApiClient";
 import { WebLocalStorageRepository } from "@/data/repositories/localStorageRepositoryImpl";
 import { LibraryRepositoryImpl } from "@/data/repositories/libraryRepositoryImpl";
-import { RegisteredLibraryRepositoryImpl } from "@/data/repositories/registeredLibraryRepositoryImpl";
-import { SearchHistoryRepositoryImpl } from "@/data/repositories/searchHistoryRepositoryImpl";
+import { ServerRegisteredLibraryRepositoryImpl } from "@/data/repositories/serverRegisteredLibraryRepositoryImpl";
+import { ServerSearchHistoryRepositoryImpl } from "@/data/repositories/serverSearchHistoryRepositoryImpl";
 import { BookMetadataRepositoryImpl } from "@/data/repositories/bookMetadataRepositoryImpl";
 
 export interface AppDependencies {
@@ -32,11 +34,13 @@ export function createDefaultDependencies(): AppDependencies {
   const libraryRepository = new LibraryRepositoryImpl({
     apiClient: calilApiClient,
   });
-  const registeredLibraryRepository = new RegisteredLibraryRepositoryImpl(
-    localStorageRepository,
+  // 登録図書館・検索履歴はサーバー（D1）に永続化する（#74）。トークンは
+  // AuthTokenStore から取得する（AuthProvider が同期）。
+  const registeredLibraryRepository = new ServerRegisteredLibraryRepositoryImpl(
+    new RegisteredLibraryApiClient(),
   );
-  const searchHistoryRepository = new SearchHistoryRepositoryImpl(
-    localStorageRepository,
+  const searchHistoryRepository = new ServerSearchHistoryRepositoryImpl(
+    new SearchHistoryApiClient(),
   );
   const bookMetadataRepository = new BookMetadataRepositoryImpl(openBdApiClient);
 

@@ -14,6 +14,7 @@ import { makeQueryClient } from '@/queryClient';
 import { theme } from '@/theme';
 import { SelectedLibrariesProvider } from '@/presentation/hooks/useSelectedLibraries';
 import { AuthProvider } from '@/presentation/auth/AuthProvider';
+import { AuthGate } from '@/presentation/auth/AuthGate';
 import { googleClientId } from '@/data/datasources/authConfig';
 
 /**
@@ -35,9 +36,11 @@ export function App() {
   const clientId = googleClientId();
 
   const routedTree = (
-    <SelectedLibrariesProvider>
-      <RouterProvider router={router} />
-    </SelectedLibrariesProvider>
+    <AuthGate>
+      <SelectedLibrariesProvider>
+        <RouterProvider router={router} />
+      </SelectedLibrariesProvider>
+    </AuthGate>
   );
 
   return (
