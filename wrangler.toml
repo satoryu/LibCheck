@@ -2,9 +2,9 @@ name = "libcheck"
 compatibility_date = "2026-06-01"
 pages_build_output_dir = "dist"
 
-# Google OAuth クライアント ID（公開値）。保護 API（/api/me 等）の aud 検証に使う。
-[vars]
-GOOGLE_CLIENT_ID = "434187355070-5qkchsdkqb6q61kvn3206mu09k73d3hd.apps.googleusercontent.com"
+# GOOGLE_CLIENT_ID は Pages プロジェクトの環境変数（プロジェクトレベル）で管理する。
+# wrangler.toml の [vars] に重複定義すると deploy 時に「binding already in use」で
+# 失敗するため、ここには置かない（公開値だが管理場所をプロジェクト側に一本化）。
 
 # 登録図書館・検索履歴の永続化先（#74）。env.DB として Functions から参照。
 # CALIL_APP_KEY はシークレットのため wrangler.toml には置かず、Pages の
