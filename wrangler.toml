@@ -5,6 +5,10 @@ pages_build_output_dir = "dist"
 # GOOGLE_CLIENT_ID は Pages プロジェクトの環境変数（プロジェクトレベル）で管理する。
 # wrangler.toml の [vars] に重複定義すると deploy 時に「binding already in use」で
 # 失敗するため、ここには置かない（公開値だが管理場所をプロジェクト側に一本化）。
+# 注意: プロジェクト側でも「プレーン変数」で持つと wrangler pages deploy が
+# [vars] を正本とみなして消してしまう（→ env.GOOGLE_CLIENT_ID 空で /api/me が500）。
+# そのため CALIL_APP_KEY と同様に「シークレット（secret_text）」で登録し、
+# デプロイをまたいで保持させる。
 
 # 登録図書館・検索履歴の永続化先（#74）。env.DB として Functions から参照。
 # CALIL_APP_KEY はシークレットのため wrangler.toml には置かず、Pages の
