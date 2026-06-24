@@ -8,11 +8,13 @@ on:
   pull_request:
     paths:
       - 'infra/**'
+      - '!infra/d1/**' # D1 スキーマは Azure Bicep と無関係（#83。適用は cloudflare-pages.yml / d1-migrate.yml）
       - '.github/workflows/infra.yml'
   push:
     branches: [main]
     paths:
       - 'infra/**'
+      - '!infra/d1/**' # D1 スキーマは Azure Bicep と無関係（#83。適用は cloudflare-pages.yml / d1-migrate.yml）
       - '.github/workflows/infra.yml'
   workflow_dispatch:
 

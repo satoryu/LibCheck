@@ -17,3 +17,6 @@ pages_build_output_dir = "dist"
 binding = "DB"
 database_name = "libcheck"
 database_id = "ba647dce-2a7a-4e0e-88f9-349dce14ce51"
+# スキーマは infra/d1/migrations/ の連番マイグレーションで管理する（#83）。
+# CI（cloudflare-pages.yml）が main 反映時に `d1 migrations apply --remote` を回す。
+migrations_dir = "infra/d1/migrations"
