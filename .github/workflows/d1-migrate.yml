@@ -1,0 +1,26 @@
+name: D1 migrations (validate)
+
+# PR 時にマイグレーションの妥当性だけを検証する（本番 D1 には触れない）。
+# 本番への適用（--remote）はデプロイ順序を保証するため cloudflare-pages.yml の
+# デプロイ前ステップで行う（#83）。
+on:
+  pull_request:
+    paths:
+      - 'infra/d1/migrations/**'
+      - 'wrangler.toml'
+      - '.github/workflows/d1-migrate.yml'
+
+jobs:
+  validate:
+    name: apply --local (dry validation)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # 一時的なローカル SQLite にマイグレーションを適用し、SQL の妥当性・
+      # 連番の整合を確認する。--local はローカル状態のみを使い API を呼ばない。
+      - name: Apply D1 migrations (local)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 migrations apply libcheck --local

@@ -28,6 +28,15 @@ jobs:
           # Google OAuth クライアント ID（公開値）。GIS のログインに使う。
           VITE_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
         run: npm run build
+      # スキーマ→コードの順序を保証するため、デプロイの「前」に本番 D1 へ
+      # マイグレーションを適用する（#83）。適用済みは d1_migrations 表で判定され
+      # 冪等にスキップ。ここが失敗すると後続の deploy には進まない。
+      - name: Apply D1 migrations (remote)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 migrations apply libcheck --remote
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:

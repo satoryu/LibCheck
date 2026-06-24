@@ -1,6 +1,8 @@
 import type { Plugin } from "vite";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
+import { orderedMigrationStatements } from "./vite-dev-migrations";
+
 /**
  * dev サーバ専用: 本番と同じ Pages Functions（登録図書館・検索履歴）を、
  * ローカル SQLite（node:sqlite）を D1 互換アダプタで包んで実行する。
@@ -114,16 +116,17 @@ export function devPersistencePlugin(): Plugin {
       const root = process.cwd();
       const db = new DatabaseSyncCtor(path.resolve(root, ".dev.d1.sqlite"));
 
-      // スキーマ適用（CREATE IF NOT EXISTS で冪等）。
-      const schema = fs.readFileSync(
-        path.resolve(root, "infra/d1/schema.sql"),
-        "utf8",
-      );
-      const stripped = schema
-        .split("\n")
-        .filter((l) => !l.trim().startsWith("--"))
-        .join("\n");
-      for (const stmt of stripped.split(";").map((s) => s.trim()).filter(Boolean)) {
+      // マイグレーション適用（本番は wrangler d1 migrations apply が同じ
+      // infra/d1/migrations/ を適用する）。ローカルは連番順に流して
+      // .dev.d1.sqlite を構築する。各文は IF NOT EXISTS 等で冪等。
+      const migrationsDir = path.resolve(root, "infra/d1/migrations");
+      const migrationFiles = fs
+        .readdirSync(migrationsDir)
+        .map((name) => ({
+          name,
+          content: fs.readFileSync(path.resolve(migrationsDir, name), "utf8"),
+        }));
+      for (const stmt of orderedMigrationStatements(migrationFiles)) {
         db.exec(stmt + ";");
       }
 

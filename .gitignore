@@ -6,6 +6,7 @@ tsconfig.tsbuildinfo
 vite.config.js
 vite.config.d.ts
 vite-dev-persistence.d.ts
+vite-dev-migrations.d.ts
 /coverage/
 
 # Azure Functions (API) local secrets & build artifacts

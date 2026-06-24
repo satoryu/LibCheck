@@ -1,5 +1,6 @@
--- Cloudflare D1 スキーマ（#74 永続化）
--- 適用: wrangler d1 execute libcheck --remote --file infra/d1/schema.sql
+-- 0001 ベースライン: #74 の永続化スキーマ（登録図書館・検索履歴）。
+-- 既存の本番 D1 は migrations 導入前に手動適用済みのため、IF NOT EXISTS で
+-- 冪等にし、初回 `wrangler d1 migrations apply` でも no-op で安全に通す。
 
 CREATE TABLE IF NOT EXISTS registered_libraries (
   user_id      TEXT    NOT NULL,
