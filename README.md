@@ -5,6 +5,7 @@
 ## 対応環境
 
 カメラを利用できるモダンブラウザ（スマートフォン・PC）。HTTPS もしくは `localhost` 上で動作します。
+利用には Google アカウントでのログインが必要です（登録図書館・検索履歴を端末間で同期するため）。
 
 ## 技術スタック
 
@@ -12,11 +13,12 @@
 - [カーリル 図書館API](https://calil.jp/doc/api_ref.html)
 - [MUI](https://mui.com/)（UI コンポーネント / `@emotion`）
 - [TanStack Query](https://tanstack.com/query)（サーバ状態・非同期データ管理）
-- [React Router](https://reactrouter.com/)（画面遷移）
-- `localStorage`（ローカルストレージ）
+- [React Router v7](https://reactrouter.com/)（画面遷移）
 - [@zxing/browser](https://github.com/zxing-js/browser)（バーコード読み取り）
 - [notistack](https://notistack.com/)（スナックバー通知）
-- [Azure Static Web Apps](https://learn.microsoft.com/azure/static-web-apps/) + Azure Functions（API プロキシ）
+- Google 認証（[Google Identity Services](https://developers.google.com/identity) / [@react-oauth/google](https://github.com/MomenSherif/react-oauth)、ID トークンは [jose](https://github.com/panva/jose) でサーバ側検証）— **ログイン必須**
+- [Cloudflare Pages](https://developers.cloudflare.com/pages/) + [Pages Functions](https://developers.cloudflare.com/pages/functions/)（静的配信 + API プロキシ / 認証 / 永続化 API）
+- [Cloudflare D1](https://developers.cloudflare.com/d1/)（登録図書館・検索履歴をユーザー単位で永続化）
 
 ## プロジェクト構成
 
@@ -43,15 +45,26 @@ Clean Architecture に基づく3層構成。
 │   └── presentation/           # プレゼンテーション層
 │       ├── pages/              # 画面
 │       ├── widgets/            # 共通ウィジェット
+│       ├── auth/               # 認証（Google ログイン・AuthProvider 等）
 │       ├── hooks/              # UI 状態フック
 │       ├── theme/              # テーマ・配色
 │       └── utils/              # エラーメッセージ解決等
 ├── public/
-│   └── staticwebapp.config.json # SWA ルーティング設定
-└── api/                        # Azure Functions（/api/calil プロキシ）
+│   └── _redirects              # Cloudflare Pages の SPA フォールバック
+├── functions/                  # Cloudflare Pages Functions（Workers ランタイム）
+│   ├── _shared/                # 共有（googleAuth: ID トークン検証）
+│   └── api/
+│       ├── calil/[action].js   # カーリル API プロキシ（library / check のみ許可）
+│       ├── me.js               # ログインユーザー情報
+│       ├── registered-libraries.js # 登録図書館の取得 / 保存（D1）
+│       └── search-history.js   # 検索履歴の取得 / 保存（D1）
+└── infra/
+    ├── d1/migrations/          # D1 スキーマのマイグレーション（追加手順は infra/d1/README.md）
+    └── *.bicep                 # 旧 Azure 用 IaC（撤去予定 #78）
 ```
 
 カーリル API の `appkey` は **サーバ側でのみ** 注入され、クライアントのバンドルには含まれません。
+登録図書館・検索履歴はログインユーザー単位で Cloudflare D1 に永続化されます。
 詳細は [`DEPLOY.md`](./DEPLOY.md) を参照してください。
 
 ## セットアップ
@@ -68,7 +81,7 @@ cp .env.local.example .env.local   # CALIL_APP_KEY=... を記入
 npm run dev                        # http://localhost:5173
 ```
 
-本番と同一構成（静的配信 + Functions API）で確認したい場合は `npm run swa:start` を利用します。
+本番と同一構成（静的配信 + Pages Functions）で確認したい場合は `npm run pages:dev`（Cloudflare Pages のローカルエミュレーション）を利用します。
 手順の詳細は [`DEPLOY.md`](./DEPLOY.md) を参照してください。
 
 ## テスト
@@ -96,8 +109,9 @@ npm run preview
 
 ## デプロイ
 
-`main` への push / PR で `.github/workflows/azure-static-web-apps.yml` が Azure Static Web Apps へ自動デプロイします。
-リソース作成・シークレット登録・手動デプロイの手順は [`DEPLOY.md`](./DEPLOY.md) を参照してください。
+`main` への push で `.github/workflows/cloudflare-pages.yml` が Cloudflare Pages へ自動デプロイします（デプロイ前に D1 マイグレーションを `--remote` で適用）。
+PR では `ci.yml`（型チェック + テスト）と `d1-migrate.yml`（マイグレーションの `--local` 検証）が走ります。
+リソース作成・シークレット登録・手動デプロイの手順は [`DEPLOY.md`](./DEPLOY.md)、スキーマ運用は [`infra/d1/README.md`](./infra/d1/README.md) を参照してください。
 
 ## コントリビューション
 
