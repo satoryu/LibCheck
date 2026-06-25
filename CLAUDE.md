@@ -4,7 +4,9 @@
 
 - React 18 / TypeScript / Vite
 - [カーリル 図書館API](https://calil.jp/doc/api_ref.html)
-- Azure Static Web Apps（静的配信 + Azure Functions による API プロキシ）
+- Google 認証（Google Identity Services / @react-oauth/google、ID トークンは jose でサーバ検証）— ログイン必須
+- Cloudflare Pages + Pages Functions（静的配信 + API プロキシ / 認証 / 永続化 API）
+- Cloudflare D1（登録図書館・検索履歴をユーザー単位で永続化。スキーマは infra/d1/migrations で管理）
 
 ## Workflow
 
@@ -91,7 +93,7 @@ When issues are found during code review, do not dismiss them solely because the
 
 When the Test Plan includes manual verification items (UI behavior, camera/barcode scanning, navigation), you must perform the verification yourself in a browser. Do not leave it to the user unless the browser environment is genuinely unavailable. Steps:
 
-1. Start the dev server (`npm run dev`, default `http://localhost:5173`), or emulate the production setup with `npm run swa:start`.
+1. Start the dev server (`npm run dev`, default `http://localhost:5173`), or emulate the production setup (Pages Functions) with `npm run pages:dev`.
 2. Open the app in a browser and verify each acceptance criterion manually (use the webapp-testing / Playwright tools when available).
 3. For camera/barcode features, verify graceful handling when camera access is denied or unavailable.
 4. Check off the verified items in the PR Test Plan.
