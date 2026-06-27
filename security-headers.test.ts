@@ -9,7 +9,10 @@ import { resolve } from 'node:path';
  * （テスト本体を public/ に置くと dist へ公開されてしまうためリポジトリ直下に置く）
  */
 const headers = readFileSync(resolve(process.cwd(), 'public/_headers'), 'utf8');
-const csp = /Content-Security-Policy:\s*(.+)/.exec(headers)?.[1]?.trim() ?? '';
+// enforce / Report-Only どちらの段階でも CSP 本体を取得する。
+const csp =
+  /Content-Security-Policy(?:-Report-Only)?:\s*(.+)/.exec(headers)?.[1]?.trim() ??
+  '';
 
 describe('public/_headers', () => {
   it('クリックジャッキング/危険シンクを塞ぐ基本ヘッダがある', () => {
