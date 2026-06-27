@@ -6,12 +6,14 @@
  * If the key were embedded here (e.g. via a `VITE_`-prefixed env var) Vite would
  * inline it into the production bundle and leak it to every user. Instead the key
  * is injected **server-side**:
- *   - production: the Azure Functions proxy (`api/src/functions/calilProxy.js`)
- *     overrides `appkey` from the `CALIL_APP_KEY` application setting when serving
- *     `/api/calil/*` behind Azure Static Web Apps.
+ *   - production: the Cloudflare Pages Function (`functions/api/calil/[action].js`)
+ *     overrides `appkey` from the `CALIL_APP_KEY` secret. The proxy also requires a
+ *     valid Google ID token (Authorization: Bearer) so the key cannot be used by
+ *     anonymous third parties (#89).
  *   - local dev: the Vite dev proxy (`vite.config.ts`) injects `appkey` from the
- *     non-`VITE_` `CALIL_APP_KEY` env var.
- * The client therefore sends an empty `appkey`, which the proxy replaces.
+ *     non-`VITE_` `CALIL_APP_KEY` env var (does not go through the Function).
+ * The client therefore sends an empty `appkey`, which the proxy replaces, plus the
+ * current ID token as a Bearer header (see CalilApiClient).
  *
  * All requests go through the same-origin `/api/calil` path in every environment.
  */

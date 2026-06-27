@@ -300,3 +300,49 @@ describe('CalilApiClient.searchLibraries', () => {
     ).rejects.toBeInstanceOf(CalilHttpException);
   });
 });
+
+describe('CalilApiClient auth header (#89)', () => {
+  function captureInitFetch(): {
+    fetchFn: typeof fetch;
+    last: () => RequestInit | undefined;
+  } {
+    let captured: RequestInit | undefined;
+    const fetchFn = vi.fn(
+      async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+        captured = init;
+        return new Response('[]', { status: 200 });
+      },
+    ) as unknown as typeof fetch;
+    return { fetchFn, last: () => captured };
+  }
+
+  test('tokenProvider がトークンを返すと Authorization: Bearer を送る', async () => {
+    const { fetchFn, last } = captureInitFetch();
+    const client = new CalilApiClient({
+      appKey: '',
+      fetchFn,
+      baseUrl: '',
+      tokenProvider: () => 'tok123',
+    });
+
+    await client.searchLibraries({ pref: '東京都' });
+
+    const headers = last()?.headers as Record<string, string>;
+    expect(headers.authorization).toBe('Bearer tok123');
+  });
+
+  test('トークンが無ければ Authorization を付けない', async () => {
+    const { fetchFn, last } = captureInitFetch();
+    const client = new CalilApiClient({
+      appKey: '',
+      fetchFn,
+      baseUrl: '',
+      tokenProvider: () => null,
+    });
+
+    await client.searchLibraries({ pref: '東京都' });
+
+    const headers = (last()?.headers ?? {}) as Record<string, string>;
+    expect(headers.authorization).toBeUndefined();
+  });
+});
