@@ -26,8 +26,9 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       proxy: {
-        // Mirrors the production Azure Functions proxy: strips the /api/calil
-        // prefix and injects the secret appkey server-side before forwarding.
+        // Mirrors the production Cloudflare Pages Function proxy: strips the
+        // /api/calil prefix and injects the secret appkey server-side before
+        // forwarding (the Function also requires auth; the dev proxy does not).
         "/api/calil": {
           target: "https://api.calil.jp",
           changeOrigin: true,
