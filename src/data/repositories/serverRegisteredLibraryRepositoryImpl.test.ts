@@ -82,8 +82,10 @@ describe('ServerRegisteredLibraryRepositoryImpl', () => {
     expect((await repo.remove(lib('S1'))).map((l) => l.systemId)).toEqual(['S2']);
   });
 
-  it('未認証（トークン無し）は例外', async () => {
+  it('トークン無し（リロード後）でも Cookie 認証前提で API に委譲する', async () => {
+    // #91: 認証は HttpOnly Cookie が主。トークン null でも例外にせず委譲し、
+    // 未認証は API の 401 として表面化する（ここでは Fake が空配列を返す）。
     const repo = new ServerRegisteredLibraryRepositoryImpl(new FakeApi() as never, () => null);
-    await expect(repo.getAll()).rejects.toThrow();
+    await expect(repo.getAll()).resolves.toEqual([]);
   });
 });

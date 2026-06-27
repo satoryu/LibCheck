@@ -19,7 +19,7 @@ export class RegisteredLibraryApiClient {
     this.httpTimeoutMs = options.httpTimeoutMs ?? 10000;
   }
 
-  async getAll(token: string): Promise<Library[]> {
+  async getAll(token: string | null): Promise<Library[]> {
     const body = (await protectedRequest(
       this.fetchFn,
       this.baseUrl,
@@ -31,7 +31,7 @@ export class RegisteredLibraryApiClient {
     return Array.isArray(body.libraries) ? (body.libraries as Library[]) : [];
   }
 
-  async saveAll(token: string, libraries: Library[]): Promise<void> {
+  async saveAll(token: string | null, libraries: Library[]): Promise<void> {
     await protectedRequest(
       this.fetchFn,
       this.baseUrl,

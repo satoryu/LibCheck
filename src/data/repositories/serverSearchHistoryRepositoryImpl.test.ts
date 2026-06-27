@@ -59,8 +59,9 @@ describe('ServerSearchHistoryRepositoryImpl', () => {
     expect(await repo.getAll()).toEqual([]);
   });
 
-  it('未認証は例外', async () => {
+  it('トークン無し（リロード後）でも Cookie 認証前提で API に委譲する', async () => {
+    // #91: 認証は HttpOnly Cookie が主。トークン null でも例外にしない。
     const repo = new ServerSearchHistoryRepositoryImpl(new FakeApi() as never, () => null);
-    await expect(repo.getAll()).rejects.toThrow();
+    await expect(repo.getAll()).resolves.toEqual([]);
   });
 });

@@ -1,12 +1,14 @@
 /**
- * 認証必須 API への共通 fetch ヘルパ。`Authorization: Bearer` を付与し、
- * 200 以外は例外（`HTTP <status>`）を投げ、JSON を返す。
+ * 認証必須 API への共通 fetch ヘルパ。認証は同一オリジンの HttpOnly セッション
+ * Cookie（#91）で行うため `credentials: 'same-origin'` で Cookie を送る。`token`
+ * があるとき（アクティブセッション中）は後方互換で `Authorization: Bearer` も
+ * 付与する（リロード後は null＝Cookie のみで認証）。200 以外は例外を投げ JSON を返す。
  */
 export async function protectedRequest(
   fetchFn: typeof fetch,
   url: string,
   method: 'GET' | 'PUT',
-  token: string,
+  token: string | null,
   body?: unknown,
   timeoutMs = 10000,
 ): Promise<unknown> {
@@ -17,8 +19,9 @@ export async function protectedRequest(
   try {
     response = await fetchFn(url, {
       method,
+      credentials: 'same-origin',
       headers: {
-        authorization: `Bearer ${token}`,
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
         ...(body !== undefined ? { 'content-type': 'application/json' } : {}),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,

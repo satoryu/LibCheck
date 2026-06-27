@@ -16,12 +16,10 @@ export class ServerSearchHistoryRepositoryImpl
     private readonly tokenProvider: () => string | null = getAuthToken,
   ) {}
 
-  private token(): string {
-    const token = this.tokenProvider();
-    if (token === null || token.length === 0) {
-      throw new Error('Not authenticated');
-    }
-    return token;
+  // 認証は HttpOnly セッション Cookie（#91）が主。リロード後はトークンが null でも
+  // Cookie で認証されるため例外にしない（未認証は API の 401 として表面化）。
+  private token(): string | null {
+    return this.tokenProvider();
   }
 
   async getAll(): Promise<SearchHistoryEntry[]> {
