@@ -4,6 +4,7 @@
  * - PUT: 全置換（body: { entries: SearchHistoryEntry[] }、searchedAt は ISO 文字列）
  */
 import { requireUser, json } from '../_shared/googleAuth.js';
+import { tooLarge, validateHistory } from '../_shared/validation.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -28,14 +29,17 @@ export async function onRequestPut(context) {
   const { user, response } = await requireUser(request, env);
   if (!user) return response;
 
+  const text = await request.text();
+  if (tooLarge(text)) return json({ error: 'payload too large' }, 413);
   let body;
   try {
-    body = await request.json();
+    body = JSON.parse(text);
   } catch {
     return json({ error: 'bad request' }, 400);
   }
-  const entries = Array.isArray(body?.entries) ? body.entries : null;
-  if (entries === null) return json({ error: 'bad request' }, 400);
+  const result = validateHistory(body);
+  if (!result.ok) return json({ error: result.error }, result.status);
+  const entries = result.value;
 
   const stmts = [
     env.DB.prepare('DELETE FROM search_history WHERE user_id = ?').bind(user.id),

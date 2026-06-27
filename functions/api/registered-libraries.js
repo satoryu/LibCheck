@@ -6,6 +6,7 @@
  * D1 バインディングは `env.DB`。user 識別は ID トークンの `sub`。
  */
 import { requireUser, json } from '../_shared/googleAuth.js';
+import { tooLarge, validateLibraries } from '../_shared/validation.js';
 
 function libraryKeyOf(lib) {
   return `${lib.systemId}:${lib.libKey}:${lib.libId}`;
@@ -30,14 +31,17 @@ export async function onRequestPut(context) {
   const { user, response } = await requireUser(request, env);
   if (!user) return response;
 
+  const text = await request.text();
+  if (tooLarge(text)) return json({ error: 'payload too large' }, 413);
   let body;
   try {
-    body = await request.json();
+    body = JSON.parse(text);
   } catch {
     return json({ error: 'bad request' }, 400);
   }
-  const libraries = Array.isArray(body?.libraries) ? body.libraries : null;
-  if (libraries === null) return json({ error: 'bad request' }, 400);
+  const result = validateLibraries(body);
+  if (!result.ok) return json({ error: result.error }, result.status);
+  const libraries = result.value;
 
   const now = Date.now();
   const stmts = [
