@@ -23,7 +23,7 @@ export class SearchHistoryApiClient {
     this.httpTimeoutMs = options.httpTimeoutMs ?? 10000;
   }
 
-  async getAll(token: string): Promise<SearchHistoryEntry[]> {
+  async getAll(token: string | null): Promise<SearchHistoryEntry[]> {
     const body = (await protectedRequest(
       this.fetchFn,
       this.baseUrl,
@@ -39,7 +39,7 @@ export class SearchHistoryApiClient {
       : [];
   }
 
-  async saveAll(token: string, entries: SearchHistoryEntry[]): Promise<void> {
+  async saveAll(token: string | null, entries: SearchHistoryEntry[]): Promise<void> {
     await protectedRequest(
       this.fetchFn,
       this.baseUrl,

@@ -18,12 +18,11 @@ export class ServerRegisteredLibraryRepositoryImpl
     private readonly tokenProvider: () => string | null = getAuthToken,
   ) {}
 
-  private token(): string {
-    const token = this.tokenProvider();
-    if (token === null || token.length === 0) {
-      throw new Error('Not authenticated');
-    }
-    return token;
+  // 認証は HttpOnly セッション Cookie（#91）が主。リロード後はメモリにトークンが
+  // 無い（null）が、Cookie で認証されるため例外にしない。未認証は API の 401 として
+  // 表面化する。アクティブセッション中は後方互換で Bearer も併送される。
+  private token(): string | null {
+    return this.tokenProvider();
   }
 
   async getAll(): Promise<Library[]> {

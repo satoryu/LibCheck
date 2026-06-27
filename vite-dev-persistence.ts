@@ -130,9 +130,18 @@ export function devPersistencePlugin(): Plugin {
         db.exec(stmt + ";");
       }
 
-      const env = { DB: makeD1Adapter(db), AUTH_MOCK: "1", GOOGLE_CLIENT_ID: "dev" };
+      const env = {
+        DB: makeD1Adapter(db),
+        AUTH_MOCK: "1",
+        GOOGLE_CLIENT_ID: "dev",
+        SESSION_SECRET: "dev-session-secret",
+      };
 
       const routes: Record<string, string> = {
+        // 認証・セッションも本番と同じ function を実行し、ローカルでも
+        // 「mock ログイン → Cookie 発行 → リロードで /api/me 復元」を再現する。
+        "/api/session": "functions/api/session.js",
+        "/api/me": "functions/api/me.js",
         "/api/registered-libraries": "functions/api/registered-libraries.js",
         "/api/search-history": "functions/api/search-history.js",
       };
@@ -145,14 +154,20 @@ export function devPersistencePlugin(): Plugin {
               const mod = (await import(moduleUrl)) as {
                 onRequestGet?: (c: unknown) => Promise<Response>;
                 onRequestPut?: (c: unknown) => Promise<Response>;
+                onRequestPost?: (c: unknown) => Promise<Response>;
+                onRequestDelete?: (c: unknown) => Promise<Response>;
               };
               const request = await toWebRequest(req);
-              const handler =
-                request.method === "GET"
-                  ? mod.onRequestGet
-                  : request.method === "PUT"
-                    ? mod.onRequestPut
-                    : undefined;
+              const byMethod: Record<
+                string,
+                ((c: unknown) => Promise<Response>) | undefined
+              > = {
+                GET: mod.onRequestGet,
+                PUT: mod.onRequestPut,
+                POST: mod.onRequestPost,
+                DELETE: mod.onRequestDelete,
+              };
+              const handler = byMethod[request.method];
               if (handler === undefined) {
                 res.statusCode = 405;
                 res.end();
