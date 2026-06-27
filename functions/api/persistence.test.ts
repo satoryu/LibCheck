@@ -112,6 +112,24 @@ describe('/api/registered-libraries', () => {
     const res = await rlPut(ctx('PUT', AUTH, env, { nope: true }));
     expect(res.status).toBe(400);
   });
+
+  it('必須フィールド欠落の要素は 400（D1 に書かない）', async () => {
+    const env = { AUTH_MOCK: '1', DB: makeFakeDB() };
+    const res = await rlPut(
+      ctx('PUT', AUTH, env, { libraries: [{ systemId: 'Sys1', libKey: 'k1' }] }),
+    );
+    expect(res.status).toBe(400);
+    const get = await rlGet(ctx('GET', AUTH, env));
+    const body = (await get.json()) as { libraries: unknown[] };
+    expect(body.libraries).toEqual([]);
+  });
+
+  it('配列長が上限超過なら 413', async () => {
+    const env = { AUTH_MOCK: '1', DB: makeFakeDB() };
+    const many = Array.from({ length: 2001 }, (_, i) => ({ ...lib1, libId: `i${i}` }));
+    const res = await rlPut(ctx('PUT', AUTH, env, { libraries: many }));
+    expect(res.status).toBe(413);
+  });
 });
 
 describe('/api/search-history', () => {
@@ -133,5 +151,18 @@ describe('/api/search-history', () => {
     expect(body.entries[0].isbn).toBe('9784873117584');
     expect(body.entries[0].searchedAt).toBe('2026-01-01T00:00:00.000Z');
     expect(body.entries[0].libraryStatuses).toEqual({ みなと: 'available' });
+  });
+
+  it('isbn 欠落の要素は 400（D1 に書かない）', async () => {
+    const env = { AUTH_MOCK: '1', DB: makeFakeDB() };
+    const res = await shPut(
+      ctx('PUT', AUTH, env, {
+        entries: [{ searchedAt: '2026-01-01T00:00:00.000Z' }],
+      }),
+    );
+    expect(res.status).toBe(400);
+    const get = await shGet(ctx('GET', AUTH, env));
+    const body = (await get.json()) as { entries: unknown[] };
+    expect(body.entries).toEqual([]);
   });
 });

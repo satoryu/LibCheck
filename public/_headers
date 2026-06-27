@@ -1,0 +1,13 @@
+# Cloudflare Pages が静的配信時に付与するセキュリティヘッダ（#87 M-2）。
+# CSP は実依存（GIS / OpenBD / Amazon 画像 / /api/*）に整合させたホワイトリスト。
+# CSP は 1 行で書く必要がある（改行不可）。
+#
+# CSP はまず Report-Only で先行導入する（ブロックせず違反のみ報告）。本番で
+# ログイン/カメラ/書影を一通り使い、ブラウザコンソールに違反が出ないことを
+# 確認してから、別 PR で Content-Security-Policy（enforce）へ切り替える。
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(self), microphone=(), geolocation=(), browsing-topics=()
+  Content-Security-Policy-Report-Only: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; script-src 'self' https://accounts.google.com/gsi/client; connect-src 'self' https://api.openbd.jp https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/
