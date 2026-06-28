@@ -68,18 +68,16 @@ export function SearchHistoryCard({
       <CardActionArea onClick={onTap} sx={{ borderRadius: 3 }}>
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
           <BookIcon sx={{ fontSize: 24 }} />
-          <Box sx={{ width: 12 }} />
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', ml: 1.5 }}>
             <Typography variant="body1">{`ISBN: ${entry.isbn}`}</Typography>
-            <Box sx={{ height: 4 }} />
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {formatDate(entry.searchedAt, now)}
             </Typography>
           </Box>
-          <Box sx={{ width: 8 }} />
-          <AvailabilityStatusBadge status={bestStatus(entry)} />
-          <Box sx={{ width: 4 }} />
-          <ChevronRightIcon sx={{ color: 'text.secondary' }} />
+          <Box sx={{ ml: 1 }}>
+            <AvailabilityStatusBadge status={bestStatus(entry)} />
+          </Box>
+          <ChevronRightIcon sx={{ color: 'text.secondary', ml: 0.5 }} />
         </Box>
       </CardActionArea>
     </Card>

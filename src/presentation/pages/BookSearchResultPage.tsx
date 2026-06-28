@@ -106,9 +106,8 @@ export function BookSearchResultPage(): JSX.Element {
 
   const isbnSection = (
     <Card>
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
+      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <BookIcon sx={{ fontSize: 24 }} />
-        <Box sx={{ width: 12 }} />
         <Typography variant="body1">{`ISBN: ${isbn}`}</Typography>
       </Box>
     </Card>
@@ -118,15 +117,14 @@ export function BookSearchResultPage(): JSX.Element {
   // タイトル取得（OpenBD）が失敗・未取得でも常に表示できる。メタデータ取得の
   // 失敗はページ全体のエラー表示には波及させない（中核機能の蔵書状況は無影響）。
   const bookMetadataSection = (
-    <>
-      <Box sx={{ height: 16 }} />
+    <Box sx={{ mt: 2 }}>
       <BookMetadataCard
         isbn={isbn}
         title={metadataQuery.data?.title}
         openBdCoverUrl={metadataQuery.data?.coverImageUrl}
         isLoadingTitle={metadataQuery.isLoading}
       />
-    </>
+    </Box>
   );
 
   const scanAnotherButton = (
@@ -158,64 +156,58 @@ export function BookSearchResultPage(): JSX.Element {
   );
 
   const errorState = (error: unknown): JSX.Element => (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
       {isbnSection}
       {bookMetadataSection}
-      <Box sx={{ height: 24 }} />
       <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          mt: 3,
         }}
       >
         <ErrorOutlineIcon sx={{ fontSize: 48, color: APP_COLORS.error }} />
-        <Box sx={{ height: 16 }} />
-        <Typography>{resolveErrorMessage(error)}</Typography>
-        <Box sx={{ height: 16 }} />
-        <Button variant="contained" onClick={handleRetry}>
+        <Typography sx={{ mt: 2 }}>{resolveErrorMessage(error)}</Typography>
+        <Button variant="contained" onClick={handleRetry} sx={{ mt: 2 }}>
           再試行
         </Button>
       </Box>
-      <Box sx={{ height: 24 }} />
-      {scanAnotherButton}
+      <Box sx={{ mt: 3 }}>{scanAnotherButton}</Box>
     </Box>
   );
 
   const loadingState = (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
       {isbnSection}
       {bookMetadataSection}
-      <Box sx={{ height: 24 }} />
-      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
         <CircularProgress />
       </Box>
-      <Box sx={{ height: 16 }} />
-      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
         <Typography>蔵書を検索中...</Typography>
       </Box>
     </Box>
   );
 
   const noLibraryState = (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
       {isbnSection}
-      <Box sx={{ height: 24 }} />
       <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          mt: 3,
         }}
       >
         <LocalLibraryIcon sx={{ fontSize: 48, color: APP_COLORS.inactive }} />
-        <Box sx={{ height: 16 }} />
-        <Typography>図書館が登録されていません</Typography>
-        <Box sx={{ height: 8 }} />
-        <Typography>図書館を登録すると蔵書を検索できます</Typography>
+        <Typography sx={{ mt: 2 }}>図書館が登録されていません</Typography>
+        <Typography sx={{ mt: 1 }}>
+          図書館を登録すると蔵書を検索できます
+        </Typography>
       </Box>
-      <Box sx={{ height: 24 }} />
-      {addLibraryButton}
+      <Box sx={{ mt: 3 }}>{addLibraryButton}</Box>
     </Box>
   );
 
@@ -225,31 +217,32 @@ export function BookSearchResultPage(): JSX.Element {
   ): JSX.Element => {
     const result = findResultForIsbn(results);
     return (
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
         {isbnSection}
         {bookMetadataSection}
-        <Box sx={{ height: 24 }} />
-        <Typography variant="subtitle1">蔵書状況</Typography>
-        <Box sx={{ height: 8 }} />
-        {results.length > 0 ? (
-          sortLibrariesByAvailability(libraries, result).map((library) => {
-            const status = result?.libraryStatuses[library.systemId];
-            if (status === undefined) return null;
-            return (
-              <LibraryAvailabilityCard
-                key={libraryKey(library)}
-                library={library}
-                status={status}
-              />
-            );
-          })
-        ) : (
-          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-            <Typography>検索結果がありません</Typography>
-          </Box>
-        )}
-        <Box sx={{ height: 24 }} />
-        {scanAnotherButton}
+        <Typography variant="subtitle1" sx={{ mt: 3 }}>
+          蔵書状況
+        </Typography>
+        <Box sx={{ mt: 1 }}>
+          {results.length > 0 ? (
+            sortLibrariesByAvailability(libraries, result).map((library) => {
+              const status = result?.libraryStatuses[library.systemId];
+              if (status === undefined) return null;
+              return (
+                <LibraryAvailabilityCard
+                  key={libraryKey(library)}
+                  library={library}
+                  status={status}
+                />
+              );
+            })
+          ) : (
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <Typography>検索結果がありません</Typography>
+            </Box>
+          )}
+        </Box>
+        <Box sx={{ mt: 3 }}>{scanAnotherButton}</Box>
       </Box>
     );
   };

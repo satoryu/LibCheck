@@ -40,30 +40,28 @@ export function CameraPermissionErrorWidget({
         }}
       >
         <CameraAltOutlinedIcon sx={{ fontSize: 64, color: 'text.secondary' }} />
-        <Box sx={{ height: 24 }} />
-        <Typography variant="subtitle1" align="center">
+        <Typography variant="subtitle1" align="center" sx={{ mt: 3 }}>
           カメラへのアクセスが許可されていません
         </Typography>
-        <Box sx={{ height: 8 }} />
-        <Typography variant="body2" align="center">
+        <Typography variant="body2" align="center" sx={{ mt: 1 }}>
           バーコードをスキャンするには、ブラウザの設定でカメラへのアクセスを許可してください。
           アドレスバーのカメラアイコン、またはサイトの設定から変更できます。
         </Typography>
-        <Box sx={{ height: 32 }} />
         <Button
           fullWidth
           variant="contained"
           startIcon={<RefreshIcon />}
           onClick={onRetry}
+          sx={{ mt: 4 }}
         >
           再試行
         </Button>
-        <Box sx={{ height: 12 }} />
         <Button
           fullWidth
           variant="outlined"
           startIcon={<KeyboardIcon />}
           onClick={onManualInput}
+          sx={{ mt: 1.5 }}
         >
           ISBNを手動入力する
         </Button>

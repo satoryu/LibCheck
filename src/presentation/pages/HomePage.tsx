@@ -65,23 +65,22 @@ export function HomePage(): React.ReactElement {
           <MenuBookIcon
             sx={{ fontSize: 64, color: theme.palette.primary.main }}
           />
-          <Box sx={{ height: 16 }} />
-          <Typography variant="h6">図書館の蔵書をかんたん検索</Typography>
-          <Box sx={{ height: 32 }} />
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            図書館の蔵書をかんたん検索
+          </Typography>
           <Button
             variant="contained"
             startIcon={<QrCodeScannerIcon />}
             onClick={() => navigate('/scan')}
-            sx={{ width: '100%', minHeight: 56 }}
+            sx={{ width: '100%', minHeight: 56, mt: 4 }}
           >
             バーコードでスキャン
           </Button>
-          <Box sx={{ height: 16 }} />
           <Button
             variant="outlined"
             startIcon={<KeyboardIcon />}
             onClick={() => navigate('/isbn-input')}
-            sx={{ width: '100%', minHeight: 56 }}
+            sx={{ width: '100%', minHeight: 56, mt: 2 }}
           >
             ISBNを入力
           </Button>

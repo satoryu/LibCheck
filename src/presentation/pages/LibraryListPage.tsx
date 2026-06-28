@@ -65,8 +65,7 @@ export function LibraryListPage(): JSX.Element {
           }}
         >
           <CircularProgress />
-          <Box sx={{ height: 16 }} />
-          <Typography>図書館を検索中...</Typography>
+          <Typography sx={{ mt: 2 }}>図書館を検索中...</Typography>
         </Box>
       );
     }

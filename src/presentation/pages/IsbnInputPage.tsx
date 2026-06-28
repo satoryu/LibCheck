@@ -39,9 +39,9 @@ export function IsbnInputPage(): React.ReactElement {
       <SubPageAppBar title="ISBN入力" />
       <Box sx={{ p: 2 }}>
         <Typography variant="h6">ISBNを入力してください</Typography>
-        <Box sx={{ height: 16 }} />
         <TextField
           fullWidth
+          sx={{ mt: 2 }}
           value={value}
           onChange={(event) => setValue(event.target.value)}
           // ISBN はハイフン区切りで入力されることがあり、ISBN-10 のチェック
@@ -52,27 +52,29 @@ export function IsbnInputPage(): React.ReactElement {
           error={errorText !== null}
           helperText={errorText ?? undefined}
         />
-        <Box sx={{ height: 8 }} />
         {showValid && (
-          <Typography sx={{ color: theme.palette.primary.main }}>
+          <Typography sx={{ color: theme.palette.primary.main, mt: 1 }}>
             有効なISBNです
           </Typography>
         )}
-        <Box sx={{ height: 8 }} />
-        <Typography variant="caption" component="p">
+        <Typography variant="caption" component="p" sx={{ mt: 1 }}>
           書籍の裏表紙に記載されている13桁の数字を入力してください。
         </Typography>
-        <Box sx={{ height: 24 }} />
         <Button
           variant="contained"
           fullWidth
           disabled={!isValid}
           onClick={onSubmit}
+          sx={{ mt: 3 }}
         >
           検索する
         </Button>
-        <Box sx={{ height: 12 }} />
-        <Button variant="outlined" fullWidth onClick={navigateToScan}>
+        <Button
+          variant="outlined"
+          fullWidth
+          onClick={navigateToScan}
+          sx={{ mt: 1.5 }}
+        >
           バーコードスキャンへ
         </Button>
       </Box>
