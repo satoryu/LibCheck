@@ -86,7 +86,7 @@ export function HomePage(): React.ReactElement {
             ISBNを入力
           </Button>
           <Link
-            href="/privacy-policy.html"
+            href="/privacy-policy"
             target="_blank"
             rel="noopener noreferrer"
             variant="caption"
