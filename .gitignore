@@ -2,6 +2,9 @@
 node_modules
 dist
 *.local
+# このプロジェクトは npm 管理（CI は npm ci）。pnpm 系の生成物は追跡しない。
+pnpm-lock.yaml
+pnpm-workspace.yaml
 tsconfig.tsbuildinfo
 vite.config.js
 vite.config.d.ts
