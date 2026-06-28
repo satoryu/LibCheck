@@ -30,6 +30,10 @@ export function LoginPage(): JSX.Element {
       <GoogleSignInControl oneTap />
       <Typography variant="caption" color="text.secondary">
         続行すると
+        <Link href="/terms.html" target="_blank" rel="noopener noreferrer">
+          利用規約
+        </Link>
+        と
         <Link
           href="/privacy-policy.html"
           target="_blank"
