@@ -60,9 +60,9 @@ export function LibraryAvailabilityCard({
             <Box sx={{ height: 8 }} />
             <Button
               variant="text"
-              onClick={() => {
-                window.open(reserveUrl, '_blank', 'noopener,noreferrer');
-              }}
+              href={reserveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
             >
               予約する
             </Button>

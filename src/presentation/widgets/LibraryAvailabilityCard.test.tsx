@@ -129,8 +129,7 @@ describe('LibraryAvailabilityCard', () => {
     expect(screen.queryByText('予約する')).not.toBeInTheDocument();
   });
 
-  test('opens reserve URL in a new tab when reserve button is tapped', async () => {
-    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+  test('予約は新しいタブで開く安全なリンクとして描画される', () => {
     const status: LibraryStatus = {
       systemId: 'Tokyo_Minato',
       status: AvailabilityStatus.available,
@@ -138,16 +137,13 @@ describe('LibraryAvailabilityCard', () => {
       libKeyStatuses: { みなと: '貸出可' },
     };
 
-    const { user } = renderWithProviders(
+    renderWithProviders(
       <LibraryAvailabilityCard library={library} status={status} />,
     );
 
-    await user.click(screen.getByText('予約する'));
-
-    expect(openSpy).toHaveBeenCalledWith(
-      'https://example.com/reserve',
-      '_blank',
-      'noopener,noreferrer',
-    );
+    const link = screen.getByRole('link', { name: '予約する' });
+    expect(link).toHaveAttribute('href', 'https://example.com/reserve');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link.getAttribute('rel') ?? '').toContain('noopener');
   });
 });
