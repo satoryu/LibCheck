@@ -15,7 +15,6 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import HistoryIcon from '@mui/icons-material/History';
-import { APP_COLORS } from '@/presentation/theme/appColors';
 import {
   useSearchHistory,
   useSearchHistoryMutations,
@@ -84,7 +83,7 @@ export function SearchHistoryPage() {
             gap: 1,
           }}
         >
-          <HistoryIcon sx={{ fontSize: 48, color: APP_COLORS.inactive }} />
+          <HistoryIcon sx={{ fontSize: 48, color: 'grey.500' }} />
           <Typography sx={{ mt: 1 }}>検索履歴はありません</Typography>
           <Typography>書籍を検索すると履歴が保存されます</Typography>
         </Box>
@@ -106,7 +105,7 @@ export function SearchHistoryPage() {
             </Box>
             <IconButton
               aria-label="削除"
-              sx={{ color: APP_COLORS.error }}
+              sx={{ color: 'error.main' }}
               onClick={() => {
                 void remove(entry.isbn);
               }}

@@ -8,7 +8,6 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import { amazonCoverImageUrl, amazonProductUrl } from '@/domain/utils/amazonUrls';
-import { APP_COLORS } from '@/presentation/theme/appColors';
 import { AMAZON_ASSOCIATE_TAG } from '@/presentation/config/amazonAffiliate';
 
 export interface BookMetadataCardProps {
@@ -104,7 +103,7 @@ export function BookMetadataCard({
           flexShrink: 0,
         }}
       >
-        <MenuBookIcon sx={{ fontSize: 40, color: APP_COLORS.inactive }} />
+        <MenuBookIcon sx={{ fontSize: 40, color: 'grey.500' }} />
       </Box>
     );
 

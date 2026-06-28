@@ -9,38 +9,40 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
 import { AvailabilityStatus } from '@/domain/models/availabilityStatus';
-import { APP_COLORS } from '@/presentation/theme/appColors';
 
 interface StatusInfo {
   label: string;
+  /** MUI テーマのカラートークン（sx の color に渡す）。 */
   color: string;
   Icon: SvgIconComponent;
 }
 
+const INACTIVE_COLOR = 'grey.500';
+
 function statusInfo(status: AvailabilityStatus): StatusInfo {
   switch (status) {
     case AvailabilityStatus.available:
-      return { label: '貸出可能', color: APP_COLORS.success, Icon: CheckCircleIcon };
+      return { label: '貸出可能', color: 'success.main', Icon: CheckCircleIcon };
     case AvailabilityStatus.inLibraryOnly:
-      return { label: '館内のみ', color: APP_COLORS.success, Icon: CheckCircleIcon };
+      return { label: '館内のみ', color: 'success.main', Icon: CheckCircleIcon };
     case AvailabilityStatus.checkedOut:
-      return { label: '貸出中', color: APP_COLORS.warning, Icon: ScheduleIcon };
+      return { label: '貸出中', color: 'warning.main', Icon: ScheduleIcon };
     case AvailabilityStatus.reserved:
-      return { label: '予約中', color: APP_COLORS.warning, Icon: ScheduleIcon };
+      return { label: '予約中', color: 'warning.main', Icon: ScheduleIcon };
     case AvailabilityStatus.preparing:
-      return { label: '準備中', color: APP_COLORS.warning, Icon: ScheduleIcon };
+      return { label: '準備中', color: 'warning.main', Icon: ScheduleIcon };
     case AvailabilityStatus.closed:
-      return { label: '休館中', color: APP_COLORS.inactive, Icon: BlockIcon };
+      return { label: '休館中', color: INACTIVE_COLOR, Icon: BlockIcon };
     case AvailabilityStatus.notFound:
       return {
         label: '蔵書なし',
-        color: APP_COLORS.inactive,
+        color: INACTIVE_COLOR,
         Icon: RemoveCircleOutlineIcon,
       };
     case AvailabilityStatus.error:
-      return { label: 'エラー', color: APP_COLORS.error, Icon: ErrorOutlineIcon };
+      return { label: 'エラー', color: 'error.main', Icon: ErrorOutlineIcon };
     case AvailabilityStatus.unknown:
-      return { label: '不明', color: APP_COLORS.inactive, Icon: HelpOutlineIcon };
+      return { label: '不明', color: INACTIVE_COLOR, Icon: HelpOutlineIcon };
   }
 }
 
