@@ -85,16 +85,26 @@ export function HomePage(): React.ReactElement {
           >
             ISBNを入力
           </Button>
-          <Link
-            href="/privacy-policy.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="caption"
-            color="text.secondary"
-            sx={{ mt: 3 }}
-          >
-            プライバシーポリシー
-          </Link>
+          <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+            <Link
+              href="/terms.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="caption"
+              color="text.secondary"
+            >
+              利用規約
+            </Link>
+            <Link
+              href="/privacy-policy.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="caption"
+              color="text.secondary"
+            >
+              プライバシーポリシー
+            </Link>
+          </Box>
         </Box>
       </Box>
     </Box>
