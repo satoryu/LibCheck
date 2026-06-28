@@ -1,4 +1,4 @@
-import { Box, Typography, useTheme } from '@mui/material';
+import { Box, Link, Typography, useTheme } from '@mui/material';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 
 import { GoogleSignInControl } from '@/presentation/auth/GoogleSignInControl';
@@ -28,6 +28,17 @@ export function LoginPage(): JSX.Element {
         {'ログインすると、登録した図書館と検索履歴を\nどの端末でも使えます。'}
       </Typography>
       <GoogleSignInControl oneTap />
+      <Typography variant="caption" color="text.secondary">
+        続行すると
+        <Link
+          href="/privacy-policy.html"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          プライバシーポリシー
+        </Link>
+        に同意したものとみなされます。
+      </Typography>
     </Box>
   );
 }

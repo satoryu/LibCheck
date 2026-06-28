@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Link,
   useTheme,
 } from '@mui/material';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
@@ -84,6 +85,16 @@ export function HomePage(): React.ReactElement {
           >
             ISBNを入力
           </Button>
+          <Link
+            href="/privacy-policy.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="caption"
+            color="text.secondary"
+            sx={{ mt: 3 }}
+          >
+            プライバシーポリシー
+          </Link>
         </Box>
       </Box>
     </Box>
