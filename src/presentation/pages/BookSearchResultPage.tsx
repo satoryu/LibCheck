@@ -21,7 +21,6 @@ import type { BookAvailability } from '@/domain/models/bookAvailability';
 import type { Library } from '@/domain/models/library';
 import { libraryKey } from '@/domain/models/library';
 import { statusForLibKey } from '@/domain/models/libraryStatus';
-import { APP_COLORS } from '@/presentation/theme/appColors';
 import { resolveErrorMessage } from '@/presentation/utils/errorMessageResolver';
 import { useBookAvailability } from '@/presentation/hooks/useBookAvailability';
 import { useBookMetadata } from '@/presentation/hooks/useBookMetadata';
@@ -167,7 +166,7 @@ export function BookSearchResultPage(): JSX.Element {
           mt: 3,
         }}
       >
-        <ErrorOutlineIcon sx={{ fontSize: 48, color: APP_COLORS.error }} />
+        <ErrorOutlineIcon sx={{ fontSize: 48, color: 'error.main' }} />
         <Typography sx={{ mt: 2 }}>{resolveErrorMessage(error)}</Typography>
         <Button variant="contained" onClick={handleRetry} sx={{ mt: 2 }}>
           再試行
@@ -201,7 +200,7 @@ export function BookSearchResultPage(): JSX.Element {
           mt: 3,
         }}
       >
-        <LocalLibraryIcon sx={{ fontSize: 48, color: APP_COLORS.inactive }} />
+        <LocalLibraryIcon sx={{ fontSize: 48, color: 'grey.500' }} />
         <Typography sx={{ mt: 2 }}>図書館が登録されていません</Typography>
         <Typography sx={{ mt: 1 }}>
           図書館を登録すると蔵書を検索できます
