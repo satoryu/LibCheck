@@ -120,9 +120,8 @@ export function BookMetadataCard({
 
   return (
     <Card sx={{ my: 1 }}>
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'flex-start' }}>
+      <Box sx={{ p: 2, display: 'flex', alignItems: 'flex-start', gap: 2 }}>
         <Box sx={{ flexShrink: 0 }}>{coverArea}</Box>
-        <Box sx={{ width: 16 }} />
         <Box
           sx={{
             flex: 1,
@@ -133,27 +132,25 @@ export function BookMetadataCard({
           }}
         >
           {titleArea}
-          <Box sx={{ height: 12 }} />
           <Button
             variant="outlined"
             startIcon={<OpenInNewIcon />}
             href={productUrl}
             target="_blank"
             rel="noopener noreferrer"
+            sx={{ mt: 1.5 }}
           >
             Amazonで見る
           </Button>
           {showAffiliateDisclosure && (
-            <>
-              <Box sx={{ height: 8 }} />
-              <Typography
-                data-testid="affiliate-disclosure"
-                variant="caption"
-                color="text.secondary"
-              >
-                ※Amazonのアソシエイトとして、LibCheckは適格販売により収入を得ています。
-              </Typography>
-            </>
+            <Typography
+              data-testid="affiliate-disclosure"
+              variant="caption"
+              color="text.secondary"
+              sx={{ mt: 1 }}
+            >
+              ※Amazonのアソシエイトとして、LibCheckは適格販売により収入を得ています。
+            </Typography>
           )}
         </Box>
       </Box>

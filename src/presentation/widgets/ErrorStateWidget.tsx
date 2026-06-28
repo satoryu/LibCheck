@@ -34,12 +34,10 @@ export function ErrorStateWidget({
         }}
       >
         <ErrorOutlineIcon sx={{ fontSize: 48, color: APP_COLORS.error }} />
-        <Box sx={{ height: 16 }} />
-        <Typography variant="body1" align="center">
+        <Typography variant="body1" align="center" sx={{ mt: 2 }}>
           {resolveErrorMessage(error)}
         </Typography>
-        <Box sx={{ height: 16 }} />
-        <Button variant="contained" onClick={onRetry}>
+        <Button variant="contained" onClick={onRetry} sx={{ mt: 2 }}>
           再試行
         </Button>
       </Box>

@@ -27,7 +27,6 @@ export function LoginPage(): JSX.Element {
       <Typography color="text.secondary" sx={{ whiteSpace: 'pre-line' }}>
         {'ログインすると、登録した図書館と検索履歴を\nどの端末でも使えます。'}
       </Typography>
-      <Box sx={{ height: 8 }} />
       <GoogleSignInControl oneTap />
     </Box>
   );

@@ -42,31 +42,28 @@ export function LibraryAvailabilityCard({
   return (
     <Card sx={{ my: 1 }}>
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
           <LocalLibraryIcon sx={{ fontSize: 20 }} />
-          <Box sx={{ width: 8 }} />
           <Typography variant="subtitle1" sx={{ flex: 1 }}>
             {library.formalName}
           </Typography>
         </Box>
-        <Box sx={{ height: 4 }} />
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           {`${library.pref}${library.city}`}
         </Typography>
-        <Box sx={{ height: 12 }} />
-        <AvailabilityStatusBadge status={libKeyStatus} />
+        <Box sx={{ mt: 1.5 }}>
+          <AvailabilityStatusBadge status={libKeyStatus} />
+        </Box>
         {showReserve && (
-          <>
-            <Box sx={{ height: 8 }} />
-            <Button
-              variant="text"
-              href={reserveUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              予約する
-            </Button>
-          </>
+          <Button
+            variant="text"
+            href={reserveUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ mt: 1 }}
+          >
+            予約する
+          </Button>
         )}
       </Box>
     </Card>

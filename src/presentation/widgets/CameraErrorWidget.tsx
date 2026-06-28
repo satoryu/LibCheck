@@ -33,29 +33,27 @@ export function CameraErrorWidget({
         }}
       >
         <VideocamOffOutlinedIcon sx={{ fontSize: 64, color: 'text.secondary' }} />
-        <Box sx={{ height: 24 }} />
-        <Typography variant="subtitle1" align="center">
+        <Typography variant="subtitle1" align="center" sx={{ mt: 3 }}>
           カメラの起動に失敗しました
         </Typography>
-        <Box sx={{ height: 8 }} />
-        <Typography variant="body2" align="center">
+        <Typography variant="body2" align="center" sx={{ mt: 1 }}>
           しばらくしてからもう一度お試しください。
         </Typography>
-        <Box sx={{ height: 32 }} />
         <Button
           fullWidth
           variant="contained"
           startIcon={<RefreshIcon />}
           onClick={onRetry}
+          sx={{ mt: 4 }}
         >
           再試行
         </Button>
-        <Box sx={{ height: 12 }} />
         <Button
           fullWidth
           variant="outlined"
           startIcon={<KeyboardIcon />}
           onClick={onManualInput}
+          sx={{ mt: 1.5 }}
         >
           ISBNを手動入力する
         </Button>

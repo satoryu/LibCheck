@@ -54,9 +54,8 @@ export function AvailabilityStatusBadge({
   const { label, color, Icon } = statusInfo(status);
 
   return (
-    <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
       <Icon sx={{ color, fontSize: 20 }} />
-      <Box sx={{ width: 4 }} />
       <Typography component="span" sx={{ color, fontWeight: 'bold' }}>
         {label}
       </Typography>
