@@ -31,7 +31,7 @@ export function LoginPage(): JSX.Element {
       <Typography variant="caption" color="text.secondary">
         続行すると
         <Link
-          href="/privacy-policy"
+          href="/privacy-policy.html"
           target="_blank"
           rel="noopener noreferrer"
         >
