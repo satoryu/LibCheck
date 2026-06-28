@@ -22,6 +22,11 @@ describe('public/_headers', () => {
     expect(headers).toMatch(/Permissions-Policy:.*camera=\(self\)/);
   });
 
+  it('CSP は enforce（Report-Only ではない）で配信する（#93）', () => {
+    expect(headers).toMatch(/^\s*Content-Security-Policy:/m);
+    expect(headers).not.toMatch(/Content-Security-Policy-Report-Only:/);
+  });
+
   it('CSP に防御の要となるディレクティブを含む', () => {
     expect(csp).not.toBe('');
     expect(csp).toContain("frame-ancestors 'none'");
