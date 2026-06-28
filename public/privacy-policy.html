@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>プライバシーポリシー - LibCheck</title>
+  <style>
+    body {
+      font-family: 'BIZ UDGothic', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 24px 16px;
+      color: #333;
+      line-height: 1.8;
+    }
+    h1 {
+      font-size: 1.6rem;
+      border-bottom: 2px solid #00796B;
+      padding-bottom: 8px;
+      color: #1a1a2e;
+    }
+    h2 {
+      font-size: 1.2rem;
+      margin-top: 2rem;
+      color: #1a1a2e;
+    }
+    h3 {
+      font-size: 1.05rem;
+      margin-top: 1.2rem;
+    }
+    p, li {
+      font-size: 0.95rem;
+    }
+    ul {
+      padding-left: 1.4em;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f5f8f7;
+    }
+    .last-updated {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 2rem;
+    }
+    .contact {
+      background: #f1f7f6;
+      border-left: 4px solid #00796B;
+      padding: 12px 16px;
+      border-radius: 0 4px 4px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>プライバシーポリシー</h1>
+  <p class="last-updated">最終更新日: 2026年6月28日</p>
+
+  <p>
+    satoryu（以下「開発者」）は、Web アプリケーション「LibCheck」（以下「本アプリ」）における
+    ユーザーの個人情報の取り扱いについて、以下のとおりプライバシーポリシー（以下「本ポリシー」）を定めます。
+  </p>
+
+  <h2>1. 本アプリについて</h2>
+  <p>
+    LibCheck は、書籍の ISBN バーコードをスキャンまたは手動入力することで、
+    ユーザーが登録した図書館における蔵書の貸出状況を確認できる Web アプリです。
+    利用には Google アカウントでのログインが必要です。図書館情報の検索には、カーリル株式会社が提供する
+    <a href="https://calil.jp/doc/api_ref.html">カーリル図書館 API</a> を利用しています。
+  </p>
+
+  <h2>2. 取得する情報</h2>
+
+  <h3>2-1. Google アカウント情報（ログイン）</h3>
+  <p>
+    ログイン時に Google（Google Identity Services）を通じて、以下の情報を取得します。
+    パスワードを本アプリが受け取ることはありません。
+  </p>
+  <ul>
+    <li>氏名（表示名）</li>
+    <li>メールアドレス</li>
+    <li>プロフィール画像の URL</li>
+    <li>Google アカウントの識別子（sub）</li>
+  </ul>
+  <p>
+    これらは利用者の認証と、登録図書館・検索履歴を利用者ごとに紐づけて保存するために使用します。
+  </p>
+
+  <h3>2-2. カメラ</h3>
+  <p>
+    書籍の ISBN バーコードをスキャンするため、カメラの使用許可を求めます。
+    カメラの映像はブラウザ内でのバーコード認識にのみ使用され、画像・動画として保存または送信されることはありません。
+  </p>
+
+  <h3>2-3. サーバーに保存するデータ</h3>
+  <p>
+    以下のデータは、ログインした利用者に紐づけて、開発者が管理するサーバー（Cloudflare D1 データベース）に保存されます。
+    これにより複数の端末で同じ登録内容・履歴を利用できます。
+  </p>
+  <ul>
+    <li><strong>登録図書館</strong>: 利用者が登録した図書館の名称・システム ID など</li>
+    <li><strong>検索履歴</strong>: 検索した ISBN・検索日時・各図書館の蔵書状況</li>
+  </ul>
+
+  <h3>2-4. Cookie</h3>
+  <p>
+    ログイン状態を維持するため、開発者が発行するセッション用 Cookie を 1 つ使用します
+    （HttpOnly・Secure・SameSite=Strict）。これは認証目的のみに使用し、広告・追跡には使用しません。
+  </p>
+
+  <h2>3. 外部サービスへの送信</h2>
+  <p>本アプリは、機能提供のため以下の外部サービスと通信します。</p>
+  <table>
+    <thead>
+      <tr><th>サービス</th><th>送信する情報</th><th>目的</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Google（認証）</td>
+        <td>ログイン時の認証情報</td>
+        <td>Google アカウントでのログイン</td>
+      </tr>
+      <tr>
+        <td>Cloudflare（配信・保存）</td>
+        <td>本アプリの配信、上記 2-3 のデータ保存</td>
+        <td>ホスティングおよびデータベース</td>
+      </tr>
+      <tr>
+        <td>カーリル図書館 API</td>
+        <td>ISBN・図書館のシステム ID・都道府県名・市区町村名・API キー（個人を特定する情報は含みません）</td>
+        <td>蔵書確認・図書館検索</td>
+      </tr>
+      <tr>
+        <td>OpenBD</td>
+        <td>ISBN（個人を特定する情報は含みません）</td>
+        <td>書名・書影の取得</td>
+      </tr>
+      <tr>
+        <td>Amazon</td>
+        <td>ISBN（リンク・書影の生成に使用。個人を特定する情報は含みません）</td>
+        <td>書影の表示および商品ページへのリンク</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>
+    本アプリは Amazon.co.jp を宣伝しリンクすることによって紹介料を獲得できる
+    Amazon アソシエイト・プログラムの参加者です。各サービスにおける情報の取り扱いは、
+    <a href="https://policies.google.com/privacy">Google</a>・
+    <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare</a>・
+    <a href="https://calil.jp/doc/api_terms.html">カーリル</a> 各社のポリシーをご参照ください。
+  </p>
+
+  <h2>4. 情報の利用目的</h2>
+  <ul>
+    <li>Google アカウントによる認証とログイン状態の維持</li>
+    <li>図書館の蔵書・貸出状況の検索・表示</li>
+    <li>登録図書館の管理・表示（利用者・端末間での同期）</li>
+    <li>検索履歴の保存・表示（利用者・端末間での同期）</li>
+    <li>アプリの動作改善</li>
+  </ul>
+
+  <h2>5. 情報の第三者提供</h2>
+  <p>開発者は、以下の場合を除き、取得した個人情報を第三者に販売・提供しません。</p>
+  <ul>
+    <li>法令に基づく場合</li>
+    <li>人の生命・身体・財産の保護のため、本人の同意を得ることが困難な場合</li>
+  </ul>
+  <p>上記 3 の外部サービスとの通信は、本アプリの機能提供に必要な範囲での利用です。</p>
+
+  <h2>6. データの保管と削除</h2>
+  <ul>
+    <li><strong>検索履歴</strong>: アプリ内の履歴画面から個別または一括で削除できます。削除はサーバー上のデータにも反映されます。</li>
+    <li><strong>登録図書館</strong>: アプリ内で登録を解除すると、サーバー上のデータからも削除されます。</li>
+    <li><strong>ログアウト</strong>: セッション Cookie を削除します。サーバー上の登録図書館・検索履歴は保持され、再ログインで再び利用できます。</li>
+    <li><strong>全データの削除・アカウントに関するお問い合わせ</strong>: 下記のお問い合わせ先までご連絡ください。</li>
+  </ul>
+
+  <h2>7. 広告・アナリティクス</h2>
+  <p>
+    本アプリは広告を表示しておらず、現時点で Google Analytics 等のアクセス解析ツールは使用していません。
+    将来導入する場合は、本ポリシーを更新したうえでお知らせします。
+  </p>
+
+  <h2>8. 未成年者のプライバシー</h2>
+  <p>
+    本アプリは 13 歳未満のお子様を対象としておらず、13 歳未満の方から意図的に個人情報を収集することはありません。
+  </p>
+
+  <h2>9. 本ポリシーの変更</h2>
+  <p>
+    開発者は、必要に応じて本ポリシーを変更することがあります。
+    変更後のポリシーは、本ページに掲載した時点から効力を生じるものとします。
+  </p>
+
+  <h2>10. お問い合わせ</h2>
+  <div class="contact">
+    <p>本ポリシーに関するご質問・ご意見・データ削除のご依頼は、下記の GitHub リポジトリの Issue よりお問い合わせください。</p>
+    <p>
+      <strong>GitHub</strong>:
+      <a href="https://github.com/satoryu/LibCheck/issues">https://github.com/satoryu/LibCheck/issues</a>
+    </p>
+  </div>
+
+</body>
+</html>
