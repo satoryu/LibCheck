@@ -1,86 +1,69 @@
 # LibCheck ロードマップ
 
-カメラでISBNのバーコードを撮影し、普段利用している図書館に蔵書があるかどうかを確認するAndroidアプリケーション。
+カメラで ISBN のバーコードを撮影し、普段利用している図書館に蔵書があるかを確認する **Web アプリケーション**。
 
-## 前提
+## 前提（現状）
 
-- 技術スタック: Flutter / Dart
-- 外部API: [カーリル 図書館API](https://calil.jp/doc/api_ref.html)
-- 対応OS: Android
+- 技術スタック: React 18 / TypeScript / Vite、MUI、TanStack Query、React Router v7
+- 認証: Google ログイン（Google Identity Services + `jose`）。**必須ログイン**
+- バックエンド / 配信: Cloudflare Pages + Pages Functions、永続化は Cloudflare D1
+- 外部 API: [カーリル図書館 API](https://calil.jp/doc/api_ref.html)（蔵書/図書館検索・サーバ側でキー注入）、OpenBD（書名・書影）、Amazon（書影・アソシエイトリンク）
+- アーキテクチャ: Clean Architecture（domain / data / presentation）
+- 構成の詳細は [`../README.md`](../README.md) / [`cloudflare-runbook.md`](cloudflare-runbook.md) を参照
 
-## Phase 1: プロジェクト基盤構築
+> 旧版は Flutter / Android / ローカル保存の単体アプリだった。React へ移植後、Azure SWA → Cloudflare へ移設し、認証・サーバ永続化を追加した（経緯は各 Issue / Cosense「LibCheck」日誌）。
 
-アプリ全体のアーキテクチャを整え、以後の開発を円滑に進めるための土台を作る。
+## 完了済みマイルストーン
 
-| # | Issue | 概要 |
-|---|-------|------|
-| 1 | プロジェクト構造の整理 | Clean Architecture に基づくディレクトリ構成、レイヤー分離の導入 |
-| 2 | 状態管理の導入 | Riverpod 等の状態管理パッケージを選定・導入 |
-| 3 | ローカルストレージの導入 | shared_preferences または Hive 等でデータ永続化の基盤を用意 |
-| 4 | カーリルAPI クライアントの実装 | http パッケージを用いたAPIクライアント基盤。図書館検索・蔵書検索エンドポイント対応 |
+- ✅ **MVP（蔵書検索の中核）**: 図書館登録 → ISBN スキャン/入力 → 蔵書状況表示 → 検索履歴
+- ✅ **Flutter → React/Vite 移植**
+- ✅ **書誌情報表示**: OpenBD 書名・書影 + Amazon 書影/アソシエイトリンク
+- ✅ **検索結果の在庫状況順ソート**
+- ✅ **Azure SWA → Cloudflare 移設**（#78・完了/クローズ）: Pages + Functions + GitHub Actions デプロイ、Bicep/Azure 撤去、軽量 IaC runbook 化
+- ✅ **認証（#73）**: Google ログイン（GIS）、ローカル認証モック
+- ✅ **永続化（#74）**: 登録図書館・検索履歴を D1 にユーザー単位で保存（端末間同期）
+- ✅ **D1 マイグレーション運用化（#83）**: `wrangler d1 migrations` + CI 自動適用
+- ✅ **HttpOnly Cookie セッション（#91）**: リロードでも再認証不要（XSS 窃取不可・CSRF 対策）
+- ✅ **セキュリティ堅牢化**: セキュリティヘッダ + CSP enforce（#87 / #93）、永続化 API の入力検証（#87）、Calil プロキシの認証必須化 + キャッシュ（#89）
+- ✅ **プライバシーポリシー（#102）**: 現状反映の全面改訂・アプリから参照可能化
 
-## Phase 2: 図書館登録機能
+## 公開前にやること（リリースブロッカー）
 
-ユーザーが普段利用する図書館を登録・管理できるようにする。
+| Issue | 概要 | 担当 |
+|---|---|---|
+| #105 | Google OAuth 同意画面を本番公開（Testing → In production）。テストユーザー以外もログイン可能にする | メンテナー（Google Cloud） |
+| #91 | リロード維持の本番実機確認（ログイン→リロード維持→ログアウト） | メンテナー（確認のみ） |
 
-| # | Issue | 概要 |
-|---|-------|------|
-| 5 | 都道府県・市区町村選択UI | 都道府県 → 市区町村の2段階選択フォームを実装 |
-| 6 | 図書館一覧表示・選択 | カーリルAPI から取得した図書館一覧を表示し、登録対象を選べるようにする |
-| 7 | 登録図書館の管理 | 複数図書館の登録・削除・一覧表示。ローカルストレージに永続化 |
+## 公開後の予定（バックログ）
 
-## Phase 3: 蔵書検索機能（コア機能）
+| Issue | 概要 | 区分 |
+|---|---|---|
+| #71 | カスタムドメインの取得と適用（現状は `libcheck.pages.dev`） | infra |
+| #72 | PWA 対応（インストール可能・オフライン） | enhancement |
+| #76 | アクセス解析の導入（Google Analytics 等。導入時はプライバシーポリシー更新） | analytics |
+| #100 | フロントエンドレビュー P2（状態分割 / データ層整理 / クエリ設定 / ログ削除） | refactor |
+| — | デザイン刷新（テーマの図書カード化など、現状は概ね既定 MUI） | design |
+| — | dev での実 Google ログイン対応（dev/prod 差分の更なる縮小） | DX |
 
-ISBN から蔵書の有無・貸出状況を確認するアプリの中核機能。
-
-| # | Issue | 概要 |
-|---|-------|------|
-| 8 | ISBNバーコードスキャン | カメラを使った ISBN バーコード（EAN-13）の読み取り機能 |
-| 9 | ISBN手動入力 | バーコードが読み取れない場合のフォールバックとして ISBN を手入力できるフォーム |
-| 10 | 蔵書検索・結果表示 | カーリルAPI の蔵書検索エンドポイントを呼び出し、登録図書館ごとの蔵書有無・貸出状況を表示 |
-
-## Phase 4: 検索履歴機能
-
-過去に検索した書籍の履歴を端末内に保存し、後から参照できるようにする。
-
-| # | Issue | 概要 |
-|---|-------|------|
-| 11 | 検索履歴の保存 | 検索した ISBN・書籍情報・結果をローカルストレージに保存 |
-| 12 | 検索履歴一覧・再検索 | 履歴一覧画面の実装。履歴から蔵書状況の再検索が可能 |
-
-## Phase 5: 品質向上・リリース準備
-
-アプリの品質を高め、リリースに向けた準備を行う。
-
-| # | Issue | 概要 |
-|---|-------|------|
-| 13 | エラーハンドリング・UX改善 | ネットワークエラー、API エラー、カメラ権限拒否などのエラーケース対応。ローディング表示の統一 |
-| 14 | UIデザインの仕上げ | アプリアイコン、テーマカラー、レイアウトの統一感を整える |
-| 15 | E2Eテスト・リリースビルド | Integration test の追加。Android リリースビルドの設定 |
-
-## 依存関係
+## アーキテクチャ概観
 
 ```mermaid
 graph TD
-    P1[Phase 1: 基盤構築]
-    P2[Phase 2: 図書館登録]
-    P3[Phase 3: 蔵書検索]
-    P4[Phase 4: 検索履歴]
-    P5[Phase 5: リリース準備]
+    subgraph client[ブラウザ SPA]
+      UI[React / MUI / React Router]
+      RQ[TanStack Query]
+      AUTH[Google ログイン（GIS）]
+    end
+    subgraph cf[Cloudflare]
+      PAGES[Pages（静的配信）]
+      FN[Pages Functions]
+      D1[(D1 / SQLite)]
+    end
+    EXT[カーリル / OpenBD / Amazon]
 
-    P1 --> P2
-    P1 --> P3
-    P2 --> P3
-    P3 --> P4
-    P4 --> P5
+    UI --> RQ --> FN
+    AUTH --> FN
+    FN --> D1
+    FN --> EXT
+    PAGES --> UI
 ```
-
-## 技術選定（案）
-
-| カテゴリ | パッケージ候補 | 備考 |
-|----------|---------------|------|
-| 状態管理 | flutter_riverpod | 宣言的で testability が高い |
-| HTTP | http / dio | カーリルAPI通信用 |
-| ローカルストレージ | shared_preferences | 図書館登録・検索履歴の永続化 |
-| バーコードスキャン | mobile_scanner | カメラによるバーコード読み取り |
-| ルーティング | go_router | 画面遷移管理 |
