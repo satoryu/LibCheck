@@ -52,10 +52,10 @@ describe('LibCheckApp', () => {
     window.history.replaceState(null, '', '/');
     render(<App />);
 
-    // 必須ログインのため未ログインではログイン画面が表示される。
+    // 必須ログインのため未ログインではランディング（紹介）が表示される。
     // SnackbarProvider はゲートの外側にあるため、この状態でも通知は出せる。
     await waitFor(() => {
-      expect(screen.getByText(/ログインすると/)).toBeInTheDocument();
+      expect(screen.getByText(/図書館にありますか/)).toBeInTheDocument();
     });
 
     // notistack v3 のモジュールレベル API でスナックバーを表示する。

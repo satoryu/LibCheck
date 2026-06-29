@@ -26,15 +26,15 @@ function renderGate(user: User | null) {
 }
 
 describe('AuthGate', () => {
-  it('未ログインはログイン画面を表示する', () => {
+  it('未ログインはランディング（紹介）を表示する', () => {
     renderGate(null);
-    expect(screen.getByText(/ログインすると/)).toBeInTheDocument();
+    expect(screen.getByText(/図書館にありますか/)).toBeInTheDocument();
     expect(screen.queryByText('APP CONTENT')).not.toBeInTheDocument();
   });
 
   it('ログイン済みは子を表示する', () => {
     renderGate({ id: 'u1', name: 'Alice' });
     expect(screen.getByText('APP CONTENT')).toBeInTheDocument();
-    expect(screen.queryByText(/ログインすると/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/図書館にありますか/)).not.toBeInTheDocument();
   });
 });
