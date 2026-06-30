@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 import { fileURLToPath, URL } from "node:url";
 import { devPersistencePlugin } from "./vite-dev-persistence";
 
@@ -17,8 +18,58 @@ export default defineConfig(({ mode }) => {
   const nodeMajor = Number(process.versions.node.split(".")[0]);
   const testExecArgv = nodeMajor >= 22 ? ["--no-experimental-webstorage"] : [];
 
+  // PWA（#72）: インストール可能＋高速化に限定。静的アセットのみ precache し、
+  // /api/* と Calil プロキシは SW でキャッシュしない（個人データ残存・古データ表示の回避）。
+  // 登録は外部 registerSW.js（injectRegister: 'script'）で CSP（script-src 'self'）に適合。
+  // vitest 実行時はビルドに関係しないため無効化する。
+  const isTest = process.env.VITEST === "true";
+  const pwaPlugins = isTest
+    ? []
+    : [
+        VitePWA({
+          registerType: "autoUpdate",
+          injectRegister: "script",
+          // dev では SW を動かさない（キャッシュ起因の混乱回避）。検証は build/preview か本番で。
+          devOptions: { enabled: false },
+          includeAssets: [
+            "favicon-32x32.png",
+            "apple-touch-icon.png",
+          ],
+          workbox: {
+            globPatterns: ["**/*.{js,css,html,svg,png,woff,woff2}"],
+            // SPA ナビゲーションのフォールバックから API と法務ページ(.html)を除外。
+            navigateFallback: "/index.html",
+            navigateFallbackDenylist: [/^\/api\//, /\.html$/],
+            // ランタイムキャッシュは定義しない＝ /api 等は常にネットワーク。
+            cleanupOutdatedCaches: true,
+          },
+          manifest: {
+            name: "LibCheck — 図書館の蔵書をかんたん検索",
+            short_name: "LibCheck",
+            description:
+              "ISBN から、登録した複数の図書館の蔵書と貸出状況を一度に確認できます。",
+            lang: "ja",
+            start_url: "/",
+            scope: "/",
+            display: "standalone",
+            theme_color: "#00796B",
+            background_color: "#0E3B36",
+            icons: [
+              { src: "/pwa-192x192.png", sizes: "192x192", type: "image/png" },
+              { src: "/pwa-512x512.png", sizes: "512x512", type: "image/png" },
+              {
+                src: "/maskable-icon-512x512.png",
+                sizes: "512x512",
+                type: "image/png",
+                purpose: "maskable",
+              },
+            ],
+          },
+        }),
+      ];
+
   return {
-    plugins: [react(), devPersistencePlugin()],
+    plugins: [react(), ...pwaPlugins, devPersistencePlugin()],
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
