@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import type { SearchHistoryEntry } from '@/domain/models/searchHistoryEntry';
+import { MAX_SEARCH_HISTORY_ENTRIES } from '@/domain/models/searchHistoryEntry';
 import { SearchHistoryApiClient } from '@/data/datasources/searchHistoryApiClient';
 import { ServerSearchHistoryRepositoryImpl } from '@/data/repositories/serverSearchHistoryRepositoryImpl';
 
@@ -63,5 +64,23 @@ describe('ServerSearchHistoryRepositoryImpl', () => {
     // #91: 認証は HttpOnly Cookie が主。トークン null でも例外にしない。
     const repo = new ServerSearchHistoryRepositoryImpl(new FakeApi() as never, () => null);
     await expect(repo.getAll()).resolves.toEqual([]);
+  });
+
+  it('save は上限を超えた古い履歴を切り捨てる（#115）', async () => {
+    // 上限まで満たした状態で 1 件保存 → 件数は上限のまま・新規が先頭・最古が消える。
+    // これが無いと #87 の入力検証（PUT 最大件数）に達した時点で保存が永久に失敗する。
+    const api = new FakeApi();
+    api.list = Array.from({ length: MAX_SEARCH_HISTORY_ENTRIES }, (_, i) =>
+      entry(`isbn-${i}`),
+    );
+    const repo = new ServerSearchHistoryRepositoryImpl(api as never, () => 'tok');
+
+    await repo.save(entry('NEW'));
+
+    const isbns = (await repo.getAll()).map((e) => e.isbn);
+    expect(isbns).toHaveLength(MAX_SEARCH_HISTORY_ENTRIES);
+    expect(isbns[0]).toBe('NEW');
+    // 末尾（最古）だった isbn-99 相当が落ちる
+    expect(isbns).not.toContain(`isbn-${MAX_SEARCH_HISTORY_ENTRIES - 1}`);
   });
 });

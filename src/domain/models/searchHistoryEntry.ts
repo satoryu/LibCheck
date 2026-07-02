@@ -12,6 +12,13 @@ export interface SearchHistoryEntry {
   libraryStatuses: Record<string, string>;
 }
 
+/**
+ * 保存する検索履歴の上限件数（ドメインルール）。超過分は古いものから切り捨てる。
+ * サーバ永続化は PUT 全置換＋入力検証（件数上限）のため、無制限に増やすと
+ * 上限到達後に保存が失敗し続ける（#115）。
+ */
+export const MAX_SEARCH_HISTORY_ENTRIES = 100;
+
 export function searchHistoryEntryFromJson(
   json: Record<string, unknown>,
 ): SearchHistoryEntry {

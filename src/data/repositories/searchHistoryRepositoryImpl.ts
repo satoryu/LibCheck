@@ -1,5 +1,6 @@
 import {
   type SearchHistoryEntry,
+  MAX_SEARCH_HISTORY_ENTRIES,
   searchHistoryEntryFromJson,
   searchHistoryEntryToJson,
 } from '@/domain/models/searchHistoryEntry';
@@ -7,7 +8,8 @@ import type { LocalStorageRepository } from '@/domain/repositories/localStorageR
 import type { SearchHistoryRepository } from '@/domain/repositories/searchHistoryRepository';
 
 const STORAGE_KEY = 'search_history';
-const MAX_ENTRIES = 100;
+// 上限はドメインルール（サーバ実装と共通。#115）。
+const MAX_ENTRIES = MAX_SEARCH_HISTORY_ENTRIES;
 
 export class SearchHistoryRepositoryImpl implements SearchHistoryRepository {
   private readonly localStorage: LocalStorageRepository;

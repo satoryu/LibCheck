@@ -1,4 +1,5 @@
 import type { SearchHistoryEntry } from '@/domain/models/searchHistoryEntry';
+import { MAX_SEARCH_HISTORY_ENTRIES } from '@/domain/models/searchHistoryEntry';
 import type { SearchHistoryRepository } from '@/domain/repositories/searchHistoryRepository';
 import type { SearchHistoryApiClient } from '@/data/datasources/searchHistoryApiClient';
 import { getAuthToken } from '@/data/datasources/authTokenStore';
@@ -28,8 +29,12 @@ export class ServerSearchHistoryRepositoryImpl
 
   async save(entry: SearchHistoryEntry): Promise<void> {
     const current = await this.getAll();
-    // 同一 ISBN は置き換え、最新を先頭に。
-    const next = [entry, ...current.filter((e) => e.isbn !== entry.isbn)];
+    // 同一 ISBN は置き換え、最新を先頭に。上限超過分は古いものから切り捨てる
+    // （放置すると PUT の件数検証に達した時点で保存が失敗し続ける。#115）。
+    const next = [entry, ...current.filter((e) => e.isbn !== entry.isbn)].slice(
+      0,
+      MAX_SEARCH_HISTORY_ENTRIES,
+    );
     await this.apiClient.saveAll(this.token(), next);
   }
 
