@@ -15,6 +15,7 @@ import { theme } from '@/theme';
 import { SelectedLibrariesProvider } from '@/presentation/hooks/useSelectedLibraries';
 import { AuthProvider } from '@/presentation/auth/AuthProvider';
 import { AuthGate } from '@/presentation/auth/AuthGate';
+import { AppErrorBoundary } from '@/presentation/widgets/AppErrorBoundary';
 import { googleClientId } from '@/data/datasources/authConfig';
 
 /**
@@ -57,6 +58,8 @@ export function App() {
               '.notistack-SnackbarContainer': { top: '64px !important' },
             }}
           />
+          {/* 描画クラッシュ時の白画面を防ぐ全体フォールバック（#117）。 */}
+          <AppErrorBoundary>
           <SnackbarProvider
             anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           >
@@ -72,6 +75,7 @@ export function App() {
               )}
             </AuthProvider>
           </SnackbarProvider>
+          </AppErrorBoundary>
         </ThemeProvider>
       </QueryClientProvider>
     </DependenciesProvider>
