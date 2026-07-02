@@ -1,0 +1,4 @@
+# LibCheck — https://libcheck.app
+User-agent: *
+Disallow: /api/
+Allow: /
