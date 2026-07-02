@@ -5,6 +5,7 @@ import {
 } from 'react-router-dom';
 
 import { AppShell } from '@/presentation/pages/AppShell';
+import { RouteErrorFallback } from '@/presentation/widgets/AppErrorBoundary';
 import { HomePage } from '@/presentation/pages/HomePage';
 import { LibraryManagementPage } from '@/presentation/pages/LibraryManagementPage';
 import { SearchHistoryPage } from '@/presentation/pages/SearchHistoryPage';
@@ -47,5 +48,9 @@ export const routes: RouteObject[] = [
 ];
 
 export function createAppRouter() {
-  return createBrowserRouter(routes);
+  // 全ルートを pathless な親で包み、ルート描画中の例外を errorElement で受ける
+  // （白画面回避。#117）。URL 構造は変わらない。
+  return createBrowserRouter([
+    { errorElement: <RouteErrorFallback />, children: routes },
+  ]);
 }
