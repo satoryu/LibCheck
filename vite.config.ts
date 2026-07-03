@@ -36,6 +36,12 @@ export default defineConfig(({ mode }) => {
             "apple-touch-icon.png",
           ],
           workbox: {
+            // autoUpdate を実際に機能させるための必須設定。これが無いと新 SW は
+            // waiting のまま activate せず、ユーザーが永遠に旧版を見続ける
+            // （injectRegister:'script' は SKIP_WAITING メッセージを送らないため、
+            // SW 自身が install 後に即 activate + 既存クライアント制御する）。
+            skipWaiting: true,
+            clientsClaim: true,
             globPatterns: ["**/*.{js,css,html,svg,png,woff,woff2}"],
             // SPA ナビゲーションのフォールバックから API と法務ページ(.html)を除外。
             navigateFallback: "/index.html",
