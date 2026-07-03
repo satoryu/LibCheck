@@ -29,6 +29,11 @@ describe('PWA 設定', () => {
     expect(viteConfig).toContain('registerType: "autoUpdate"');
   });
 
+  it('新 SW が即 activate する（skipWaiting/clientsClaim。無いと更新が永遠に届かない）', () => {
+    expect(viteConfig).toContain('skipWaiting: true');
+    expect(viteConfig).toContain('clientsClaim: true');
+  });
+
   it('PWA アイコン素材が public に存在する', () => {
     for (const f of ['pwa-192x192.png', 'pwa-512x512.png', 'maskable-icon-512x512.png', 'apple-touch-icon.png']) {
       expect(existsSync(resolve(process.cwd(), 'public', f)), f).toBe(true);
