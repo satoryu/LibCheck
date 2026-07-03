@@ -55,12 +55,29 @@ export function HeroCard(): JSX.Element {
         />
       </Box>
 
+      {/* ワードマーク（製品名）。飾りラベルだけでは名前が記憶に残らないため、
+          見出しの前に「名前」として明示する。 */}
+      <Typography
+        component="p"
+        sx={{
+          mt: 2.5,
+          fontFamily: LANDING_SERIF,
+          fontWeight: 700,
+          fontSize: '1.3rem',
+          letterSpacing: '0.04em',
+          color: C.teal,
+          lineHeight: 1,
+        }}
+      >
+        LibCheck
+      </Typography>
+
       {/* 大見出し（明朝） */}
       <Typography
         id="lp-hero-heading"
         component="h1"
         sx={{
-          mt: 2,
+          mt: 1.5,
           fontFamily: LANDING_SERIF,
           fontWeight: 600,
           color: C.ink,
