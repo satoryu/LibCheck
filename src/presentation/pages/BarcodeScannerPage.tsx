@@ -59,8 +59,6 @@ export function BarcodeScannerPage(): JSX.Element {
 
     const handleDecoded = (rawValue: string): void => {
       if (isProcessingRef.current) return;
-      // eslint-disable-next-line no-console
-      console.debug('[scan] decoded:', rawValue);
       const interpretation = interpretScannedBarcode(rawValue);
       if (interpretation.kind === 'isbn') {
         isProcessingRef.current = true;
