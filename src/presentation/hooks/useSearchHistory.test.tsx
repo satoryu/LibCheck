@@ -15,24 +15,33 @@ import type { SearchHistoryRepository } from "@/domain/repositories/searchHistor
 
 class FakeSearchHistoryRepository implements SearchHistoryRepository {
   private entries: SearchHistoryEntry[] = [];
+  getAllCallCount = 0;
 
-  async getAll(): Promise<SearchHistoryEntry[]> {
+  private sorted(): SearchHistoryEntry[] {
     const sorted = [...this.entries];
     sorted.sort((a, b) => b.searchedAt.getTime() - a.searchedAt.getTime());
     return sorted;
   }
 
-  async save(entry: SearchHistoryEntry): Promise<void> {
+  async getAll(): Promise<SearchHistoryEntry[]> {
+    this.getAllCallCount += 1;
+    return this.sorted();
+  }
+
+  async save(entry: SearchHistoryEntry): Promise<SearchHistoryEntry[]> {
     this.entries = this.entries.filter((e) => e.isbn !== entry.isbn);
     this.entries.push(entry);
+    return this.sorted();
   }
 
-  async remove(isbn: string): Promise<void> {
+  async remove(isbn: string): Promise<SearchHistoryEntry[]> {
     this.entries = this.entries.filter((e) => e.isbn !== isbn);
+    return this.sorted();
   }
 
-  async removeAll(): Promise<void> {
+  async removeAll(): Promise<SearchHistoryEntry[]> {
     this.entries = [];
+    return [];
   }
 }
 
@@ -103,5 +112,67 @@ describe("searchHistory hooks", () => {
 
     await waitFor(() => expect(result.current.query.data).toHaveLength(1));
     expect((result.current.query.data ?? [])[0].isbn).toBe("9784003101018");
+  });
+
+  test("save はリポジトリの戻り値でキャッシュを更新し、再 getAll しない（#100 P2-6）", async () => {
+    // 修正前は「save → 再 getAll → setQueryData」で、サーバ実装では履歴保存
+    // 1回につき余分な GET が発生していた（GET→PUT→GET の3リクエスト）。
+    const { result } = renderHook(
+      () => ({
+        query: useSearchHistory(),
+        mutations: useSearchHistoryMutations(),
+      }),
+      { wrapper: createWrapper(deps) },
+    );
+
+    await waitFor(() => expect(result.current.query.isSuccess).toBe(true));
+    const callsAfterInitialLoad = fakeRepo.getAllCallCount;
+
+    await act(async () => {
+      await result.current.mutations.save({
+        isbn: "9784003101018",
+        searchedAt: new Date(2026, 1, 15),
+        libraryStatuses: { Tokyo_Chiyoda: "available" },
+      });
+    });
+
+    await waitFor(() => expect(result.current.query.data).toHaveLength(1));
+    expect(fakeRepo.getAllCallCount).toBe(callsAfterInitialLoad);
+  });
+
+  test("remove / removeAll もキャッシュを直接更新する", async () => {
+    await fakeRepo.save({
+      isbn: "9784003101018",
+      searchedAt: new Date(2026, 1, 15),
+      libraryStatuses: {},
+    });
+    await fakeRepo.save({
+      isbn: "9784873117584",
+      searchedAt: new Date(2026, 1, 16),
+      libraryStatuses: {},
+    });
+
+    const { result } = renderHook(
+      () => ({
+        query: useSearchHistory(),
+        mutations: useSearchHistoryMutations(),
+      }),
+      { wrapper: createWrapper(deps) },
+    );
+
+    await waitFor(() => expect(result.current.query.data).toHaveLength(2));
+    const callsAfterInitialLoad = fakeRepo.getAllCallCount;
+
+    await act(async () => {
+      await result.current.mutations.remove("9784003101018");
+    });
+    await waitFor(() => expect(result.current.query.data).toHaveLength(1));
+
+    await act(async () => {
+      await result.current.mutations.removeAll();
+    });
+    await waitFor(() => expect(result.current.query.data).toHaveLength(0));
+
+    expect(fakeRepo.getAllCallCount).toBe(callsAfterInitialLoad);
   });
 });

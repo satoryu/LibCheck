@@ -24,7 +24,7 @@ export class SearchHistoryRepositoryImpl implements SearchHistoryRepository {
     return entries;
   }
 
-  async save(entry: SearchHistoryEntry): Promise<void> {
+  async save(entry: SearchHistoryEntry): Promise<SearchHistoryEntry[]> {
     const entries = await this.getAllRaw();
 
     const filtered = entries.filter((e) => e.isbn !== entry.isbn);
@@ -38,16 +38,20 @@ export class SearchHistoryRepositoryImpl implements SearchHistoryRepository {
         : filtered;
 
     await this.saveAll(trimmed);
+    return trimmed;
   }
 
-  async remove(isbn: string): Promise<void> {
+  async remove(isbn: string): Promise<SearchHistoryEntry[]> {
     const entries = await this.getAllRaw();
     const filtered = entries.filter((e) => e.isbn !== isbn);
+    filtered.sort((a, b) => b.searchedAt.getTime() - a.searchedAt.getTime());
     await this.saveAll(filtered);
+    return filtered;
   }
 
-  async removeAll(): Promise<void> {
+  async removeAll(): Promise<SearchHistoryEntry[]> {
     await this.localStorage.remove(STORAGE_KEY);
+    return [];
   }
 
   private async getAllRaw(): Promise<SearchHistoryEntry[]> {

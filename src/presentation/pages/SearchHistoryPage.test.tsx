@@ -19,17 +19,20 @@ class FakeSearchHistoryRepository implements SearchHistoryRepository {
     );
   }
 
-  async save(entry: SearchHistoryEntry): Promise<void> {
+  async save(entry: SearchHistoryEntry): Promise<SearchHistoryEntry[]> {
     this.entries = this.entries.filter((e) => e.isbn !== entry.isbn);
     this.entries.push(entry);
+    return this.getAll();
   }
 
-  async remove(isbn: string): Promise<void> {
+  async remove(isbn: string): Promise<SearchHistoryEntry[]> {
     this.entries = this.entries.filter((e) => e.isbn !== isbn);
+    return this.getAll();
   }
 
-  async removeAll(): Promise<void> {
+  async removeAll(): Promise<SearchHistoryEntry[]> {
     this.entries = [];
+    return [];
   }
 }
 
