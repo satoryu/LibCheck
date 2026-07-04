@@ -5,6 +5,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { enqueueSnackbar } from 'notistack';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -82,10 +83,14 @@ export function BookSearchResultPage(): JSX.Element {
         library.libKey,
       );
     }
-    void save({
+    save({
       isbn,
       searchedAt: new Date(),
       libraryStatuses: statuses,
+    }).catch(() => {
+      // 履歴保存は中核機能（蔵書表示）を妨げない範囲で通知する（#100 P2-6:
+      // 以前は fire-and-forget で失敗が無言だった）。
+      enqueueSnackbar('検索履歴を保存できませんでした', { variant: 'warning' });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

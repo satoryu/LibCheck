@@ -27,7 +27,7 @@ export class ServerSearchHistoryRepositoryImpl
     return this.apiClient.getAll(this.token());
   }
 
-  async save(entry: SearchHistoryEntry): Promise<void> {
+  async save(entry: SearchHistoryEntry): Promise<SearchHistoryEntry[]> {
     const current = await this.getAll();
     // 同一 ISBN は置き換え、最新を先頭に。上限超過分は古いものから切り捨てる
     // （放置すると PUT の件数検証に達した時点で保存が失敗し続ける。#115）。
@@ -36,17 +36,18 @@ export class ServerSearchHistoryRepositoryImpl
       MAX_SEARCH_HISTORY_ENTRIES,
     );
     await this.apiClient.saveAll(this.token(), next);
+    return next;
   }
 
-  async remove(isbn: string): Promise<void> {
+  async remove(isbn: string): Promise<SearchHistoryEntry[]> {
     const current = await this.getAll();
-    await this.apiClient.saveAll(
-      this.token(),
-      current.filter((e) => e.isbn !== isbn),
-    );
+    const next = current.filter((e) => e.isbn !== isbn);
+    await this.apiClient.saveAll(this.token(), next);
+    return next;
   }
 
-  async removeAll(): Promise<void> {
+  async removeAll(): Promise<SearchHistoryEntry[]> {
     await this.apiClient.saveAll(this.token(), []);
+    return [];
   }
 }
