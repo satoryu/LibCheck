@@ -7,6 +7,7 @@ import type { AppDependencies } from "@/app/dependencies";
 import { makeFakeDeps } from "@/test/testUtils";
 import { SelectedLibrariesProvider } from "@/presentation/hooks/useSelectedLibraries";
 import { useBookAvailability } from "@/presentation/hooks/useBookAvailability";
+import { useRegisteredLibraries } from "@/presentation/hooks/useRegisteredLibraries";
 import { AvailabilityStatus } from "@/domain/models/availabilityStatus";
 import type { BookAvailability } from "@/domain/models/bookAvailability";
 import type { Library } from "@/domain/models/library";
@@ -34,9 +35,12 @@ class FakeLibraryRepository implements LibraryRepository {
 }
 
 class FakeRegisteredLibraryRepository implements RegisteredLibraryRepository {
+  getAllCallCount = 0;
+
   constructor(private readonly libraries: Library[] = []) {}
 
   async getAll(): Promise<Library[]> {
+    this.getAllCallCount += 1;
     return [...this.libraries];
   }
 
@@ -203,6 +207,35 @@ describe("useBookAvailability", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(fakeLibraryRepo.capturedSystemIds).toHaveLength(1);
+    expect(fakeLibraryRepo.capturedSystemIds).toEqual(["Tokyo_Minato"]);
+  });
+
+  test("useRegisteredLibraries と併用しても getAll は1回（キャッシュ共有・#100 P2-5）", async () => {
+    // 修正前は queryFn 内で repository.getAll() を直接再取得しており、ページの
+    // useRegisteredLibraries と合わせて 2 回の取得（サーバ実装では余分な HTTP）が
+    // 発生していた。BookSearchResultPage は両フックを併用するため、その形を再現する。
+    const fakeLibraryRepo = new FakeLibraryRepository([]);
+    const fakeRegisteredRepo = new FakeRegisteredLibraryRepository([library1]);
+
+    const deps = makeFakeDeps({
+      libraryRepository: fakeLibraryRepo,
+      registeredLibraryRepository: fakeRegisteredRepo,
+    });
+
+    const { result } = renderHook(
+      () => ({
+        registered: useRegisteredLibraries(),
+        availability: useBookAvailability("9784123456789"),
+      }),
+      { wrapper: createWrapper(deps) },
+    );
+
+    await waitFor(() => {
+      expect(result.current.registered.isSuccess).toBe(true);
+      expect(result.current.availability.isSuccess).toBe(true);
+    });
+
+    expect(fakeRegisteredRepo.getAllCallCount).toBe(1);
     expect(fakeLibraryRepo.capturedSystemIds).toEqual(["Tokyo_Minato"]);
   });
 });
