@@ -32,6 +32,9 @@ export function useBookAvailability(
   return useQuery({
     queryKey: ['bookAvailability', isbn, systemIds],
     enabled: isbn.length > 0 && registered.isSuccess,
+    // 蔵書検索は Calil のポーリング（最大60秒）を伴うため、グローバル既定の
+    // 再試行（#100 P2-7）から除外する（失敗時の自動再実行は負荷増幅になる）。
+    retry: false,
     queryFn: async () => {
       if (systemIds.length === 0) {
         return [];
