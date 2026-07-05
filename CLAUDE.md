@@ -106,7 +106,7 @@ Do not merge a PR if there are unchecked items in its Test Plan. For items that 
 
 Merging is not the end of the work. An Issue/PR is done only when all of the following hold:
 
-1. CI is green (`scripts/watch-pr.sh [PR-number]` waits for it) → squash merge.
+1. CI is green, and the merge is chained to it: `scripts/watch-pr.sh <PR> && gh pr merge <PR> --squash --delete-branch` (never merge as a separate step that ignores the exit code).
 2. Watch the production deploy triggered by the merge to main (cloudflare-pages.yml) with `gh run watch` until it completes.
 3. **Run `scripts/smoke.sh` and confirm every item passes** (first-line production verification; read-only and safe).
 4. Verify the change-specific behavior in production (new endpoint responses, headers, rendering, etc.).
