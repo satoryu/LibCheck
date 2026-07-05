@@ -94,10 +94,36 @@ When issues are found during code review, do not dismiss them solely because the
 When the Test Plan includes manual verification items (UI behavior, camera/barcode scanning, navigation), you must perform the verification yourself in a browser. Do not leave it to the user unless the browser environment is genuinely unavailable. Steps:
 
 1. Start the dev server (`npm run dev`, default `http://localhost:5173`), or emulate the production setup (Pages Functions) with `npm run pages:dev`.
-2. Open the app in a browser and verify each acceptance criterion manually (use the webapp-testing / Playwright tools when available).
+2. Open the app in a browser and verify each acceptance criterion manually (use the Chrome integration tools when available; Playwright does not install in this environment — see Known Pitfalls).
 3. For camera/barcode features, verify graceful handling when camera access is denied or unavailable.
 4. Check off the verified items in the PR Test Plan.
 
 ## Merging
 
 Do not merge a PR if there are unchecked items in its Test Plan. For items that cannot be verified by automated tests (e.g. in-browser verification), perform the verification yourself first. Only ask the user for approval if the environment is genuinely unavailable.
+
+## Definition of Done
+
+「マージして終わり」にしない。1つの Issue/PR は以下をすべて満たして完了とする:
+
+1. CI 緑（`scripts/watch-pr.sh [PR番号]` で待機できる）→ squash merge
+2. main へのマージで走る本番デプロイ（cloudflare-pages.yml）の完了を `gh run watch` で見届ける
+3. **`scripts/smoke.sh` を実行し全項目 ✅**（本番の一次検証。読み取りのみで安全）
+4. その変更固有の本番検証（新エンドポイントの応答、ヘッダ、表示など）を実測する
+5. 検証結果を PR / Issue に記録してからクローズする
+
+## Verification Principles
+
+- **記憶で書かない**: 外部サービス（Cloudflare / Google / Workbox 等）の仕様・コマンド・制約は、実装前に公式ドキュメントで裏取りする。ダッシュボードのクリック手順は陳腐化するため、手順は API / CLI で示す。
+- **変更前に影響範囲を grep する**: 呼び出し側・テスト・Fake 実装を先に洗ってから設計する。
+- **サーバとクライアントを切り分ける**: 本番の不具合は、まず curl（サーバ/CDN の状態）とブラウザ（SW・キャッシュ・Cookie などクライアントの状態）を分けて観測してから原因を推定する。
+- **Service Worker / PWA を変更したら「更新が届くこと」自体を検証項目にする**: 新 SW が waiting に滞留しないこと（`navigator.serviceWorker.getRegistration()` で `waiting` が残らない）をブラウザで確認する。curl やユニットテストでは検出できない。
+
+## Known Pitfalls（このプロジェクト固有の罠）
+
+- **Cloudflare Pages の環境変数は必ず `secret_text`**: plain 変数は `wrangler pages deploy` が消す（正本は wrangler.toml の `[vars]`）。変更は再デプロイで初めて反映される。
+- **クリーン URL（拡張子なし）は本番 Pages のみの機能**: ローカル Vite dev では 404 になる。アプリ内リンクは `.html` 付きにする（本番は 308 で追従される）。
+- **`git add -A` を使わない**: 未追跡のゴミ（過去に pnpm ファイル）を巻き込んだ事故がある。対象パスを明示して add する。
+- **wrangler / Playwright はローカルに入らない**（sharp のネイティブビルドで失敗する環境）。wrangler は CI（wrangler-action）か `npx`、ブラウザ確認は Chrome 連携ツールか、ユーザーの目視に依頼する。
+- **GIS One Tap は承認済みユーザーを即・自動ログインさせる**: 未ログイン画面（ランディング）の確認はログアウト直後かシークレットウィンドウで行う。dev で実 Google ログインは通らない（`VITE_AUTH_MOCK=true` でモックを使う）。
+- **Cloudflare API トークンの受け渡し**: ユーザーが `/tmp/cf_token`・`/tmp/cf_acct` に配置（`umask 077`）→ 値は一切表示しない → **検証が完了するまで削除しない** → 完了後に `rm`。
