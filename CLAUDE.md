@@ -104,26 +104,26 @@ Do not merge a PR if there are unchecked items in its Test Plan. For items that 
 
 ## Definition of Done
 
-「マージして終わり」にしない。1つの Issue/PR は以下をすべて満たして完了とする:
+Merging is not the end of the work. An Issue/PR is done only when all of the following hold:
 
-1. CI 緑（`scripts/watch-pr.sh [PR番号]` で待機できる）→ squash merge
-2. main へのマージで走る本番デプロイ（cloudflare-pages.yml）の完了を `gh run watch` で見届ける
-3. **`scripts/smoke.sh` を実行し全項目 ✅**（本番の一次検証。読み取りのみで安全）
-4. その変更固有の本番検証（新エンドポイントの応答、ヘッダ、表示など）を実測する
-5. 検証結果を PR / Issue に記録してからクローズする
+1. CI is green (`scripts/watch-pr.sh [PR-number]` waits for it) → squash merge.
+2. Watch the production deploy triggered by the merge to main (cloudflare-pages.yml) with `gh run watch` until it completes.
+3. **Run `scripts/smoke.sh` and confirm every item passes** (first-line production verification; read-only and safe).
+4. Verify the change-specific behavior in production (new endpoint responses, headers, rendering, etc.).
+5. Record the verification results on the PR / Issue before closing it.
 
 ## Verification Principles
 
-- **記憶で書かない**: 外部サービス（Cloudflare / Google / Workbox 等）の仕様・コマンド・制約は、実装前に公式ドキュメントで裏取りする。ダッシュボードのクリック手順は陳腐化するため、手順は API / CLI で示す。
-- **変更前に影響範囲を grep する**: 呼び出し側・テスト・Fake 実装を先に洗ってから設計する。
-- **サーバとクライアントを切り分ける**: 本番の不具合は、まず curl（サーバ/CDN の状態）とブラウザ（SW・キャッシュ・Cookie などクライアントの状態）を分けて観測してから原因を推定する。
-- **Service Worker / PWA を変更したら「更新が届くこと」自体を検証項目にする**: 新 SW が waiting に滞留しないこと（`navigator.serviceWorker.getRegistration()` で `waiting` が残らない）をブラウザで確認する。curl やユニットテストでは検出できない。
+- **Never implement from memory**: verify specs, commands, and constraints of external services (Cloudflare / Google / Workbox etc.) against official docs before implementing. Dashboard click-paths go stale quickly, so document procedures as API / CLI commands.
+- **Grep the blast radius before changing code**: find callers, tests, and fake implementations first, then design the change.
+- **Separate server state from client state**: for production issues, observe with curl (server/CDN state) and the browser (Service Worker, caches, cookies) independently before hypothesizing a cause.
+- **When touching the Service Worker / PWA, verify that updates actually reach users**: confirm in a browser that the new SW does not stay in `waiting` (`navigator.serviceWorker.getRegistration()`). Neither curl nor unit tests can catch this.
 
-## Known Pitfalls（このプロジェクト固有の罠）
+## Known Pitfalls (project-specific)
 
-- **Cloudflare Pages の環境変数は必ず `secret_text`**: plain 変数は `wrangler pages deploy` が消す（正本は wrangler.toml の `[vars]`）。変更は再デプロイで初めて反映される。
-- **クリーン URL（拡張子なし）は本番 Pages のみの機能**: ローカル Vite dev では 404 になる。アプリ内リンクは `.html` 付きにする（本番は 308 で追従される）。
-- **`git add -A` を使わない**: 未追跡のゴミ（過去に pnpm ファイル）を巻き込んだ事故がある。対象パスを明示して add する。
-- **wrangler / Playwright はローカルに入らない**（sharp のネイティブビルドで失敗する環境）。wrangler は CI（wrangler-action）か `npx`、ブラウザ確認は Chrome 連携ツールか、ユーザーの目視に依頼する。
-- **GIS One Tap は承認済みユーザーを即・自動ログインさせる**: 未ログイン画面（ランディング）の確認はログアウト直後かシークレットウィンドウで行う。dev で実 Google ログインは通らない（`VITE_AUTH_MOCK=true` でモックを使う）。
-- **Cloudflare API トークンの受け渡し**: ユーザーが `/tmp/cf_token`・`/tmp/cf_acct` に配置（`umask 077`）→ 値は一切表示しない → **検証が完了するまで削除しない** → 完了後に `rm`。
+- **Cloudflare Pages env vars must be `secret_text`**: plain-text vars are wiped by `wrangler pages deploy` (the source of truth for plain vars is `[vars]` in wrangler.toml). Changes take effect only on the next deploy.
+- **Clean URLs (extension-less) exist only on production Pages**: they 404 on the local Vite dev server. Use `.html` links in the app (production follows with a 308).
+- **Do not use `git add -A`**: it once swept in untracked junk (pnpm files). Always stage explicit paths.
+- **wrangler / Playwright do not install locally** (the sharp native build fails in this environment). Use CI (wrangler-action) or `npx` for wrangler; use the Chrome integration tools or ask the user for browser verification.
+- **GIS One Tap silently signs in previously-approved users**: check the logged-out view (landing page) right after signing out or in an incognito window. Real Google sign-in does not work on the dev server (use `VITE_AUTH_MOCK=true`).
+- **Cloudflare API token handoff**: the user places tokens at `/tmp/cf_token` / `/tmp/cf_acct` (`umask 077`) → never print the values → **keep them until verification completes** → then `rm`.
