@@ -46,5 +46,6 @@ describe('public/_headers', () => {
     expect(csp).toMatch(/frame-src[^;]*https:\/\/accounts\.google\.com\/gsi\//);
     expect(csp).toMatch(/connect-src[^;]*https:\/\/api\.openbd\.jp/);
     expect(csp).toMatch(/connect-src[^;]*https:\/\/accounts\.google\.com\/gsi\//);
+    expect(csp).toMatch(/connect-src[^;]*https:\/\/o472140\.ingest\.us\.sentry\.io/);
   });
 });
