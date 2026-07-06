@@ -5,6 +5,8 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
+import { reportError } from '@/sentry';
+
 interface Props {
   children: ReactNode;
 }
@@ -56,8 +58,9 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
-    // 監視サービス導入（#118）まではコンソールに記録するのみ。
     console.error('[AppErrorBoundary]', error, info.componentStack);
+    // エラー監視（#118）。未初期化（ローカル等）では no-op。
+    reportError(error);
   }
 
   render(): ReactNode {

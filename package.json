@@ -17,6 +17,7 @@
     "@mui/icons-material": "^6.0.0",
     "@mui/material": "^6.0.0",
     "@react-oauth/google": "^0.13.5",
+    "@sentry/react": "^10.63.0",
     "@tanstack/react-query": "^5.0.0",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.0",
