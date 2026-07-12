@@ -20,6 +20,12 @@
 - [Cloudflare Pages](https://developers.cloudflare.com/pages/) + [Pages Functions](https://developers.cloudflare.com/pages/functions/)（静的配信 + API プロキシ / 認証 / 永続化 API）
 - [Cloudflare D1](https://developers.cloudflare.com/d1/)（登録図書館・検索履歴をユーザー単位で永続化）
 
+## システム構成
+
+![LibCheck 本番システム構成図](./docs/production-architecture.drawio.png)
+
+PNG には draw.io の図面 XML が埋め込まれているため、[draw.io](https://www.diagrams.net/)（デスクトップアプリ or app.diagrams.net）で開くとそのまま編集できます。
+
 ## プロジェクト構成
 
 Clean Architecture に基づく3層構成。
