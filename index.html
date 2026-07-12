@@ -29,5 +29,11 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Cloudflare Web Analytics（#76。Cookie 不使用・個人を特定しない計測） -->
+    <script
+      type="module"
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "36dde0862ae84cf7957e9b97a3f0073f"}'
+    ></script>
   </body>
 </html>

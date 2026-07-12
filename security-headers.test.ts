@@ -47,5 +47,7 @@ describe('public/_headers', () => {
     expect(csp).toMatch(/connect-src[^;]*https:\/\/api\.openbd\.jp/);
     expect(csp).toMatch(/connect-src[^;]*https:\/\/accounts\.google\.com\/gsi\//);
     expect(csp).toMatch(/connect-src[^;]*https:\/\/o472140\.ingest\.us\.sentry\.io/);
+    expect(csp).toMatch(/script-src[^;]*https:\/\/static\.cloudflareinsights\.com/);
+    expect(csp).toMatch(/connect-src[^;]*https:\/\/cloudflareinsights\.com/);
   });
 });
