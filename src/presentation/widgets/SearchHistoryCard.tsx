@@ -11,6 +11,7 @@ import {
   availabilityFromName,
 } from '@/domain/models/availabilityStatus';
 import type { SearchHistoryEntry } from '@/domain/models/searchHistoryEntry';
+import { KC_MONO } from '@/presentation/theme/tokens';
 import { AvailabilityStatusBadge } from '@/presentation/widgets/AvailabilityStatusBadge';
 
 export interface SearchHistoryCardProps {
@@ -69,7 +70,12 @@ export function SearchHistoryCard({
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
           <BookIcon sx={{ fontSize: 24 }} />
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', ml: 1.5 }}>
-            <Typography variant="body1">{`ISBN: ${entry.isbn}`}</Typography>
+            <Typography
+              variant="body1"
+              sx={{ fontFamily: KC_MONO, letterSpacing: '0.06em' }}
+            >
+              {`ISBN: ${entry.isbn}`}
+            </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {formatDate(entry.searchedAt, now)}
             </Typography>

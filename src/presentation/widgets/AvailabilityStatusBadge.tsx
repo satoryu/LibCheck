@@ -55,10 +55,31 @@ export function AvailabilityStatusBadge({
 }: AvailabilityStatusBadgeProps): JSX.Element {
   const { label, color, Icon } = statusInfo(status);
 
+  // 「スタンプ」の語彙（#138 Phase 2）: LP の「貸出可能」スタンプと同じ枠付き。
+  // アイコンは色覚多様性への配慮で維持し、回転はさせない（一覧でうるさくなるため）。
   return (
-    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-      <Icon sx={{ color, fontSize: 20 }} />
-      <Typography component="span" sx={{ color, fontWeight: 'bold' }}>
+    <Box
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 0.5,
+        border: '1.5px solid',
+        borderColor: color,
+        borderRadius: 1,
+        px: 1,
+        py: 0.25,
+      }}
+    >
+      <Icon sx={{ color, fontSize: 18 }} />
+      <Typography
+        component="span"
+        sx={{
+          color,
+          fontWeight: 'bold',
+          fontSize: '0.85rem',
+          letterSpacing: '0.08em',
+        }}
+      >
         {label}
       </Typography>
     </Box>
