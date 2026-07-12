@@ -123,7 +123,7 @@ Merging is not the end of the work. An Issue/PR is done only when all of the fol
 
 - **Cloudflare Pages env vars must be `secret_text`**: plain-text vars are wiped by `wrangler pages deploy` (the source of truth for plain vars is `[vars]` in wrangler.toml). Changes take effect only on the next deploy.
 - **Clean URLs (extension-less) exist only on production Pages**: they 404 on the local Vite dev server. Use `.html` links in the app (production follows with a 308).
-- **Do not use `git add -A`**: it once swept in untracked junk (pnpm files). Always stage explicit paths.
+- **Do not use `git add -A`**: it once swept in untracked junk (pnpm files). Always stage explicit paths. Enforced by a PreToolUse hook (`scripts/claude-hooks/block-git-add-all.sh`, wired in `.claude/settings.json`) that also blocks `git add --all` / `git add .`.
 - **wrangler / Playwright do not install locally** (the sharp native build fails in this environment). Use CI (wrangler-action) or `npx` for wrangler; use the Chrome integration tools or ask the user for browser verification.
 - **GIS One Tap silently signs in previously-approved users**: check the logged-out view (landing page) right after signing out or in an incognito window. Real Google sign-in does not work on the dev server (use `VITE_AUTH_MOCK=true`).
 - **Cloudflare API token handoff**: the user places tokens at `/tmp/cf_token` / `/tmp/cf_acct` (`umask 077`) → never print the values → **keep them until verification completes** → then `rm`.
