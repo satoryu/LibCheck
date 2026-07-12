@@ -38,8 +38,9 @@ swa-cli.config.json
 # is commented out by default.
 #.vscode/
 
-# Claude Code local settings
-.claude/
+# Claude Code: チーム共有設定 (settings.json) は追跡し、個人設定は除外する
+.claude/*
+!.claude/settings.json
 .vite/
 
 # Bicep compiled output
