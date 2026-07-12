@@ -29,6 +29,7 @@ import { useBookMetadata } from '@/presentation/hooks/useBookMetadata';
 import { useRegisteredLibraries } from '@/presentation/hooks/useRegisteredLibraries';
 import { useSearchHistoryMutations } from '@/presentation/hooks/useSearchHistory';
 import { sortLibrariesByAvailability } from '@/presentation/utils/sortLibrariesByAvailability';
+import { KC_MONO, KC_COLORS } from '@/presentation/theme/tokens';
 import { BookMetadataCard } from '@/presentation/widgets/BookMetadataCard';
 import { LibraryAvailabilityCard } from '@/presentation/widgets/LibraryAvailabilityCard';
 import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
@@ -94,11 +95,17 @@ function useSaveHistoryOnResult(
 }
 
 function IsbnSection({ isbn }: { isbn: string }): JSX.Element {
+  // 「貸出カード」の語彙（#138 Phase 2）: 上辺のティール罫 + 請求記号風の等幅表記。
   return (
-    <Card>
+    <Card sx={{ borderTop: `3px solid ${KC_COLORS.teal}` }}>
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <BookIcon sx={{ fontSize: 24 }} />
-        <Typography variant="body1">{`ISBN: ${isbn}`}</Typography>
+        <BookIcon sx={{ fontSize: 24, color: KC_COLORS.brass }} />
+        <Typography
+          variant="body1"
+          sx={{ fontFamily: KC_MONO, letterSpacing: '0.06em' }}
+        >
+          {`ISBN: ${isbn}`}
+        </Typography>
       </Box>
     </Card>
   );
