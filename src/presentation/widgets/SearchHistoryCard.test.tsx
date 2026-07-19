@@ -113,3 +113,39 @@ describe('SearchHistoryCard', () => {
     expect(onTap).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('SearchHistoryCard メタデータ表示（#141）', () => {
+  const entry = {
+    isbn: '9784873117584',
+    searchedAt: new Date(2026, 6, 1),
+    libraryStatuses: { みなと: 'available' },
+  };
+
+  test('metadata があればタイトルを主表記にし、ISBN は補助表記に降格する', () => {
+    renderWithProviders(
+      <SearchHistoryCard
+        entry={entry}
+        onTap={() => {}}
+        metadata={{
+          isbn: '9784873117584',
+          title: 'リーダブルコード',
+          coverImageUrl: 'https://cover.openbd.jp/9784873117584.jpg',
+        }}
+      />,
+    );
+    expect(screen.getByText('リーダブルコード')).toBeInTheDocument();
+    // ISBN も補助表記として残る
+    expect(screen.getByText(/9784873117584/)).toBeInTheDocument();
+    // 書影（img か placeholder のどちらか）が描画される
+    expect(
+      screen.queryByTestId('book-cover') ??
+        screen.queryByTestId('book-cover-placeholder'),
+    ).not.toBeNull();
+  });
+
+  test('metadata が無ければ従来どおり ISBN が主表記', () => {
+    renderWithProviders(<SearchHistoryCard entry={entry} onTap={() => {}} />);
+    expect(screen.getByText('ISBN: 9784873117584')).toBeInTheDocument();
+    expect(screen.queryByText('リーダブルコード')).not.toBeInTheDocument();
+  });
+});

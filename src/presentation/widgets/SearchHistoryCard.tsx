@@ -1,4 +1,3 @@
-import BookIcon from '@mui/icons-material/Book';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -10,7 +9,9 @@ import {
   aggregateAvailability,
   availabilityFromName,
 } from '@/domain/models/availabilityStatus';
+import type { BookMetadata } from '@/domain/models/bookMetadata';
 import type { SearchHistoryEntry } from '@/domain/models/searchHistoryEntry';
+import { BookCoverThumbnail } from '@/presentation/widgets/BookCoverThumbnail';
 import { KC_MONO } from '@/presentation/theme/tokens';
 import { AvailabilityStatusBadge } from '@/presentation/widgets/AvailabilityStatusBadge';
 
@@ -18,6 +19,8 @@ export interface SearchHistoryCardProps {
   entry: SearchHistoryEntry;
   onTap: () => void;
   now?: Date;
+  /** 書誌メタデータ（#141）。未取得（undefined/null）なら ISBN を主表記にする。 */
+  metadata?: BookMetadata | null;
 }
 
 function pad2(value: number): string {
@@ -63,19 +66,49 @@ export function SearchHistoryCard({
   entry,
   onTap,
   now,
+  metadata,
 }: SearchHistoryCardProps): JSX.Element {
+  const title = metadata?.title;
   return (
     <Card sx={{ my: 0.5 }}>
       <CardActionArea onClick={onTap} sx={{ borderRadius: 3 }}>
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
-          <BookIcon sx={{ fontSize: 24 }} />
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', ml: 1.5 }}>
-            <Typography
-              variant="body1"
-              sx={{ fontFamily: KC_MONO, letterSpacing: '0.06em' }}
-            >
-              {`ISBN: ${entry.isbn}`}
-            </Typography>
+          <BookCoverThumbnail
+            isbn={entry.isbn}
+            openBdCoverUrl={metadata?.coverImageUrl}
+            width={44}
+            height={62}
+            alt={title ?? '書影'}
+          />
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', ml: 1.5, minWidth: 0 }}>
+            {title !== undefined && title.length > 0 ? (
+              <>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {title}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontFamily: KC_MONO, letterSpacing: '0.06em' }}
+                >
+                  {`ISBN: ${entry.isbn}`}
+                </Typography>
+              </>
+            ) : (
+              <Typography
+                variant="body1"
+                sx={{ fontFamily: KC_MONO, letterSpacing: '0.06em' }}
+              >
+                {`ISBN: ${entry.isbn}`}
+              </Typography>
+            )}
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {formatDate(entry.searchedAt, now)}
             </Typography>

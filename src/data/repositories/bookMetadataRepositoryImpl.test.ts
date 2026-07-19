@@ -54,3 +54,27 @@ describe('BookMetadataRepositoryImpl', () => {
     });
   });
 });
+
+describe('BookMetadataRepositoryImpl.getByIsbns（#141）', () => {
+  it('一括取得を Map に変換し、該当なし(null)は含めない', async () => {
+    const fakeClient = {
+      async getByIsbns(isbns: string[]) {
+        expect(isbns).toEqual(['A', 'B', 'C']);
+        return [
+          { summary: { isbn: 'A', title: 'タイトルA', cover: 'https://cover.openbd.jp/A.jpg' } },
+          null,
+          { summary: { isbn: 'C', title: 'タイトルC' } },
+        ];
+      },
+    };
+    const repo = new BookMetadataRepositoryImpl(fakeClient as never);
+
+    const map = await repo.getByIsbns(['A', 'B', 'C']);
+
+    expect(map.size).toBe(2);
+    expect(map.get('A')?.title).toBe('タイトルA');
+    expect(map.get('A')?.coverImageUrl).toBe('https://cover.openbd.jp/A.jpg');
+    expect(map.has('B')).toBe(false);
+    expect(map.get('C')?.title).toBe('タイトルC');
+  });
+});

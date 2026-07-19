@@ -62,6 +62,15 @@ export class FakeBookMetadataRepository implements BookMetadataRepository {
   async getByIsbn(isbn: string): Promise<BookMetadata | null> {
     return this.byIsbn[isbn] ?? null;
   }
+
+  async getByIsbns(isbns: string[]): Promise<Map<string, BookMetadata>> {
+    const map = new Map<string, BookMetadata>();
+    for (const isbn of isbns) {
+      const found = this.byIsbn[isbn];
+      if (found) map.set(isbn, found);
+    }
+    return map;
+  }
 }
 
 export function makeFakeDeps(

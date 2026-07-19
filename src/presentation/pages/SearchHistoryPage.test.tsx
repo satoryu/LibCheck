@@ -3,7 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 
 import type { SearchHistoryEntry } from '@/domain/models/searchHistoryEntry';
 import type { SearchHistoryRepository } from '@/domain/repositories/searchHistoryRepository';
-import { renderWithProviders, makeFakeDeps } from '@/test/testUtils';
+import { renderWithProviders, makeFakeDeps, FakeBookMetadataRepository } from '@/test/testUtils';
 import { SearchHistoryPage } from '@/presentation/pages/SearchHistoryPage';
 
 class FakeSearchHistoryRepository implements SearchHistoryRepository {
@@ -135,5 +135,26 @@ describe('SearchHistoryPage', () => {
       expect(screen.queryByText(/9784003101018/)).not.toBeInTheDocument();
     });
     expect(screen.getByText(/9784167158057/)).toBeInTheDocument();
+  });
+});
+
+describe('検索履歴のメタデータ表示（#141・結合）', () => {
+  it('履歴一覧に書籍タイトルが表示される', async () => {
+    const repo = new FakeSearchHistoryRepository();
+    await repo.save({
+      isbn: '9784873117584',
+      searchedAt: new Date(2026, 6, 1),
+      libraryStatuses: { みなと: 'available' },
+    });
+    const deps = makeFakeDeps({
+      searchHistoryRepository: repo,
+      bookMetadataRepository: new FakeBookMetadataRepository({
+        '9784873117584': { isbn: '9784873117584', title: 'リーダブルコード' },
+      }),
+    });
+    renderWithProviders(<SearchHistoryPage />, { deps });
+
+    expect(await screen.findByText('リーダブルコード')).toBeInTheDocument();
+    expect(screen.getByText(/9784873117584/)).toBeInTheDocument();
   });
 });

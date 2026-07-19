@@ -60,3 +60,43 @@ describe('OpenBdApiClient', () => {
     await expect(client.getByIsbn('9784873117584')).rejects.toThrow();
   });
 });
+
+describe('OpenBdApiClient.getByIsbns（#141 一括取得）', () => {
+  test('複数 ISBN を CSV で1リクエストし、要求順で返す（該当なしは null）', async () => {
+    let calledUrl = '';
+    let callCount = 0;
+    const fetchFn: typeof fetch = async (input) => {
+      callCount++;
+      calledUrl = String(input);
+      return jsonResponse([
+        { summary: { isbn: '9784873117584', title: 'リーダブルコード' } },
+        null,
+        { summary: { isbn: '9784297127831', title: '良いコード悪いコード' } },
+      ]);
+    };
+    const client = new OpenBdApiClient({ fetchFn, baseUrl: 'https://api.openbd.jp/v1' });
+
+    const results = await client.getByIsbns([
+      '9784873117584',
+      '9780000000000',
+      '9784297127831',
+    ]);
+
+    expect(callCount).toBe(1);
+    expect(calledUrl).toBe(
+      'https://api.openbd.jp/v1/get?isbn=9784873117584%2C9780000000000%2C9784297127831',
+    );
+    expect(results).toHaveLength(3);
+    expect(results[0]?.summary?.title).toBe('リーダブルコード');
+    expect(results[1]).toBeNull();
+    expect(results[2]?.summary?.title).toBe('良いコード悪いコード');
+  });
+
+  test('空配列はリクエストせず [] を返す', async () => {
+    const fetchFn = vi.fn(async () => jsonResponse([]));
+    const client = new OpenBdApiClient({ fetchFn });
+
+    expect(await client.getByIsbns([])).toEqual([]);
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+});

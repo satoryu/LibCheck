@@ -33,8 +33,44 @@ export class OpenBdApiClient {
    * HTTP エラー・ネットワークエラー・パースエラーは例外を投げる。
    */
   async getByIsbn(isbn: string): Promise<OpenBdResponse | null> {
-    const url = `${this.baseUrl}/get?isbn=${encodeURIComponent(isbn)}`;
+    const parsed = await this.fetchParsed(
+      `${this.baseUrl}/get?isbn=${encodeURIComponent(isbn)}`,
+    );
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return null;
+    }
+    const first = parsed[0];
+    if (first === null || typeof first !== 'object') {
+      return null;
+    }
+    return openBdResponseFromJson(first as Record<string, unknown>);
+  }
 
+  /**
+   * 複数 ISBN の書誌情報を CSV 指定の1リクエストで一括取得する（#141）。
+   * 戻りは要求順で、該当が無い ISBN は null。空配列はリクエストせず [] を返す。
+   */
+  async getByIsbns(isbns: string[]): Promise<(OpenBdResponse | null)[]> {
+    if (isbns.length === 0) {
+      return [];
+    }
+    const parsed = await this.fetchParsed(
+      `${this.baseUrl}/get?isbn=${encodeURIComponent(isbns.join(','))}`,
+    );
+    if (!Array.isArray(parsed)) {
+      return isbns.map(() => null);
+    }
+    return isbns.map((_, i) => {
+      const entry = parsed[i];
+      if (entry === null || entry === undefined || typeof entry !== 'object') {
+        return null;
+      }
+      return openBdResponseFromJson(entry as Record<string, unknown>);
+    });
+  }
+
+  /** 共通のリクエスト処理（タイムアウト・エラーメッセージは従来どおり）。 */
+  private async fetchParsed(url: string): Promise<unknown> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
@@ -57,14 +93,6 @@ export class OpenBdApiClient {
       throw new Error(`OpenBD HTTP ${response.status}: ${response.statusText}`);
     }
 
-    const parsed = JSON.parse(await response.text()) as unknown;
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      return null;
-    }
-    const first = parsed[0];
-    if (first === null || typeof first !== 'object') {
-      return null;
-    }
-    return openBdResponseFromJson(first as Record<string, unknown>);
+    return JSON.parse(await response.text()) as unknown;
   }
 }
