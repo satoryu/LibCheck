@@ -19,6 +19,7 @@ import {
   useSearchHistory,
   useSearchHistoryMutations,
 } from '@/presentation/hooks/useSearchHistory';
+import { useBookMetadataList } from '@/presentation/hooks/useBookMetadata';
 import { ErrorStateWidget } from '@/presentation/widgets/ErrorStateWidget';
 import { SearchHistoryCard } from '@/presentation/widgets/SearchHistoryCard';
 
@@ -31,6 +32,11 @@ export function SearchHistoryPage() {
   const navigate = useNavigate();
   const historyAsync = useSearchHistory();
   const { remove, removeAll } = useSearchHistoryMutations();
+  // 書誌メタデータ（タイトル・書影）は OpenBD から一括取得（#141）。
+  // 補助情報のため、取得失敗時は各カードが ISBN 主表記にフォールバックする。
+  const metadataAsync = useBookMetadataList(
+    (historyAsync.data ?? []).map((e) => e.isbn),
+  );
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
 
   const entries = historyAsync.data ?? [];
@@ -100,6 +106,7 @@ export function SearchHistoryPage() {
             <Box sx={{ flexGrow: 1 }}>
               <SearchHistoryCard
                 entry={entry}
+                metadata={metadataAsync.data?.get(entry.isbn) ?? null}
                 onTap={() => navigate(`/result/${entry.isbn}`)}
               />
             </Box>

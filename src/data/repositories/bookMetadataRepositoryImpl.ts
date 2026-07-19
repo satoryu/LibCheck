@@ -22,4 +22,21 @@ export class BookMetadataRepositoryImpl implements BookMetadataRepository {
       coverImageUrl: summary?.cover,
     };
   }
+
+  async getByIsbns(isbns: string[]): Promise<Map<string, BookMetadata>> {
+    const responses = await this.apiClient.getByIsbns(isbns);
+    const map = new Map<string, BookMetadata>();
+    responses.forEach((response, i) => {
+      if (response === null) return;
+      const summary = response.summary;
+      map.set(isbns[i], {
+        isbn: isbns[i],
+        title: summary?.title,
+        author: summary?.author,
+        publisher: summary?.publisher,
+        coverImageUrl: summary?.cover,
+      });
+    });
+    return map;
+  }
 }

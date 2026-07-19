@@ -106,6 +106,9 @@ class ThrowingBookMetadataRepository implements BookMetadataRepository {
   async getByIsbn(): Promise<BookMetadata | null> {
     throw new Error('OpenBD network error');
   }
+  async getByIsbns(): Promise<Map<string, BookMetadata>> {
+    throw new Error('OpenBD network error');
+  }
 }
 
 interface SubjectOptions {
