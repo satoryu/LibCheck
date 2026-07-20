@@ -19,50 +19,65 @@
 - ✅ **Flutter → React/Vite 移植**
 - ✅ **書誌情報表示**: OpenBD 書名・書影 + Amazon 書影/アソシエイトリンク
 - ✅ **検索結果の在庫状況順ソート**
-- ✅ **Azure SWA → Cloudflare 移設**（#78・完了/クローズ）: Pages + Functions + GitHub Actions デプロイ、Bicep/Azure 撤去、軽量 IaC runbook 化
+- ✅ **Azure SWA → Cloudflare 移設**（#78）: Pages + Functions + GitHub Actions デプロイ、Bicep/Azure 撤去、軽量 IaC runbook 化
 - ✅ **認証（#73）**: Google ログイン（GIS）、ローカル認証モック
 - ✅ **永続化（#74）**: 登録図書館・検索履歴を D1 にユーザー単位で保存（端末間同期）
 - ✅ **D1 マイグレーション運用化（#83）**: `wrangler d1 migrations` + CI 自動適用
-- ✅ **HttpOnly Cookie セッション（#91）**: リロードでも再認証不要（XSS 窃取不可・CSRF 対策）
+- ✅ **HttpOnly Cookie セッション（#91）**: リロードでも再認証不要（XSS 窃取不可・CSRF 対策）。リロード維持を実機確認済み
 - ✅ **セキュリティ堅牢化**: セキュリティヘッダ + CSP enforce（#87 / #93）、永続化 API の入力検証（#87）、Calil プロキシの認証必須化 + キャッシュ（#89）
-- ✅ **プライバシーポリシー（#102）**: 現状反映の全面改訂・アプリから参照可能化
+- ✅ **フロントエンドレビュー P1 / P2**（#95 / #100）: 予約リンクの安全化・スペーサー/テーマ色統一、状態分割・データ層整理・クエリ設定・ログ削除
+- ✅ **検索履歴の堅牢化**（#115）: 上限（100件）を超えたら古いものから切り捨て、保存が壊れる不具合を修正
+- ✅ **検索履歴にタイトル・書影を表示**（#141）: OpenBD 一括取得。未取得時は ISBN 表記に自然フォールバック
+- ✅ **描画クラッシュ対策**（#117）: ルートに `errorElement` を追加し白画面を防止
+- ✅ **フロントエンドのエラー監視**（#118）: Sentry 導入
+- ✅ **法務ページ**: プライバシーポリシー（#102）・利用規約（#109）を現状反映・アプリ内から参照可能化
 - ✅ **OAuth 同意画面の本番公開（#105）**: 「対象」= 本番環境。非機微スコープのみで審査不要。本番 Client ID へ移行済み
-- ✅ **リロード維持の本番確認（#91）**: ログイン→リロード維持→ログアウトを実機確認
+- ✅ **公開仕上げ**（#116）: OGP/Twitter カード・robots.txt・`www` → apex 正規化（301）
 - ✅ **カスタムドメイン（#71）**: `libcheck.app`（apex 正規）を適用。配信・TLS・Functions・CSP・法務ページ・Google ログインを新ドメインで確認
+- ✅ **アクセス解析**（#76）: Cloudflare Web Analytics（ビーコン）を導入。Google Analytics は見送り
+- ✅ **公開後運用の runbook 化**（#119）: D1 バックアップ・復旧（Time Travel）とユーザーデータ削除手順を `cloudflare-runbook.md` に整備
+- ✅ **デザイン刷新「Knowledge Cartography」**（#138）: ランディングページ（#113、貸出カード意匠）で確立したトークンをアプリ全体のテーマへ展開。詳細は `docs/design-guidelines.md`
+- ✅ **PWA 対応**（#72）: インストール可能 + 高速化。個人データ API はキャッシュしない方針で導入
+- ✅ **PWA オフライン改善**: 接続断時に親切なメッセージ・バナー表示（#145）、登録図書館・検索履歴のオフライン閲覧（#143）
 
 ## 公開前ブロッカー: すべて解消 ✅
 
-コード・インフラ・法務（プライバシーポリシー・利用規約）・認証の公開前準備はすべて完了し、**いつでも一般公開できる状態**。正規 URL は独自ドメイン **`https://libcheck.app`**（apex を正規とし、Cloudflare Pages 既定の `libcheck.pages.dev` でも到達可能）。
+コード・インフラ・法務（プライバシーポリシー・利用規約）・認証の公開前準備はすべて完了し、**いつでも一般公開できる状態**。正規 URL は独自ドメイン **`https://libcheck.app`**（apex を正規とし、Cloudflare Pages 既定の `libcheck.pages.dev` でも到達可能）。すでに一般公開済み。
 
-## 公開後の予定（バックログ）
+## 現在の予定（バックログ）
 
 | Issue | 概要 | 区分 |
 |---|---|---|
-| #72 | PWA 対応（インストール可能・オフライン） | enhancement |
-| #76 | アクセス解析の導入（Google Analytics 等。導入時はプライバシーポリシー更新） | analytics |
-| #100 | フロントエンドレビュー P2（状態分割 / データ層整理 / クエリ設定 / ログ削除） | refactor |
-| — | デザイン刷新（テーマの図書カード化など、現状は概ね既定 MUI） | design |
+| #144 | PWA: オフライン中にスキャンした ISBN を貯めて復帰後に自動検索（レベル3）。Calil のポーリング方式と Background Sync の単発リクエストモデルの整合という未解決の設計課題あり | enhancement |
 | — | dev での実 Google ログイン対応（dev/prod 差分の更なる縮小） | DX |
 
 ## アーキテクチャ概観
+
+より詳細な本番構成図は [`production-architecture.drawio.png`](production-architecture.drawio.png)（draw.io で編集可）を参照。
 
 ```mermaid
 graph TD
     subgraph client[ブラウザ SPA]
       UI[React / MUI / React Router]
       RQ[TanStack Query]
+      SW[Service Worker<br/>PWA・オフラインキャッシュ]
       AUTH[Google ログイン（GIS）]
+      SENTRY[Sentry SDK]
     end
     subgraph cf[Cloudflare]
       PAGES[Pages（静的配信）]
       FN[Pages Functions]
       D1[(D1 / SQLite)]
+      CFA[Web Analytics]
     end
     EXT[カーリル / OpenBD / Amazon]
 
     UI --> RQ --> FN
+    UI <--> SW
     AUTH --> FN
     FN --> D1
     FN --> EXT
     PAGES --> UI
+    SENTRY -.->|エラーレポート| ExtSentry[Sentry.io]
+    PAGES -.-> CFA
 ```
