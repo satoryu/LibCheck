@@ -9,8 +9,20 @@ import {
  * エラーの種類に応じたユーザー向けメッセージを返す。
  *
  * `lib/presentation/utils/error_message_resolver.dart` の移植。
+ *
+ * `isOnline` が false（オフライン）のときは、エラーの種類によらず
+ * オフライン専用メッセージに一本化する（#145）。オフライン中は通信系の
+ * 例外だけでなくあらゆる失敗が「繋がっていないこと」に起因するため、
+ * サーバー障害等の一般的なエラーメッセージと区別してユーザーに伝える。
+ * 省略時は `navigator.onLine` を用いる。
  */
-export function resolveErrorMessage(error: unknown): string {
+export function resolveErrorMessage(
+  error: unknown,
+  isOnline: boolean = navigator.onLine,
+): string {
+  if (!isOnline) {
+    return 'オフラインです。接続を確認してください';
+  }
   if (error instanceof CalilNetworkException) {
     return 'インターネット接続を確認してください';
   }

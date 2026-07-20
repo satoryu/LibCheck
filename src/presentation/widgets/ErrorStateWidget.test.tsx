@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 
 import {
   CalilNetworkException,
@@ -45,5 +45,34 @@ describe('ErrorStateWidget', () => {
     await user.click(screen.getByText('再試行'));
 
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  test('表示中に offline になるとオフライン専用メッセージへ切り替わる（#145）', () => {
+    renderWithProviders(
+      <ErrorStateWidget
+        error={new CalilNetworkException('Connection refused')}
+        onRetry={() => {}}
+      />,
+    );
+    expect(
+      screen.getByText('インターネット接続を確認してください'),
+    ).toBeInTheDocument();
+
+    act(() => {
+      Object.defineProperty(window.navigator, 'onLine', {
+        configurable: true,
+        value: false,
+      });
+      window.dispatchEvent(new Event('offline'));
+    });
+
+    expect(
+      screen.getByText('オフラインです。接続を確認してください'),
+    ).toBeInTheDocument();
+
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      value: true,
+    });
   });
 });

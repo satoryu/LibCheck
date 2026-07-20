@@ -11,7 +11,9 @@ import {
 import HomeIcon from '@mui/icons-material/Home';
 import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
 import HistoryIcon from '@mui/icons-material/History';
+import WifiOffIcon from '@mui/icons-material/WifiOff';
 
+import { useOnlineStatus } from '@/presentation/hooks/useOnlineStatus';
 import { AuthButton } from '@/presentation/widgets/AuthButton';
 
 interface TabDefinition {
@@ -38,6 +40,7 @@ const TABS: readonly TabDefinition[] = [
 export function AppShell(): React.ReactElement {
   const navigate = useNavigate();
   const location = useLocation();
+  const isOnline = useOnlineStatus();
 
   const currentIndex = resolveCurrentIndex(location.pathname);
   const title = TABS[currentIndex]?.title ?? 'LibCheck';
@@ -51,6 +54,24 @@ export function AppShell(): React.ReactElement {
           </Typography>
           <AuthButton />
         </Toolbar>
+        {!isOnline && (
+          // オフライン中であることを常時分かるようにする（#145）。都度の
+          // エラー表示とは別に、状態として一貫して見える位置に置く。
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 0.5,
+              py: 0.5,
+              bgcolor: 'warning.main',
+              color: 'warning.contrastText',
+            }}
+          >
+            <WifiOffIcon fontSize="small" />
+            <Typography variant="caption">オフラインです</Typography>
+          </Box>
+        )}
       </AppBar>
       <Outlet />
       <Paper

@@ -205,6 +205,28 @@ describe('BookSearchResultPage', () => {
     expect(await screen.findByText(/エラー/)).toBeInTheDocument();
   });
 
+  test('オフライン時はオフライン専用メッセージを表示する（#145）', async () => {
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      value: false,
+    });
+    try {
+      renderSubject({
+        libraryRepo: new ErrorLibraryRepository(),
+        registeredRepo: new FakeRegisteredLibraryRepository([library1]),
+      });
+
+      expect(
+        await screen.findByText('オフラインです。接続を確認してください'),
+      ).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window.navigator, 'onLine', {
+        configurable: true,
+        value: true,
+      });
+    }
+  });
+
   test('shows scan button with camera icon when source is scan', async () => {
     const results: BookAvailability[] = [
       {
