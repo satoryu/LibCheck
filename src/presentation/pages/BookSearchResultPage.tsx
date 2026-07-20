@@ -26,6 +26,7 @@ import { statusForLibKey } from '@/domain/models/libraryStatus';
 import { resolveErrorMessage } from '@/presentation/utils/errorMessageResolver';
 import { useBookAvailability } from '@/presentation/hooks/useBookAvailability';
 import { useBookMetadata } from '@/presentation/hooks/useBookMetadata';
+import { useOnlineStatus } from '@/presentation/hooks/useOnlineStatus';
 import { useRegisteredLibraries } from '@/presentation/hooks/useRegisteredLibraries';
 import { useSearchHistoryMutations } from '@/presentation/hooks/useSearchHistory';
 import { sortLibrariesByAvailability } from '@/presentation/utils/sortLibrariesByAvailability';
@@ -164,6 +165,9 @@ function ErrorState({
   isScan: boolean;
   onRetry: () => void;
 }): JSX.Element {
+  // オンライン状態を購読することで、表示中に接続が切れてもメッセージが
+  // 追従する（#145）。
+  const isOnline = useOnlineStatus();
   return (
     <Box sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
       <IsbnSection isbn={isbn} />
@@ -177,7 +181,9 @@ function ErrorState({
         }}
       >
         <ErrorOutlineIcon sx={{ fontSize: 48, color: 'error.main' }} />
-        <Typography sx={{ mt: 2 }}>{resolveErrorMessage(error)}</Typography>
+        <Typography sx={{ mt: 2 }}>
+          {resolveErrorMessage(error, isOnline)}
+        </Typography>
         <Button variant="contained" onClick={onRetry} sx={{ mt: 2 }}>
           再試行
         </Button>
