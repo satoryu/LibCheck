@@ -44,6 +44,12 @@ export function AppShell(): React.ReactElement {
 
   const currentIndex = resolveCurrentIndex(location.pathname);
   const title = TABS[currentIndex]?.title ?? 'LibCheck';
+  // 図書館・履歴タブは #143 でオフライン時も前回取得分を表示できるようにしたため、
+  // それがキャッシュであることが分かるようメッセージを補足する。
+  const offlineMessage =
+    currentIndex === 1 || currentIndex === 2
+      ? 'オフラインです。表示中のデータは前回取得時点のものです'
+      : 'オフラインです';
 
   return (
     <Box sx={{ pb: 7, minHeight: '100vh' }}>
@@ -69,7 +75,7 @@ export function AppShell(): React.ReactElement {
             }}
           >
             <WifiOffIcon fontSize="small" />
-            <Typography variant="caption">オフラインです</Typography>
+            <Typography variant="caption">{offlineMessage}</Typography>
           </Box>
         )}
       </AppBar>

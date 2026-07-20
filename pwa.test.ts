@@ -19,9 +19,25 @@ describe('PWA 設定', () => {
     expect(viteConfig).toContain('purpose: "maskable"');
   });
 
-  it('SW は /api をナビゲーションフォールバックから除外し、ランタイムキャッシュを定義しない', () => {
+  it('SW は /api をナビゲーションフォールバックから除外する', () => {
     expect(viteConfig).toMatch(/navigateFallbackDenylist:\s*\[\/\^\\\/api\\\//);
-    expect(viteConfig).not.toContain('runtimeCaching');
+  });
+
+  it('登録図書館・検索履歴の GET はオフライン閲覧用に NetworkFirst でキャッシュし、Calil は対象外にする（#143）', () => {
+    // runtimeCaching は workbox 設定内（manifest 設定より前）にあるはず。
+    const runtimeCachingIndex = viteConfig.indexOf('runtimeCaching');
+    const manifestIndex = viteConfig.indexOf('manifest: {');
+    expect(runtimeCachingIndex).toBeGreaterThan(-1);
+    expect(manifestIndex).toBeGreaterThan(runtimeCachingIndex);
+    const runtimeCachingBlock = viteConfig.slice(
+      runtimeCachingIndex,
+      manifestIndex,
+    );
+    expect(runtimeCachingBlock).toContain('"NetworkFirst"');
+    expect(runtimeCachingBlock).toContain('/api/registered-libraries');
+    expect(runtimeCachingBlock).toContain('/api/search-history');
+    // Calil（蔵書状況）はリアルタイム性が命なのでキャッシュ対象に含めない。
+    expect(runtimeCachingBlock).not.toContain('calil');
   });
 
   it('SW 登録は外部スクリプト（CSP script-src self 適合・inline 不使用）', () => {
