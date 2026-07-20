@@ -7,6 +7,7 @@ import {
   SessionApiClient,
   type SessionApi,
 } from '@/data/datasources/sessionApiClient';
+import { clearOfflineApiCache } from '@/presentation/utils/offlineCache';
 
 export interface AuthContextValue {
   /** ログイン中のユーザー。未ログインは null。 */
@@ -85,6 +86,9 @@ export function AuthProvider({
         setUser(null);
         setIdToken(null);
         void session.destroy().catch(() => {});
+        // 同じ端末で次にログインする別ユーザーへ、#143 のオフラインキャッシュ
+        // （登録図書館・検索履歴）が残存しないよう削除する。
+        void clearOfflineApiCache().catch(() => {});
       },
     }),
     [user, idToken, session],

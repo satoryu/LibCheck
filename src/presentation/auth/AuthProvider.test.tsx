@@ -1,10 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 import { AuthProvider, useAuth } from '@/presentation/auth/AuthProvider';
 import type { SessionApi } from '@/data/datasources/sessionApiClient';
 import type { User } from '@/domain/models/user';
+import { OFFLINE_API_CACHE_NAME } from '@/presentation/utils/offlineCache';
 
 const alice: User = { id: 'u1', name: 'Alice', email: 'a@example.com' };
 
@@ -97,5 +98,23 @@ describe('AuthProvider セッション（#91）', () => {
 
     act(() => result.current.signOut());
     expect(destroy).toHaveBeenCalled();
+  });
+});
+
+describe('AuthProvider オフラインキャッシュ削除（#143）', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('signOut は登録図書館・検索履歴のオフラインキャッシュを削除する（別ユーザーへの残存防止）', () => {
+    const del = vi.fn().mockResolvedValue(true);
+    vi.stubGlobal('caches', { delete: del });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    act(() => result.current.signIn(alice, 'idtok'));
+
+    act(() => result.current.signOut());
+
+    expect(del).toHaveBeenCalledWith(OFFLINE_API_CACHE_NAME);
   });
 });

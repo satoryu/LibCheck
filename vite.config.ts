@@ -46,8 +46,34 @@ export default defineConfig(({ mode }) => {
             // SPA ナビゲーションのフォールバックから API と法務ページ(.html)を除外。
             navigateFallback: "/index.html",
             navigateFallbackDenylist: [/^\/api\//, /\.html$/],
-            // ランタイムキャッシュは定義しない＝ /api 等は常にネットワーク。
             cleanupOutdatedCaches: true,
+            // #143: 登録図書館・検索履歴は電波の悪い場所でも「最後に取得した状態」を
+            // 見られるよう、Workbox の Cache Storage（HTTP キャッシュとは別レイヤー）
+            // へ保存する。functions/_shared/googleAuth.js の json() が付与する
+            // `Cache-Control: no-store` はブラウザの HTTP キャッシュを禁止するだけで、
+            // Workbox 自身のキャッシュ層には影響しないため、これらのレスポンスも保存できる。
+            // NetworkFirst: オンライン時は常に最新を取りに行き、取れた分だけキャッシュを
+            // 更新する。取得できない（オフライン/タイムアウト）ときだけキャッシュへ
+            // フォールバックする。Calil（/api/calil/*、蔵書状況）はリアルタイム性が
+            // 命で古い結果はむしろ有害なため、意図的に対象外のまま（常にネットワーク）。
+            runtimeCaching: [
+              {
+                urlPattern: ({ url }) =>
+                  url.pathname === "/api/registered-libraries" ||
+                  url.pathname === "/api/search-history",
+                handler: "NetworkFirst",
+                method: "GET",
+                options: {
+                  // 名前は src/presentation/utils/offlineCache.ts の
+                  // OFFLINE_API_CACHE_NAME と一致させること（ログアウト時にこの
+                  // キャッシュを削除し、別ユーザーへのデータ残存を防ぐため）。
+                  cacheName: "api-user-data",
+                  networkTimeoutSeconds: 3,
+                  cacheableResponse: { statuses: [200] },
+                  expiration: { maxEntries: 2, maxAgeSeconds: 60 * 60 * 24 * 7 },
+                },
+              },
+            ],
           },
           manifest: {
             name: "LibCheck — 図書館の蔵書をかんたん検索",
