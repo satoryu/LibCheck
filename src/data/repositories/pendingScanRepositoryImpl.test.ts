@@ -111,4 +111,15 @@ describe('PendingScanRepositoryImpl', () => {
       expect(updated.map((s) => s.isbn)).toEqual(['9784003101018']);
     });
   });
+
+  describe('removeAll', () => {
+    it('clears the queue and returns an empty list', async () => {
+      await repository.add(createScan({ isbn: '9784003101018' }));
+      await repository.add(createScan({ isbn: '9784167158057' }));
+
+      const updated = await repository.removeAll();
+      expect(updated).toHaveLength(0);
+      expect(await repository.getAll()).toHaveLength(0);
+    });
+  });
 });

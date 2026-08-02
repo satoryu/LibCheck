@@ -38,6 +38,11 @@ class FakePendingScanRepository implements PendingScanRepository {
     this.scans = this.scans.filter((s) => s.isbn !== isbn);
     return this.sorted();
   }
+
+  async removeAll(): Promise<PendingScan[]> {
+    this.scans = [];
+    return [];
+  }
 }
 
 function createWrapper(deps: AppDependencies) {

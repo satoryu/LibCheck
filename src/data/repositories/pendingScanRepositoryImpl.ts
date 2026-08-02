@@ -42,6 +42,11 @@ export class PendingScanRepositoryImpl implements PendingScanRepository {
     return filtered;
   }
 
+  async removeAll(): Promise<PendingScan[]> {
+    await this.localStorage.remove(STORAGE_KEY);
+    return [];
+  }
+
   private async getAllRaw(): Promise<PendingScan[]> {
     const jsonString = await this.localStorage.getString(STORAGE_KEY);
     if (jsonString === null) return [];

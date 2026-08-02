@@ -14,4 +14,9 @@ export interface PendingScanRepository {
   add(scan: PendingScan): Promise<PendingScan[]>;
   /** 削除し、更新後リストを返す。 */
   remove(isbn: string): Promise<PendingScan[]>;
+  /**
+   * 全削除し、空リストを返す。ログアウト時に呼び、同一端末で次にログインする
+   * 別ユーザーの検索履歴へ前ユーザーの保留 ISBN が自動保存されるのを防ぐ。
+   */
+  removeAll(): Promise<PendingScan[]>;
 }

@@ -4,13 +4,17 @@ import userEvent from '@testing-library/user-event';
 
 import { AuthButton } from '@/presentation/widgets/AuthButton';
 import { AuthProvider } from '@/presentation/auth/AuthProvider';
+import { DependenciesProvider } from '@/app/dependencies';
+import { makeFakeDeps } from '@/test/testUtils';
 import type { User } from '@/domain/models/user';
 
 function renderButton(initialUser: User | null = null) {
   return render(
-    <AuthProvider initialUser={initialUser}>
-      <AuthButton />
-    </AuthProvider>,
+    <DependenciesProvider value={makeFakeDeps()}>
+      <AuthProvider initialUser={initialUser}>
+        <AuthButton />
+      </AuthProvider>
+    </DependenciesProvider>,
   );
 }
 
