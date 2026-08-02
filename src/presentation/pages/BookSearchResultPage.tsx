@@ -22,7 +22,7 @@ import type { UseQueryResult } from '@tanstack/react-query';
 import type { BookAvailability } from '@/domain/models/bookAvailability';
 import type { Library } from '@/domain/models/library';
 import { libraryKey } from '@/domain/models/library';
-import { statusForLibKey } from '@/domain/models/libraryStatus';
+import { availabilityToHistoryStatuses } from '@/presentation/utils/availabilityToHistoryStatuses';
 import { resolveErrorMessage } from '@/presentation/utils/errorMessageResolver';
 import { useBookAvailability } from '@/presentation/hooks/useBookAvailability';
 import { useBookMetadata } from '@/presentation/hooks/useBookMetadata';
@@ -74,15 +74,7 @@ function useSaveHistoryOnResult(
     if (registeredLibraries === undefined) return;
     savedIsbnRef.current = isbn;
 
-    const statuses: Record<string, string> = {};
-    for (const library of registeredLibraries) {
-      const systemStatus = result.libraryStatuses[library.systemId];
-      if (systemStatus === undefined) continue;
-      statuses[libraryKey(library)] = statusForLibKey(
-        systemStatus,
-        library.libKey,
-      );
-    }
+    const statuses = availabilityToHistoryStatuses(result, registeredLibraries);
     save({
       isbn,
       searchedAt: new Date(),

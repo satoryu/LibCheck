@@ -12,6 +12,7 @@ import FlashOffIcon from '@mui/icons-material/FlashOff';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 
 import { interpretScannedBarcode } from '@/presentation/utils/scanInterpreter';
+import { usePendingScanMutations } from '@/presentation/hooks/usePendingScans';
 import { CameraErrorWidget } from '@/presentation/widgets/CameraErrorWidget';
 import { CameraPermissionErrorWidget } from '@/presentation/widgets/CameraPermissionErrorWidget';
 import { ScanOverlayWidget } from '@/presentation/widgets/ScanOverlayWidget';
@@ -33,6 +34,10 @@ export function BarcodeScannerPage(): JSX.Element {
   const isProcessingRef = useRef(false);
   // ISBN以外のバーコード（価格コード等）を読んだ際の通知をスロットルするための時刻。
   const lastNonIsbnNoticeRef = useRef(0);
+  // オフライン保留（#144）は遷移せずスキャンを継続するため、同じバーコードを
+  // 毎フレーム読み続ける。同一 ISBN の連続保留・連続通知をスロットルする。
+  const lastOfflineQueueRef = useRef({ isbn: '', at: 0 });
+  const { add: addPendingScan } = usePendingScanMutations();
 
   const [errorType, setErrorType] = useState<CameraErrorType | null>(null);
   const [isFlashOn, setIsFlashOn] = useState(false);
@@ -61,6 +66,33 @@ export function BarcodeScannerPage(): JSX.Element {
       if (isProcessingRef.current) return;
       const interpretation = interpretScannedBarcode(rawValue);
       if (interpretation.kind === 'isbn') {
+        // オフライン中は検索できないため、保留キューに入れてスキャンを継続する
+        // （#144）。useOnlineStatus の値は effect のクロージャに固定されて
+        // しまうため、デコード時点の navigator.onLine を直接参照する。
+        if (!navigator.onLine) {
+          const now = Date.now();
+          if (
+            lastOfflineQueueRef.current.isbn === interpretation.isbn &&
+            now - lastOfflineQueueRef.current.at < 3000
+          ) {
+            return;
+          }
+          lastOfflineQueueRef.current = { isbn: interpretation.isbn, at: now };
+          navigator.vibrate?.(50);
+          addPendingScan({ isbn: interpretation.isbn, scannedAt: new Date() })
+            .then((updated) => {
+              enqueueSnackbar(
+                `オフラインのため保留しました（${updated.length}件）`,
+                { variant: 'info' },
+              );
+            })
+            .catch(() => {
+              enqueueSnackbar('保留リストへの保存に失敗しました', {
+                variant: 'warning',
+              });
+            });
+          return;
+        }
         isProcessingRef.current = true;
         navigator.vibrate?.(50);
         stopCamera();

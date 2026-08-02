@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { act, screen, waitFor } from '@testing-library/react';
+import { onlineManager } from '@tanstack/react-query';
 
 import { renderRouteWithProviders } from '@/test/testUtils';
 
@@ -12,14 +13,24 @@ const zxingMock = vi.hoisted(() => ({
     switchTorch: undefined as undefined | ((on: boolean) => Promise<void>),
   },
   startError: undefined as unknown,
+  // decodeFromVideoDevice のコールバックを保持し、テストからバーコードの
+  // デコード成功を再現できるようにする。
+  decodeCallback: undefined as
+    | undefined
+    | ((result: { getText(): string } | undefined) => void),
 }));
 
 vi.mock('@zxing/browser', () => ({
   BrowserMultiFormatReader: class {
-    async decodeFromVideoDevice(): Promise<typeof zxingMock.controls> {
+    async decodeFromVideoDevice(
+      _device: unknown,
+      _video: unknown,
+      callback: (result: { getText(): string } | undefined) => void,
+    ): Promise<typeof zxingMock.controls> {
       if (zxingMock.startError !== undefined) {
         throw zxingMock.startError;
       }
+      zxingMock.decodeCallback = callback;
       return zxingMock.controls;
     }
   },
@@ -198,5 +209,92 @@ describe('BarcodeScannerPage フラッシュ', () => {
       expect(screen.getByTestId('FlashOnIcon')).toBeInTheDocument();
     });
     expect(switchTorch).toHaveBeenCalledWith(true);
+  });
+});
+
+describe('BarcodeScannerPage オフライン保留（#144）', () => {
+  let originalMediaDevices: PropertyDescriptor | undefined;
+
+  function setNavigatorOnline(value: boolean): void {
+    Object.defineProperty(window.navigator, 'onLine', {
+      value,
+      configurable: true,
+    });
+    // 実ブラウザでは offline イベントで React Query の onlineManager も
+    // オフラインになり、networkMode 既定（'online'）のクエリ/ミューテーションは
+    // 一時停止する。jsdom ではイベント発火のタイミング（Provider マウント前後）
+    // に依存しないよう、onlineManager を直接切り替えて再現する。これを
+    // しないと「オフライン中に保留キューへ保存できない」バグを見逃す。
+    onlineManager.setOnline(value);
+  }
+
+  async function decode(isbn: string): Promise<void> {
+    await waitFor(() => {
+      expect(zxingMock.decodeCallback).toBeDefined();
+    });
+    await act(async () => {
+      zxingMock.decodeCallback?.({ getText: () => isbn });
+    });
+  }
+
+  beforeEach(() => {
+    originalMediaDevices = Object.getOwnPropertyDescriptor(
+      navigator,
+      'mediaDevices',
+    );
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: () => Promise.resolve({}) },
+    });
+    zxingMock.controls.switchTorch = undefined;
+    zxingMock.startError = undefined;
+    zxingMock.decodeCallback = undefined;
+  });
+
+  afterEach(() => {
+    setNavigatorOnline(true);
+    zxingMock.decodeCallback = undefined;
+    if (originalMediaDevices) {
+      Object.defineProperty(navigator, 'mediaDevices', originalMediaDevices);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (navigator as any).mediaDevices;
+    }
+  });
+
+  test('オフライン時はISBNを保留キューに入れ、スキャン画面に留まる', async () => {
+    setNavigatorOnline(false);
+    const { deps } = renderRouteWithProviders('/scan');
+
+    await decode('9784003101018');
+
+    expect(
+      await screen.findByText('オフラインのため保留しました（1件）'),
+    ).toBeInTheDocument();
+    // 結果画面へは遷移せず、続けてスキャンできる。
+    expect(screen.getByText('バーコードスキャン')).toBeInTheDocument();
+
+    const queued = await deps.pendingScanRepository.getAll();
+    expect(queued.map((s) => s.isbn)).toEqual(['9784003101018']);
+  });
+
+  test('オフライン時に同じISBNを2度読んでもキューは1件のまま', async () => {
+    setNavigatorOnline(false);
+    const { deps } = renderRouteWithProviders('/scan');
+
+    await decode('9784003101018');
+    await decode('9784003101018');
+
+    const queued = await deps.pendingScanRepository.getAll();
+    expect(queued).toHaveLength(1);
+  });
+
+  test('オンライン時は従来どおり結果画面へ遷移する', async () => {
+    setNavigatorOnline(true);
+    renderRouteWithProviders('/scan');
+
+    await decode('9784003101018');
+
+    expect(await screen.findByText('検索結果')).toBeInTheDocument();
   });
 });

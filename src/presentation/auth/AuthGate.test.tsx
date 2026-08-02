@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@mui/material/styles';
 
 import { theme } from '@/theme';
+import { DependenciesProvider } from '@/app/dependencies';
+import { makeFakeDeps } from '@/test/testUtils';
 import { AuthProvider } from '@/presentation/auth/AuthProvider';
 import { AuthGate } from '@/presentation/auth/AuthGate';
 import type { User } from '@/domain/models/user';
@@ -13,15 +15,17 @@ function renderGate(user: User | null) {
     defaultOptions: { queries: { retry: false } },
   });
   return render(
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <AuthProvider initialUser={user}>
-          <AuthGate>
-            <div>APP CONTENT</div>
-          </AuthGate>
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>,
+    <DependenciesProvider value={makeFakeDeps()}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider theme={theme}>
+          <AuthProvider initialUser={user}>
+            <AuthGate>
+              <div>APP CONTENT</div>
+            </AuthGate>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </DependenciesProvider>,
   );
 }
 

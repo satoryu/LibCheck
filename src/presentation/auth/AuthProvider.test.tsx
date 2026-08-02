@@ -3,6 +3,9 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 import { AuthProvider, useAuth } from '@/presentation/auth/AuthProvider';
+import { DependenciesProvider } from '@/app/dependencies';
+import type { AppDependencies } from '@/app/dependencies';
+import { makeFakeDeps } from '@/test/testUtils';
 import type { SessionApi } from '@/data/datasources/sessionApiClient';
 import type { User } from '@/domain/models/user';
 import { OFFLINE_API_CACHE_NAME } from '@/presentation/utils/offlineCache';
@@ -19,9 +22,25 @@ function fakeSession(overrides: Partial<SessionApi> = {}): SessionApi {
   };
 }
 
-function wrapper({ children }: { children: ReactNode }) {
-  return <AuthProvider sessionApi={fakeSession()}>{children}</AuthProvider>;
+/** AuthProvider は signOut のローカルデータ削除に deps を使うため注入する。 */
+function makeWrapper(
+  deps: AppDependencies = makeFakeDeps(),
+  authProps: {
+    sessionApi?: SessionApi;
+    initialUser?: User | null;
+    initialIdToken?: string | null;
+  } = { sessionApi: fakeSession() },
+) {
+  return function wrapper({ children }: { children: ReactNode }) {
+    return (
+      <DependenciesProvider value={deps}>
+        <AuthProvider {...authProps}>{children}</AuthProvider>
+      </DependenciesProvider>
+    );
+  };
 }
+
+const wrapper = makeWrapper();
 
 describe('AuthProvider / useAuth', () => {
   it('初期状態は未ログイン', () => {
@@ -44,11 +63,10 @@ describe('AuthProvider / useAuth', () => {
 
   it('initialUser で初期ログイン状態を注入できる', () => {
     const { result } = renderHook(() => useAuth(), {
-      wrapper: ({ children }) => (
-        <AuthProvider initialUser={alice} initialIdToken="t0">
-          {children}
-        </AuthProvider>
-      ),
+      wrapper: makeWrapper(makeFakeDeps(), {
+        initialUser: alice,
+        initialIdToken: 't0',
+      }),
     });
     expect(result.current.user).toEqual(alice);
     expect(result.current.idToken).toBe('t0');
@@ -63,9 +81,7 @@ describe('AuthProvider セッション（#91）', () => {
   it('マウント時に restore でセッションを復元する', async () => {
     const session = fakeSession({ restore: async () => alice });
     const { result } = renderHook(() => useAuth(), {
-      wrapper: ({ children }) => (
-        <AuthProvider sessionApi={session}>{children}</AuthProvider>
-      ),
+      wrapper: makeWrapper(makeFakeDeps(), { sessionApi: session }),
     });
     await waitFor(() => expect(result.current.user).toEqual(alice));
   });
@@ -73,11 +89,10 @@ describe('AuthProvider セッション（#91）', () => {
   it('initialUser がある場合は restore しない', () => {
     const restore = vi.fn(async () => alice);
     renderHook(() => useAuth(), {
-      wrapper: ({ children }) => (
-        <AuthProvider initialUser={alice} sessionApi={fakeSession({ restore })}>
-          {children}
-        </AuthProvider>
-      ),
+      wrapper: makeWrapper(makeFakeDeps(), {
+        initialUser: alice,
+        sessionApi: fakeSession({ restore }),
+      }),
     });
     expect(restore).not.toHaveBeenCalled();
   });
@@ -86,11 +101,9 @@ describe('AuthProvider セッション（#91）', () => {
     const create = vi.fn(async () => {});
     const destroy = vi.fn(async () => {});
     const { result } = renderHook(() => useAuth(), {
-      wrapper: ({ children }) => (
-        <AuthProvider sessionApi={fakeSession({ create, destroy })}>
-          {children}
-        </AuthProvider>
-      ),
+      wrapper: makeWrapper(makeFakeDeps(), {
+        sessionApi: fakeSession({ create, destroy }),
+      }),
     });
 
     act(() => result.current.signIn(alice, 'idtok'));
@@ -116,5 +129,30 @@ describe('AuthProvider オフラインキャッシュ削除（#143）', () => {
     act(() => result.current.signOut());
 
     expect(del).toHaveBeenCalledWith(OFFLINE_API_CACHE_NAME);
+  });
+});
+
+describe('AuthProvider 保留スキャン削除（#144）', () => {
+  it('signOut は保留スキャンキューを削除する（次ユーザーの履歴への自動保存を防ぐ）', async () => {
+    // ログアウト時に保留キューが残ると、同一端末で次にログインした別ユーザーの
+    // AppShell 常駐プロセッサが前ユーザーの ISBN を自動検索し、その別ユーザーの
+    // サーバ側検索履歴（D1）へ保存してしまう（#143 のオフラインキャッシュ削除と
+    // 同じ「別ユーザーへの残存防止」の一環）。
+    const deps = makeFakeDeps();
+    await deps.pendingScanRepository.add({
+      isbn: '9784003101018',
+      scannedAt: new Date(2026, 7, 1),
+    });
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: makeWrapper(deps),
+    });
+    act(() => result.current.signIn(alice, 'idtok'));
+
+    act(() => result.current.signOut());
+
+    await waitFor(async () => {
+      expect(await deps.pendingScanRepository.getAll()).toHaveLength(0);
+    });
   });
 });

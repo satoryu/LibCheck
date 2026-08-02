@@ -8,6 +8,7 @@ import {
   type SessionApi,
 } from '@/data/datasources/sessionApiClient';
 import { clearOfflineApiCache } from '@/presentation/utils/offlineCache';
+import { useDeps } from '@/app/dependencies';
 
 export interface AuthContextValue {
   /** ログイン中のユーザー。未ログインは null。 */
@@ -44,6 +45,7 @@ export function AuthProvider({
 }): JSX.Element {
   const [user, setUser] = useState<User | null>(initialUser);
   const [idToken, setIdToken] = useState<string | null>(initialIdToken);
+  const deps = useDeps();
 
   const session = useMemo<SessionApi>(
     () => sessionApi ?? new SessionApiClient(),
@@ -89,9 +91,13 @@ export function AuthProvider({
         // 同じ端末で次にログインする別ユーザーへ、#143 のオフラインキャッシュ
         // （登録図書館・検索履歴）が残存しないよう削除する。
         void clearOfflineApiCache().catch(() => {});
+        // 保留スキャン（#144）も削除する。残すと次ユーザーのログイン直後に
+        // 常駐プロセッサが前ユーザーの ISBN を自動検索し、次ユーザーの
+        // サーバ側検索履歴へ保存してしまう。
+        void deps.pendingScanRepository.removeAll().catch(() => {});
       },
     }),
-    [user, idToken, session],
+    [user, idToken, session, deps],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
