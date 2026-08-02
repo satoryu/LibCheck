@@ -23,6 +23,7 @@ import { OpenBdApiClient } from "@/data/datasources/openBdApiClient";
 import { LibraryRepositoryImpl } from "@/data/repositories/libraryRepositoryImpl";
 import { RegisteredLibraryRepositoryImpl } from "@/data/repositories/registeredLibraryRepositoryImpl";
 import { SearchHistoryRepositoryImpl } from "@/data/repositories/searchHistoryRepositoryImpl";
+import { PendingScanRepositoryImpl } from "@/data/repositories/pendingScanRepositoryImpl";
 
 export class FakeLocalStorageRepository implements LocalStorageRepository {
   private store = new Map<string, string>();
@@ -109,6 +110,9 @@ export function makeFakeDeps(
     });
   const bookMetadataRepository =
     overrides?.bookMetadataRepository ?? new FakeBookMetadataRepository();
+  const pendingScanRepository =
+    overrides?.pendingScanRepository ??
+    new PendingScanRepositoryImpl(localStorageRepository);
 
   return {
     localStorageRepository,
@@ -118,6 +122,7 @@ export function makeFakeDeps(
     registeredLibraryRepository,
     searchHistoryRepository,
     bookMetadataRepository,
+    pendingScanRepository,
   };
 }
 

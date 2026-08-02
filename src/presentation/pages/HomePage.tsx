@@ -11,6 +11,11 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import { useRegisteredLibraries } from '@/presentation/hooks/useRegisteredLibraries';
+import {
+  usePendingScans,
+  usePendingScanMutations,
+} from '@/presentation/hooks/usePendingScans';
+import { PendingScansCard } from '@/presentation/widgets/PendingScansCard';
 
 /**
  * ホーム画面。
@@ -23,6 +28,8 @@ export function HomePage(): React.ReactElement {
   const navigate = useNavigate();
   const theme = useTheme();
   const registeredLibraries = useRegisteredLibraries();
+  const pendingScans = usePendingScans();
+  const { remove: removePendingScan } = usePendingScanMutations();
 
   if (registeredLibraries.isLoading) {
     return (
@@ -85,6 +92,16 @@ export function HomePage(): React.ReactElement {
           >
             ISBNを入力
           </Button>
+          {(pendingScans.data ?? []).length > 0 && (
+            <PendingScansCard
+              scans={pendingScans.data ?? []}
+              onRemove={(isbn) => {
+                removePendingScan(isbn).catch(() => {
+                  // 削除失敗時はカードが残るだけなので通知は出さない。
+                });
+              }}
+            />
+          )}
           <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
             <Link
               href="/terms.html"

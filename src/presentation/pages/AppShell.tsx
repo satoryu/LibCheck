@@ -14,6 +14,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
 
 import { useOnlineStatus } from '@/presentation/hooks/useOnlineStatus';
+import { usePendingScanProcessor } from '@/presentation/hooks/usePendingScanProcessor';
 import { AuthButton } from '@/presentation/widgets/AuthButton';
 
 interface TabDefinition {
@@ -41,6 +42,9 @@ export function AppShell(): React.ReactElement {
   const navigate = useNavigate();
   const location = useLocation();
   const isOnline = useOnlineStatus();
+  // 保留スキャン（#144）の自動検索。タブ配下のどの画面にいても復帰を拾える
+  // よう、シェルで1箇所だけマウントする。
+  usePendingScanProcessor();
 
   const currentIndex = resolveCurrentIndex(location.pathname);
   const title = TABS[currentIndex]?.title ?? 'LibCheck';

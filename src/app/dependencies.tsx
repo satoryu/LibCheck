@@ -4,6 +4,7 @@ import type { LibraryRepository } from "@/domain/repositories/libraryRepository"
 import type { RegisteredLibraryRepository } from "@/domain/repositories/registeredLibraryRepository";
 import type { SearchHistoryRepository } from "@/domain/repositories/searchHistoryRepository";
 import type { BookMetadataRepository } from "@/domain/repositories/bookMetadataRepository";
+import type { PendingScanRepository } from "@/domain/repositories/pendingScanRepository";
 import { CalilApiClient } from "@/data/datasources/calilApiClient";
 import { CALIL_API_CONFIG } from "@/data/datasources/calilApiConfig";
 import { OpenBdApiClient } from "@/data/datasources/openBdApiClient";
@@ -14,6 +15,7 @@ import { LibraryRepositoryImpl } from "@/data/repositories/libraryRepositoryImpl
 import { ServerRegisteredLibraryRepositoryImpl } from "@/data/repositories/serverRegisteredLibraryRepositoryImpl";
 import { ServerSearchHistoryRepositoryImpl } from "@/data/repositories/serverSearchHistoryRepositoryImpl";
 import { BookMetadataRepositoryImpl } from "@/data/repositories/bookMetadataRepositoryImpl";
+import { PendingScanRepositoryImpl } from "@/data/repositories/pendingScanRepositoryImpl";
 
 export interface AppDependencies {
   localStorageRepository: LocalStorageRepository;
@@ -23,6 +25,7 @@ export interface AppDependencies {
   registeredLibraryRepository: RegisteredLibraryRepository;
   searchHistoryRepository: SearchHistoryRepository;
   bookMetadataRepository: BookMetadataRepository;
+  pendingScanRepository: PendingScanRepository;
 }
 
 export function createDefaultDependencies(): AppDependencies {
@@ -43,6 +46,10 @@ export function createDefaultDependencies(): AppDependencies {
     new SearchHistoryApiClient(),
   );
   const bookMetadataRepository = new BookMetadataRepositoryImpl(openBdApiClient);
+  // 保留スキャン（#144）は端末ローカル専用の一時キューであり、サーバには送らない。
+  const pendingScanRepository = new PendingScanRepositoryImpl(
+    localStorageRepository,
+  );
 
   return {
     localStorageRepository,
@@ -52,6 +59,7 @@ export function createDefaultDependencies(): AppDependencies {
     registeredLibraryRepository,
     searchHistoryRepository,
     bookMetadataRepository,
+    pendingScanRepository,
   };
 }
 

@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, it, expect } from 'vitest';
+import { screen, waitFor } from '@testing-library/react';
+import { onlineManager } from '@tanstack/react-query';
 
 import { makeFakeDeps, renderRouteWithProviders } from '@/test/testUtils';
 import type { AppDependencies } from '@/app/dependencies';
@@ -81,5 +82,72 @@ describe('HomePage', () => {
     await user.click(await screen.findByText('ISBNを入力'));
 
     expect(await screen.findByText('ISBN入力')).toBeInTheDocument();
+  });
+});
+
+describe('HomePage 保留中の検索（#144）', () => {
+  function setNavigatorOnline(value: boolean): void {
+    Object.defineProperty(window.navigator, 'onLine', {
+      value,
+      configurable: true,
+    });
+    // 実ブラウザ同様、React Query の onlineManager にも状態を伝える
+    // （BarcodeScannerPage.test.tsx の同名ヘルパー参照）。オフライン中でも
+    // 保留カードが表示できること（ローカルデータのみのクエリが一時停止
+    // しないこと）の回帰テストになる。
+    onlineManager.setOnline(value);
+  }
+
+  beforeEach(() => {
+    // 自動検索プロセッサが動かない状態で、カード表示だけを検証する。
+    setNavigatorOnline(false);
+  });
+
+  afterEach(() => {
+    setNavigatorOnline(true);
+  });
+
+  it('保留が0件のときはカードを表示しない', async () => {
+    renderRouteWithProviders('/', { deps: depsWithRegistered([sampleLibrary]) });
+
+    expect(await screen.findByText('LibCheck')).toBeInTheDocument();
+    expect(screen.queryByText(/保留中の検索/)).not.toBeInTheDocument();
+  });
+
+  it('保留があるときは件数とISBNを表示する', async () => {
+    const deps = depsWithRegistered([sampleLibrary]);
+    await deps.pendingScanRepository.add({
+      isbn: '9784003101018',
+      scannedAt: new Date(2026, 7, 1, 10, 0),
+    });
+    await deps.pendingScanRepository.add({
+      isbn: '9784167158057',
+      scannedAt: new Date(2026, 7, 1, 10, 5),
+    });
+
+    renderRouteWithProviders('/', { deps });
+
+    expect(await screen.findByText('保留中の検索（2件）')).toBeInTheDocument();
+    expect(screen.getByText('9784003101018')).toBeInTheDocument();
+    expect(screen.getByText('9784167158057')).toBeInTheDocument();
+  });
+
+  it('削除ボタンで保留項目を削除できる', async () => {
+    const deps = depsWithRegistered([sampleLibrary]);
+    await deps.pendingScanRepository.add({
+      isbn: '9784003101018',
+      scannedAt: new Date(2026, 7, 1, 10, 0),
+    });
+
+    const { user } = renderRouteWithProviders('/', { deps });
+
+    await user.click(
+      await screen.findByLabelText('保留中の9784003101018を削除'),
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText(/保留中の検索/)).not.toBeInTheDocument();
+    });
+    expect(await deps.pendingScanRepository.getAll()).toHaveLength(0);
   });
 });
