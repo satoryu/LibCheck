@@ -2,3 +2,5 @@
 User-agent: *
 Disallow: /api/
 Allow: /
+
+Sitemap: https://libcheck.app/sitemap.xml

@@ -10,6 +10,8 @@
       name="description"
       content="ISBN から、登録した複数の図書館の蔵書と貸出状況を一度に確認できます。"
     />
+    <!-- 検索エンジンに正規URLを明示する（#151）。 -->
+    <link rel="canonical" href="https://libcheck.app/" />
     <!-- OGP / Twitter カード（SNS シェア時の表示。#116） -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="LibCheck" />
@@ -25,6 +27,23 @@
     <meta property="og:locale" content="ja_JP" />
     <meta name="twitter:card" content="summary_large_image" />
     <title>LibCheck — 図書館の蔵書をかんたん検索</title>
+    <!-- 構造化データ（#151）。リッチリザルト対応。 -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "LibCheck",
+        "description": "ISBN から、登録した複数の図書館の蔵書と貸出状況を一度に確認できます。",
+        "url": "https://libcheck.app/",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Web, Android, iOS",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "JPY"
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
