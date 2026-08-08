@@ -149,3 +149,42 @@ describe('SearchHistoryCard メタデータ表示（#141）', () => {
     expect(screen.queryByText('リーダブルコード')).not.toBeInTheDocument();
   });
 });
+
+describe('SearchHistoryCard の横オーバーフロー対策（#153）', () => {
+  // タイトルと同様、ISBN 表記も 1 行で切り詰められることを保証する
+  // （#153: 長いタイトルで履歴行が画面幅を超えて横スクロールバーが出た
+  // 問題の副次対応）。jsdom は実レイアウトを行わないため、切り詰めを
+  // 実現する CSS 宣言（overflow/textOverflow/whiteSpace）が適用されて
+  // いることを固定する。
+  const entry: SearchHistoryEntry = {
+    isbn: '9784873117584',
+    searchedAt: new Date(2026, 6, 1),
+    libraryStatuses: {},
+  };
+
+  test('タイトル表示時、補助表記の ISBN キャプションが 1 行に切り詰められる', () => {
+    renderWithProviders(
+      <SearchHistoryCard
+        entry={entry}
+        onTap={() => {}}
+        metadata={{ isbn: entry.isbn, title: 'リーダブルコード' }}
+      />,
+    );
+
+    const isbnCaption = screen.getByText(/9784873117584/);
+    const style = window.getComputedStyle(isbnCaption);
+    expect(style.whiteSpace).toBe('nowrap');
+    expect(style.overflow).toBe('hidden');
+    expect(style.textOverflow).toBe('ellipsis');
+  });
+
+  test('metadata が無い場合の ISBN 主表記も 1 行に切り詰められる', () => {
+    renderWithProviders(<SearchHistoryCard entry={entry} onTap={() => {}} />);
+
+    const isbnPrimary = screen.getByText('ISBN: 9784873117584');
+    const style = window.getComputedStyle(isbnPrimary);
+    expect(style.whiteSpace).toBe('nowrap');
+    expect(style.overflow).toBe('hidden');
+    expect(style.textOverflow).toBe('ellipsis');
+  });
+});
