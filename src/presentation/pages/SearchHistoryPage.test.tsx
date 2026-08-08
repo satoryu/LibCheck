@@ -158,3 +158,36 @@ describe('検索履歴のメタデータ表示（#141・結合）', () => {
     expect(screen.getByText(/9784873117584/)).toBeInTheDocument();
   });
 });
+
+describe('検索履歴アイテムの横スクロール対策（#153）', () => {
+  it('タイトルが長い書籍でも履歴行が横幅いっぱいに広がらないよう minWidth:0 が設定されている', async () => {
+    // 長いタイトルの書籍を履歴行の flex item ラッパーに minWidth: 0 が
+    // 無いと、ネストした flexbox の自動最小サイズがタイトルの
+    // 折り返し前の幅まで膨らみ、画面幅を超えて横スクロールバーが出る
+    // （#153）。jsdom は実レイアウトを行わないため scrollWidth 等の
+    // ピクセル計測はできないので、原因となっている宣言的なスタイル
+    // （minWidth:0）が適用されていることを回帰テストとして固定する。
+    const repo = new FakeSearchHistoryRepository();
+    await repo.save({
+      isbn: '9784873115658',
+      searchedAt: new Date(2026, 6, 1),
+      libraryStatuses: {},
+    });
+    const deps = makeFakeDeps({
+      searchHistoryRepository: repo,
+      bookMetadataRepository: new FakeBookMetadataRepository({
+        '9784873115658': {
+          isbn: '9784873115658',
+          title:
+            'リーダブルコード：より良いコードを書くためのシンプルで実践的なテクニック',
+        },
+      }),
+    });
+    renderWithProviders(<SearchHistoryPage />, { deps });
+
+    await screen.findByText(/リーダブルコード/);
+    const row = screen.getByTestId('search-history-row');
+
+    expect(window.getComputedStyle(row).minWidth).toBe('0');
+  });
+});

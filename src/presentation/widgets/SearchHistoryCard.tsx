@@ -96,7 +96,13 @@ export function SearchHistoryCard({
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{ fontFamily: KC_MONO, letterSpacing: '0.06em' }}
+                  sx={{
+                    fontFamily: KC_MONO,
+                    letterSpacing: '0.06em',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   {`ISBN: ${entry.isbn}`}
                 </Typography>
@@ -104,7 +110,13 @@ export function SearchHistoryCard({
             ) : (
               <Typography
                 variant="body1"
-                sx={{ fontFamily: KC_MONO, letterSpacing: '0.06em' }}
+                sx={{
+                  fontFamily: KC_MONO,
+                  letterSpacing: '0.06em',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
               >
                 {`ISBN: ${entry.isbn}`}
               </Typography>

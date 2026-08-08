@@ -103,7 +103,15 @@ export function SearchHistoryPage() {
             key={entry.isbn}
             sx={{ display: 'flex', alignItems: 'stretch', gap: 1, mb: 1 }}
           >
-            <Box sx={{ flexGrow: 1 }}>
+            {/*
+              minWidth: 0 が無いと、この flex item の自動最小サイズが
+              内部のタイトル（折り返し前の幅）まで膨らみ、長いタイトルの
+              書籍だけ行が画面幅を超えて横スクロールバーが出る（#153）。
+            */}
+            <Box
+              data-testid="search-history-row"
+              sx={{ flexGrow: 1, minWidth: 0 }}
+            >
               <SearchHistoryCard
                 entry={entry}
                 metadata={metadataAsync.data?.get(entry.isbn) ?? null}
