@@ -1,11 +1,23 @@
 import { describe, expect, test } from 'vitest';
 
-import { isPublicPath, PUBLIC_PATHS } from '@/presentation/auth/publicPaths';
+import { isPublicPath } from '@/presentation/auth/publicPaths';
 
 describe('publicPaths', () => {
   describe('PUBLIC_PATHS（既定値）', () => {
-    test('本Issue（#157）の時点では空である（どのルートも未ログインで公開しない）', () => {
-      expect(PUBLIC_PATHS).toEqual([]);
+    // #158: 地域ページ（都道府県選択・市区町村選択・図書館一覧）を公開する。
+    test('地域ページ3ルートが未ログインで閲覧できる', () => {
+      expect(isPublicPath('/library/add')).toBe(true);
+      expect(isPublicPath('/library/add/東京都')).toBe(true);
+      expect(isPublicPath('/library/add/東京都/港区')).toBe(true);
+    });
+
+    test('それ以外の既存ルートは引き続き非公開', () => {
+      expect(isPublicPath('/')).toBe(false);
+      expect(isPublicPath('/history')).toBe(false);
+      expect(isPublicPath('/library')).toBe(false);
+      expect(isPublicPath('/scan')).toBe(false);
+      expect(isPublicPath('/isbn-input')).toBe(false);
+      expect(isPublicPath('/result/9784873117584')).toBe(false);
     });
   });
 
@@ -39,8 +51,9 @@ describe('publicPaths', () => {
       expect(isPublicPath('/library-management', patterns)).toBe(false);
     });
 
-    test('パターン未指定時は既定の PUBLIC_PATHS（空）を使い、常に false', () => {
-      expect(isPublicPath('/library/add')).toBe(false);
+    test('パターン未指定時は既定の PUBLIC_PATHS を使う', () => {
+      // #158: /library/add 系は既定で公開。それ以外は非公開のまま。
+      expect(isPublicPath('/library/add')).toBe(true);
       expect(isPublicPath('/')).toBe(false);
     });
   });

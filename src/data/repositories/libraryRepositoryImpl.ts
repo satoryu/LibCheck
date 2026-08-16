@@ -1,4 +1,5 @@
 import { CalilApiClient } from '@/data/datasources/calilApiClient';
+import type { StaticLibraryDataSource } from '@/data/datasources/staticLibraryDataSource';
 import {
   AvailabilityStatus,
   aggregateAvailability,
@@ -11,35 +12,29 @@ import type { LibraryRepository } from '@/domain/repositories/libraryRepository'
 
 export class LibraryRepositoryImpl implements LibraryRepository {
   private readonly apiClient: CalilApiClient;
+  private readonly staticLibraryDataSource: StaticLibraryDataSource;
 
-  constructor(args: { apiClient: CalilApiClient }) {
+  constructor(args: {
+    /** checkBookAvailability（蔵書検索・認証必須）専用。#158 以降 getLibraries には使わない。 */
+    apiClient: CalilApiClient;
+    /**
+     * getLibraries 専用（#158）。`scripts/generateLibraryData.mjs` がビルド
+     * 前提で生成した静的JSONを読む。地域ページの閲覧がカーリルの利用制限を
+     * 消費しないようにするための変更。詳細は docs/158-regional-pages/design.md。
+     */
+    staticLibraryDataSource: StaticLibraryDataSource;
+  }) {
     this.apiClient = args.apiClient;
+    this.staticLibraryDataSource = args.staticLibraryDataSource;
   }
 
   async getLibraries(args: {
     pref: string;
     city?: string;
   }): Promise<Library[]> {
-    const responses = await this.apiClient.searchLibraries({
-      pref: args.pref,
-      city: args.city,
-    });
-
-    return responses.map((r) => ({
-      systemId: r.systemId,
-      systemName: r.systemName,
-      libKey: r.libKey,
-      libId: r.libId,
-      shortName: r.shortName,
-      formalName: r.formalName,
-      address: r.address,
-      pref: r.pref,
-      city: r.city,
-      category: r.category,
-      url: r.urlPc,
-      tel: r.tel,
-      geocode: r.geocode,
-    }));
+    const libraries = await this.staticLibraryDataSource.getByPrefecture(args.pref);
+    if (args.city === undefined) return libraries;
+    return libraries.filter((lib) => lib.city === args.city);
   }
 
   async checkBookAvailability(args: {

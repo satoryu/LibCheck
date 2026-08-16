@@ -33,25 +33,63 @@ export async function onRequest(context) {
   }
 
   const meta = findRouteMeta(url.pathname);
-  const rewriter = new HTMLRewriter().on('meta[name="robots"]', {
-    element(el) {
-      el.setAttribute('content', 'noindex');
-    },
-  });
-
-  if (meta !== null) {
-    rewriter
-      .on('title', {
+  if (meta === null) {
+    // 未知のパスも安全側で noindex にする。
+    return new HTMLRewriter()
+      .on('meta[name="robots"]', {
         element(el) {
-          el.setInnerContent(meta.title);
+          el.setAttribute('content', 'noindex');
         },
       })
-      .on('meta[property="og:title"]', {
-        element(el) {
-          el.setAttribute('content', meta.title);
-        },
-      });
+      .transform(response);
   }
+
+  const rewriter = new HTMLRewriter()
+    .on('title', {
+      element(el) {
+        el.setInnerContent(meta.title);
+      },
+    })
+    .on('meta[property="og:title"]', {
+      element(el) {
+        el.setAttribute('content', meta.title);
+      },
+    });
+
+  if (meta.noindex) {
+    // 個人向けページ等、まだ公開していないルート（#157）。
+    rewriter.on('meta[name="robots"]', {
+      element(el) {
+        el.setAttribute('content', 'noindex');
+      },
+    });
+    return rewriter.transform(response);
+  }
+
+  // 公開済みルート（#158〜）。description/canonical/OGP まで書き換える。
+  // robots は index.html の既定値（index,follow）のままでよいため触らない。
+  const canonicalUrl = `https://libcheck.app${url.pathname}`;
+  rewriter
+    .on('meta[name="description"]', {
+      element(el) {
+        el.setAttribute('content', meta.description);
+      },
+    })
+    .on('link[rel="canonical"]', {
+      element(el) {
+        el.setAttribute('href', canonicalUrl);
+      },
+    })
+    .on('meta[property="og:description"]', {
+      element(el) {
+        el.setAttribute('content', meta.description);
+      },
+    })
+    .on('meta[property="og:url"]', {
+      element(el) {
+        el.setAttribute('content', canonicalUrl);
+      },
+    });
 
   return rewriter.transform(response);
 }

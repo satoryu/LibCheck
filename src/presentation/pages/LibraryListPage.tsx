@@ -13,6 +13,7 @@ import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 
 import { libraryKey } from '@/domain/models/library';
+import { useAuth } from '@/presentation/auth/AuthProvider';
 import { useLibraryList } from '@/presentation/hooks/useLibraryList';
 import { useRegisteredLibraryMutations } from '@/presentation/hooks/useRegisteredLibraries';
 import { useSelectedLibraries } from '@/presentation/hooks/useSelectedLibraries';
@@ -30,6 +31,7 @@ export function LibraryListPage(): JSX.Element {
   const pref = params.pref ?? '';
   const city = params.city ?? '';
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const librariesQuery = useLibraryList({ pref, city });
   const { selected, isSelected, toggle, clear } = useSelectedLibraries();
@@ -45,6 +47,18 @@ export function LibraryListPage(): JSX.Element {
 
   const handleRegister = async (): Promise<void> => {
     if (selected.length === 0) return;
+
+    // この画面は #158 で未ログインでも閲覧できるようになったが、登録は
+    // サーバ側が引き続き認証必須（#89）。401 のサイレント失敗にせず、
+    // ログインへの導線を示す（ランディングへ遷移。#155 の完了条件）。
+    if (user === null) {
+      enqueueSnackbar('図書館を登録するにはログインが必要です', {
+        variant: 'info',
+      });
+      navigate('/');
+      return;
+    }
+
     await addAll([...selected]);
     clear();
     enqueueSnackbar('図書館を登録しました');

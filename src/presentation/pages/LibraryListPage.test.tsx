@@ -11,8 +11,10 @@ import type { Library } from '@/domain/models/library';
 import { librariesEqual } from '@/domain/models/library';
 import type { LibraryRepository } from '@/domain/repositories/libraryRepository';
 import type { RegisteredLibraryRepository } from '@/domain/repositories/registeredLibraryRepository';
+import type { User } from '@/domain/models/user';
 import { theme } from '@/theme';
 import { DependenciesProvider } from '@/app/dependencies';
+import { AuthProvider } from '@/presentation/auth/AuthProvider';
 import { SelectedLibrariesProvider } from '@/presentation/hooks/useSelectedLibraries';
 import { routes } from '@/app/router';
 import { renderRouteWithProviders, makeFakeDeps } from '@/test/testUtils';
@@ -94,15 +96,23 @@ function createLibrary(opts: {
 
 const ROUTE = '/library/add/東京都/港区';
 
+// #158: この画面は未ログインでも閲覧できる（公開ルート）が、登録操作は
+// 引き続きログインが必要。既存のテストは「ログイン済みユーザーとして
+// 登録できること」を検証する意図のため、既定をログイン済みにする。
+// 未ログイン時の挙動は専用の describe ブロックで別途検証する。
+const LOGGED_IN_USER: User = { id: 'test-user', name: 'Test User' };
+
 function renderPage(
   libraryRepo: LibraryRepository,
   registeredRepo: RegisteredLibraryRepository,
+  authUser: User | null = LOGGED_IN_USER,
 ) {
   return renderRouteWithProviders(ROUTE, {
     deps: makeFakeDeps({
       libraryRepository: libraryRepo,
       registeredLibraryRepository: registeredRepo,
     }),
+    authUser,
   });
 }
 
@@ -266,9 +276,11 @@ describe('LibraryListPage', () => {
         <QueryClientProvider client={queryClient}>
           <SnackbarProvider>
             <ThemeProvider theme={theme}>
-              <SelectedLibrariesProvider>
-                <RouterProvider router={router} />
-              </SelectedLibrariesProvider>
+              <AuthProvider initialUser={{ id: 'test-user', name: 'Test User' }}>
+                <SelectedLibrariesProvider>
+                  <RouterProvider router={router} />
+                </SelectedLibrariesProvider>
+              </AuthProvider>
             </ThemeProvider>
           </SnackbarProvider>
         </QueryClientProvider>
@@ -329,5 +341,38 @@ describe('図書館一覧のカーリルへのリンク（#156）', () => {
       ).toBeInTheDocument();
     });
     expect(screen.queryByRole('link', { name: /カーリル/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('未ログインでの登録操作（#158）', () => {
+  // この画面自体は #158 で未ログインでも閲覧できるようになったが、登録
+  // 操作はサーバ側が引き続き認証必須（#89）。クライアント側でも事前に
+  // チェックし、401 のサイレント失敗ではなくログインへの導線を示す。
+  test('未ログインで登録するとログインへ誘導され、登録APIは呼ばれない', async () => {
+    const libraries = [
+      createLibrary({ formalName: '図書館1', address: '住所1', libId: '1' }),
+    ];
+    const registeredRepo = new FakeRegisteredLibraryRepository();
+
+    const { user } = renderPage(
+      new MockLibraryRepository(libraries),
+      registeredRepo,
+      null,
+    );
+
+    await user.click(await screen.findByText('図書館1'));
+    await user.click(
+      screen.getByRole('button', { name: /選択した図書館を登録する/ }),
+    );
+
+    // 図書館一覧画面から遷移する（ログインゲート自体は routes 配列の外側
+    // ＝ createAppRouter() 側にのみ適用される設計のため、このテストハーネス
+    // 〈renderRouteWithProviders が使う routes〉では実際にランディングが
+    // 出るとは限らない。#157 design.md 参照）。
+    await waitFor(() => {
+      expect(screen.queryByText('図書館1')).not.toBeInTheDocument();
+    });
+    // 登録APIは呼ばれていない。
+    expect(registeredRepo.libs).toHaveLength(0);
   });
 });

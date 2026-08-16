@@ -105,6 +105,43 @@ describe('_middleware.js', () => {
     expect(res.__rewriterSelectors).toContain('title');
   });
 
+  it('非公開ルートは canonical/description を書き換えない（#158）', async () => {
+    globalThis.HTMLRewriter = FakeHTMLRewriter as unknown as typeof HTMLRewriter;
+    const { onRequest } = await importMiddleware();
+
+    const next = vi.fn(async () => htmlResponse());
+
+    const res = (await onRequest({
+      request: new Request('https://libcheck.app/history'),
+      next,
+    } as never)) as Response & { __rewriterSelectors: string[] };
+
+    expect(res.__rewriterSelectors).not.toContain('link[rel="canonical"]');
+    expect(res.__rewriterSelectors).not.toContain('meta[name="description"]');
+  });
+
+  it('公開済みの地域ページは title/description/canonical/OGP を書き換える（#158）', async () => {
+    globalThis.HTMLRewriter = FakeHTMLRewriter as unknown as typeof HTMLRewriter;
+    const { onRequest } = await importMiddleware();
+
+    const next = vi.fn(async () => htmlResponse());
+
+    const res = (await onRequest({
+      request: new Request(
+        `https://libcheck.app/library/add/${encodeURIComponent('東京都')}/${encodeURIComponent('港区')}`,
+      ),
+      next,
+    } as never)) as Response & { __rewriterSelectors: string[] };
+
+    expect(res.__rewriterSelectors).not.toContain('meta[name="robots"]');
+    expect(res.__rewriterSelectors).toContain('title');
+    expect(res.__rewriterSelectors).toContain('meta[name="description"]');
+    expect(res.__rewriterSelectors).toContain('link[rel="canonical"]');
+    expect(res.__rewriterSelectors).toContain('meta[property="og:title"]');
+    expect(res.__rewriterSelectors).toContain('meta[property="og:description"]');
+    expect(res.__rewriterSelectors).toContain('meta[property="og:url"]');
+  });
+
   it('未知のパスも安全側で robots セレクタを登録する（noindex にする）', async () => {
     globalThis.HTMLRewriter = FakeHTMLRewriter as unknown as typeof HTMLRewriter;
     const { onRequest } = await importMiddleware();
