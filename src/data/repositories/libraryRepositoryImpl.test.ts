@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { CalilApiClient } from "@/data/datasources/calilApiClient";
+import { StaticLibraryDataSource } from "@/data/datasources/staticLibraryDataSource";
 import { LibraryRepositoryImpl } from "@/data/repositories/libraryRepositoryImpl";
+import type { Library } from "@/domain/models/library";
 import { AvailabilityStatus } from "@/domain/models/availabilityStatus";
 
 function makeClient(body: unknown): CalilApiClient {
@@ -15,42 +17,92 @@ function makeClient(body: unknown): CalilApiClient {
   });
 }
 
+/**
+ * getLibraries は #158 で静的データソース経由に変わったが、
+ * checkBookAvailability のテストではこの依存自体は使わないため、
+ * ダミー（呼ばれない）実装で十分。
+ */
+function unusedStaticSource(): StaticLibraryDataSource {
+  return new StaticLibraryDataSource({
+    fetchFn: async () => {
+      throw new Error("この依存は呼ばれない想定のテストです");
+    },
+  });
+}
+
+function makeStaticSource(libraries: Library[]): StaticLibraryDataSource {
+  return new StaticLibraryDataSource({
+    fetchFn: async () =>
+      new Response(JSON.stringify(libraries), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+  });
+}
+
 describe("LibraryRepositoryImpl", () => {
   describe("getLibraries", () => {
-    it("converts LibraryResponse DTOs to Library domain models", async () => {
-      const apiClient = makeClient([
-        {
-          systemid: "Tokyo_Minato",
-          systemname: "港区図書館",
-          libkey: "みなと",
-          libid: "123",
-          short: "みなと図書館",
-          formal: "港区立みなと図書館",
-          url_pc: "https://example.com",
-          address: "東京都港区芝公園3-2-25",
-          pref: "東京都",
-          city: "港区",
-          tel: "03-1234-5678",
-          geocode: "139.7454,35.6586",
-          category: "MEDIUM",
-        },
-      ]);
-      const repo = new LibraryRepositoryImpl({ apiClient });
+    // #158: カーリル /library をランタイムで呼ぶのではなく、ビルド時に
+    // 生成した静的JSON（StaticLibraryDataSource 経由）から返す。
+    // カーリルの利用制限を消費しないことがこの変更の目的。
+    const library: Library = {
+      systemId: "Tokyo_Minato",
+      systemName: "港区図書館",
+      libKey: "みなと",
+      libId: "123",
+      shortName: "みなと図書館",
+      formalName: "港区立みなと図書館",
+      address: "東京都港区芝公園3-2-25",
+      pref: "東京都",
+      city: "港区",
+      category: "MEDIUM",
+      url: "https://example.com",
+      tel: "03-1234-5678",
+      geocode: "139.7454,35.6586",
+    };
+
+    it("静的データソースから Library をそのまま返す（pref のみ指定）", async () => {
+      const repo = new LibraryRepositoryImpl({
+        apiClient: makeClient([]),
+        staticLibraryDataSource: makeStaticSource([library]),
+      });
 
       const libraries = await repo.getLibraries({ pref: "東京都" });
 
       expect(libraries).toHaveLength(1);
-      const lib = libraries[0];
-      expect(lib.systemId).toBe("Tokyo_Minato");
-      expect(lib.systemName).toBe("港区図書館");
-      expect(lib.formalName).toBe("港区立みなと図書館");
-      expect(lib.url).toBe("https://example.com");
-      expect(lib.tel).toBe("03-1234-5678");
-      expect(lib.geocode).toBe("139.7454,35.6586");
+      expect(libraries[0]).toEqual(library);
+    });
+
+    it("city を指定するとクライアント側でフィルタする", async () => {
+      const other: Library = { ...library, city: "渋谷区", libKey: "しぶや" };
+      const repo = new LibraryRepositoryImpl({
+        apiClient: makeClient([]),
+        staticLibraryDataSource: makeStaticSource([library, other]),
+      });
+
+      const libraries = await repo.getLibraries({ pref: "東京都", city: "港区" });
+
+      expect(libraries).toHaveLength(1);
+      expect(libraries[0].city).toBe("港区");
+    });
+
+    it("city 未指定なら都道府県内の全件を返す", async () => {
+      const other: Library = { ...library, city: "渋谷区", libKey: "しぶや" };
+      const repo = new LibraryRepositoryImpl({
+        apiClient: makeClient([]),
+        staticLibraryDataSource: makeStaticSource([library, other]),
+      });
+
+      const libraries = await repo.getLibraries({ pref: "東京都" });
+
+      expect(libraries).toHaveLength(2);
     });
   });
 
   describe("checkBookAvailability", () => {
+    // #158 の変更後も無変更であることの回帰確認（getLibraries とは独立した
+    // 依存＝CalilApiClient のみを使う。認証必須の蔵書検索フローに影響が
+    // 無いことを保証する）。
     it("converts CheckResponse to BookAvailability domain models", async () => {
       const apiClient = makeClient({
         session: "abc123",
@@ -68,7 +120,10 @@ describe("LibraryRepositoryImpl", () => {
           },
         },
       });
-      const repo = new LibraryRepositoryImpl({ apiClient });
+      const repo = new LibraryRepositoryImpl({
+        apiClient,
+        staticLibraryDataSource: unusedStaticSource(),
+      });
 
       const results = await repo.checkBookAvailability({
         isbn: ["9784774142230"],
@@ -105,7 +160,10 @@ describe("LibraryRepositoryImpl", () => {
           },
         },
       });
-      const repo = new LibraryRepositoryImpl({ apiClient });
+      const repo = new LibraryRepositoryImpl({
+        apiClient,
+        staticLibraryDataSource: unusedStaticSource(),
+      });
 
       const results = await repo.checkBookAvailability({
         isbn: ["9784774142230"],
@@ -133,7 +191,10 @@ describe("LibraryRepositoryImpl", () => {
           },
         },
       });
-      const repo = new LibraryRepositoryImpl({ apiClient });
+      const repo = new LibraryRepositoryImpl({
+        apiClient,
+        staticLibraryDataSource: unusedStaticSource(),
+      });
 
       const results = await repo.checkBookAvailability({
         isbn: ["9784774142230"],

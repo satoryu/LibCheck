@@ -1,12 +1,16 @@
 /**
- * 未ログインでも描画してよいルートのパスパターン一覧（#157）。
+ * 未ログインでも描画してよいルートのパスパターン一覧（#157 で導入）。
  *
- * #157 の時点では意図的に空。#158（地域ページ公開）・#159（ISBN検索結果
- * ページの部分公開）が、実際にルートを公開する際にここへパターンを
+ * #158 で地域ページ（都道府県選択・市区町村選択・図書館一覧）を公開。
+ * #159（ISBN検索結果ページの部分公開）が追加する場合はここへパターンを
  * 追加する。追加した場合は `functions/_shared/routeMeta.js` の対応する
  * エントリも同時に更新すること（メタ情報側は独立管理。design.md 参照）。
  */
-export const PUBLIC_PATHS: readonly string[] = [];
+export const PUBLIC_PATHS: readonly string[] = [
+  '/library/add',
+  '/library/add/:pref',
+  '/library/add/:pref/:city',
+];
 
 /**
  * `pathname` が `publicPaths`（既定は `PUBLIC_PATHS`）のいずれかのパターンに

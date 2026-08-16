@@ -8,6 +8,7 @@ import type { PendingScanRepository } from "@/domain/repositories/pendingScanRep
 import { CalilApiClient } from "@/data/datasources/calilApiClient";
 import { CALIL_API_CONFIG } from "@/data/datasources/calilApiConfig";
 import { OpenBdApiClient } from "@/data/datasources/openBdApiClient";
+import { StaticLibraryDataSource } from "@/data/datasources/staticLibraryDataSource";
 import { RegisteredLibraryApiClient } from "@/data/datasources/registeredLibraryApiClient";
 import { SearchHistoryApiClient } from "@/data/datasources/searchHistoryApiClient";
 import { WebLocalStorageRepository } from "@/data/repositories/localStorageRepositoryImpl";
@@ -34,8 +35,12 @@ export function createDefaultDependencies(): AppDependencies {
     appKey: CALIL_API_CONFIG.appKey,
   });
   const openBdApiClient = new OpenBdApiClient();
+  // getLibraries は静的データ（#158）、checkBookAvailability はカーリル
+  // プロキシ（認証必須）と、依存先が分かれている。詳細は
+  // docs/158-regional-pages/design.md 参照。
   const libraryRepository = new LibraryRepositoryImpl({
     apiClient: calilApiClient,
+    staticLibraryDataSource: new StaticLibraryDataSource(),
   });
   // 登録図書館・検索履歴はサーバー（D1）に永続化する（#74）。トークンは
   // AuthTokenStore から取得する（AuthProvider が同期）。

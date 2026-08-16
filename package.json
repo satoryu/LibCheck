@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "pages:dev": "npm run build && npx wrangler pages dev"
+    "pages:dev": "npm run build && npx wrangler pages dev",
+    "generate:library-data": "node --env-file=.env.local scripts/generateLibraryData.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.0.0",

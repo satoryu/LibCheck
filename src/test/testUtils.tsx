@@ -20,6 +20,7 @@ import type { BookMetadata } from "@/domain/models/bookMetadata";
 import type { BookMetadataRepository } from "@/domain/repositories/bookMetadataRepository";
 import { CalilApiClient } from "@/data/datasources/calilApiClient";
 import { OpenBdApiClient } from "@/data/datasources/openBdApiClient";
+import { StaticLibraryDataSource } from "@/data/datasources/staticLibraryDataSource";
 import { LibraryRepositoryImpl } from "@/data/repositories/libraryRepositoryImpl";
 import { RegisteredLibraryRepositoryImpl } from "@/data/repositories/registeredLibraryRepositoryImpl";
 import { SearchHistoryRepositoryImpl } from "@/data/repositories/searchHistoryRepositoryImpl";
@@ -92,7 +93,16 @@ export function makeFakeDeps(
     });
   const libraryRepository =
     overrides?.libraryRepository ??
-    new LibraryRepositoryImpl({ apiClient: calilApiClient });
+    new LibraryRepositoryImpl({
+      apiClient: calilApiClient,
+      staticLibraryDataSource: new StaticLibraryDataSource({
+        fetchFn: async () =>
+          new Response("[]", {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+      }),
+    });
   const registeredLibraryRepository =
     overrides?.registeredLibraryRepository ??
     new RegisteredLibraryRepositoryImpl(localStorageRepository);
