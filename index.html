@@ -12,6 +12,11 @@
     />
     <!-- 検索エンジンに正規URLを明示する（#151）。 -->
     <link rel="canonical" href="https://libcheck.app/" />
+    <!-- ログイン必須の個人向けページには functions/_middleware.js が
+         content="noindex" に書き換える（#157）。書き換え先のアンカーとして
+         明示的に用意しておく（要素が無いと HTMLRewriter のセレクタが
+         マッチしない）。 -->
+    <meta name="robots" content="index,follow" />
     <!-- OGP / Twitter カード（SNS シェア時の表示。#116） -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="LibCheck" />

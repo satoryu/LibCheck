@@ -14,7 +14,6 @@ import { makeQueryClient } from '@/queryClient';
 import { theme } from '@/theme';
 import { SelectedLibrariesProvider } from '@/presentation/hooks/useSelectedLibraries';
 import { AuthProvider } from '@/presentation/auth/AuthProvider';
-import { AuthGate } from '@/presentation/auth/AuthGate';
 import { AppErrorBoundary } from '@/presentation/widgets/AppErrorBoundary';
 import { googleClientId } from '@/data/datasources/authConfig';
 
@@ -29,6 +28,11 @@ import { googleClientId } from '@/data/datasources/authConfig';
  *         > SnackbarProvider
  *           > SelectedLibrariesProvider
  *             > RouterProvider
+ *
+ * ログインゲート（未ログイン時はランディングを表示）は #157 でルーター内の
+ * pathless layout route（`RootAuthGate`）に移した。ルート単位で「未ログイン
+ * でも公開する」を選べるようにするための変更で、詳細は
+ * docs/157-seo-foundation/design.md を参照。
  */
 export function App() {
   const dependencies = useMemo(() => createDefaultDependencies(), []);
@@ -37,11 +41,9 @@ export function App() {
   const clientId = googleClientId();
 
   const routedTree = (
-    <AuthGate>
-      <SelectedLibrariesProvider>
-        <RouterProvider router={router} />
-      </SelectedLibrariesProvider>
-    </AuthGate>
+    <SelectedLibrariesProvider>
+      <RouterProvider router={router} />
+    </SelectedLibrariesProvider>
   );
 
   return (
