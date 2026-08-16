@@ -5,6 +5,7 @@ import {
 } from 'react-router-dom';
 
 import { AppShell } from '@/presentation/pages/AppShell';
+import { RootAuthGate } from '@/presentation/auth/RootAuthGate';
 import { RouteErrorFallback } from '@/presentation/widgets/AppErrorBoundary';
 import { HomePage } from '@/presentation/pages/HomePage';
 import { LibraryManagementPage } from '@/presentation/pages/LibraryManagementPage';
@@ -50,7 +51,15 @@ export const routes: RouteObject[] = [
 export function createAppRouter() {
   // 全ルートを pathless な親で包み、ルート描画中の例外を errorElement で受ける
   // （白画面回避。#117）。URL 構造は変わらない。
+  //
+  // `RootAuthGate` は実アプリ専用ルーター（このファイル）にのみ適用する。
+  // `routes` 自体（テストの `renderRouteWithProviders` が直接使う）は
+  // ゲートしない設計上の理由は docs/157-seo-foundation/design.md 参照。
   return createBrowserRouter([
-    { errorElement: <RouteErrorFallback />, children: routes },
+    {
+      errorElement: <RouteErrorFallback />,
+      element: <RootAuthGate />,
+      children: routes,
+    },
   ]);
 }
