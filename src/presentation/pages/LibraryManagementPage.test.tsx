@@ -158,3 +158,21 @@ describe('LibraryManagementPage', () => {
     expect(screen.getByText('再試行')).toBeInTheDocument();
   });
 });
+
+describe('登録図書館のカーリルへのリンク（#156）', () => {
+  // カーリル図書館APIの仕様上、APIで取得した図書館名を表示する場合は
+  // カーリルへのリンクが必須。この画面はリスト項目がボタンではないため、
+  // 図書館名そのものをリンクにできる。
+  // https://calil.jp/doc/api_ref.html
+  test('図書館名がカーリルの図書館ページへのリンクになっている', async () => {
+    renderPage(new FakeRegisteredLibraryRepository([library1]));
+
+    const link = await screen.findByRole('link', { name: '港区立みなと図書館' });
+    expect(link).toHaveAttribute(
+      'href',
+      `https://calil.jp/library/123/${encodeURIComponent('港区立みなと図書館')}`,
+    );
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link.getAttribute('rel') ?? '').toContain('noopener');
+  });
+});

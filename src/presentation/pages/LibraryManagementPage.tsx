@@ -12,6 +12,7 @@ import {
   DialogTitle,
   Fab,
   IconButton,
+  Link,
   List,
   ListItem,
   ListItemText,
@@ -22,6 +23,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
 import type { Library } from '@/domain/models/library';
 import { libraryKey } from '@/domain/models/library';
+import { calilLibraryUrl } from '@/domain/utils/calilUrls';
 import {
   useRegisteredLibraries,
   useRegisteredLibraryMutations,
@@ -139,7 +141,18 @@ export function LibraryManagementPage() {
             }
           >
             <ListItemText
-              primary={library.formalName}
+              primary={
+                /* カーリルAPIの規約上、APIで取得した図書館名の表示には
+                   カーリルへのリンクが必須（#156）。この行はボタンでは
+                   ないため、図書館名そのものをリンクにできる。 */
+                <Link
+                  href={calilLibraryUrl(library)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {library.formalName}
+                </Link>
+              }
               secondary={`${library.pref}${library.city}`}
             />
           </ListItem>

@@ -293,3 +293,41 @@ describe('LibraryListPage', () => {
     ).toBeDisabled();
   });
 });
+
+describe('図書館一覧のカーリルへのリンク（#156）', () => {
+  // カーリル図書館APIの仕様上、APIで取得した図書館名を表示する場合は
+  // カーリルへのリンクが必須。この画面は行全体が選択用の ListItemButton で
+  // あり内側に <a> を置けないため、一覧単位の帰属表示でリンクを担保する。
+  // https://calil.jp/doc/api_ref.html
+  test('一覧が表示されているときカーリルへのリンクを表示する', async () => {
+    renderPage(
+      new MockLibraryRepository([
+        createLibrary({
+          formalName: '東京都立中央図書館',
+          address: '東京都港区南麻布5-7-13',
+        }),
+      ]),
+      new FakeRegisteredLibraryRepository(),
+    );
+
+    await screen.findByText('東京都立中央図書館');
+    const link = screen.getByRole('link', { name: /カーリル/ });
+    expect(link).toHaveAttribute('href', 'https://calil.jp/');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link.getAttribute('rel') ?? '').toContain('noopener');
+  });
+
+  test('図書館が0件のときは図書館名を表示しないため帰属表示も出さない', async () => {
+    renderPage(
+      new MockLibraryRepository([]),
+      new FakeRegisteredLibraryRepository(),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /選択した図書館を登録する/ }),
+      ).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('link', { name: /カーリル/ })).not.toBeInTheDocument();
+  });
+});
