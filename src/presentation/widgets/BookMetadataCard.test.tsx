@@ -93,3 +93,27 @@ describe('BookMetadataCard', () => {
     expect(screen.queryByTestId('affiliate-disclosure')).not.toBeInTheDocument();
   });
 });
+
+describe('BookMetadataCard カーリルへのリンク（#156）', () => {
+  // カーリル図書館APIの仕様上、APIで取得した図書館名・貸出状況を表示する場合は
+  // カーリルへのリンクが必須。書籍ページへの導線をここで担保する。
+  // https://calil.jp/doc/api_ref.html
+  test('「カーリルで見る」リンクが /book/{ISBN-10} を新規タブで開く', () => {
+    render(<BookMetadataCard isbn="9784873117584" title="リーダブルコード" />);
+
+    const link = screen.getByRole('link', { name: /カーリルで見る/ });
+    expect(link).toHaveAttribute('href', 'https://calil.jp/book/4873117585');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));
+  });
+
+  test('ISBN-10 が導出できない（979始まり）場合はカーリルリンクを表示しない', () => {
+    // 推測した URL へリンクするより、表示しない方を選ぶ（設計判断）。
+    // 貸出状況を表示する画面には図書館ごとのカーリルリンクが別途存在する。
+    render(<BookMetadataCard isbn="9791032305690" title="洋書" />);
+
+    expect(
+      screen.queryByRole('link', { name: /カーリルで見る/ }),
+    ).not.toBeInTheDocument();
+  });
+});

@@ -10,6 +10,7 @@ import {
   DialogContentText,
   DialogTitle,
   IconButton,
+  Link,
   Typography,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -129,6 +130,16 @@ export function SearchHistoryPage() {
             </IconButton>
           </Box>
         ))}
+        {/* カーリルAPIの規約上、APIで取得した貸出状況を表示する画面には
+            カーリルへのリンクが必要（#156）。履歴カードは図書館名を持たず
+            書籍ごとのリンクは行内の要素を増やして横幅を圧迫する（#153）ため、
+            一覧単位の帰属表示でリンクを担保する。 */}
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+          貸出状況の情報提供:{' '}
+          <Link href="https://calil.jp/" target="_blank" rel="noopener noreferrer">
+            カーリル
+          </Link>
+        </Typography>
       </Box>
     );
   };
