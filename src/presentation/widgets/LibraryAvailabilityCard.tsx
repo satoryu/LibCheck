@@ -2,11 +2,13 @@ import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
+import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 
 import { isReservable } from '@/domain/models/availabilityStatus';
 import type { Library } from '@/domain/models/library';
 import { statusForLibKey, type LibraryStatus } from '@/domain/models/libraryStatus';
+import { calilLibraryUrl } from '@/domain/utils/calilUrls';
 import { AvailabilityStatusBadge } from '@/presentation/widgets/AvailabilityStatusBadge';
 
 export interface LibraryAvailabilityCardProps {
@@ -44,9 +46,18 @@ export function LibraryAvailabilityCard({
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
           <LocalLibraryIcon sx={{ fontSize: 20 }} />
-          <Typography variant="subtitle1" sx={{ flex: 1 }}>
+          {/* カーリルAPIの規約上、APIで取得した図書館名を表示する際は
+              カーリルのページへのリンクが必須（#156）。図書館名そのものを
+              リンクにすることで、要素を増やさずに規約を満たす。 */}
+          <Link
+            variant="subtitle1"
+            href={calilLibraryUrl(library)}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ flex: 1, minWidth: 0 }}
+          >
             {library.formalName}
-          </Typography>
+          </Link>
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           {`${library.pref}${library.city}`}

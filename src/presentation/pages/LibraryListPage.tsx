@@ -5,6 +5,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import CircularProgress from '@mui/material/CircularProgress';
+import Link from '@mui/material/Link';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -110,6 +111,22 @@ export function LibraryListPage(): JSX.Element {
               );
             })}
           </List>
+          {/* カーリルAPIの規約上、APIで取得した図書館名を表示する画面には
+              カーリルへのリンクが必要（#156）。各行は選択用の ListItemButton
+              であり内側に <a> を置くと不正な入れ子になるため、一覧単位の
+              帰属表示でリンクを担保する。 */}
+          {libraries.length > 0 && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: 'block', px: 2, pb: 1 }}
+            >
+              図書館情報の提供:{' '}
+              <Link href="https://calil.jp/" target="_blank" rel="noopener noreferrer">
+                カーリル
+              </Link>
+            </Typography>
+          )}
         </Box>
         <Box sx={{ p: 2 }}>
           <Button

@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import { amazonProductUrl } from '@/domain/utils/amazonUrls';
+import { calilBookUrl } from '@/domain/utils/calilUrls';
 import { AMAZON_ASSOCIATE_TAG } from '@/presentation/config/amazonAffiliate';
 import { BookCoverThumbnail } from '@/presentation/widgets/BookCoverThumbnail';
 
@@ -41,6 +42,9 @@ export function BookMetadataCard({
 }: BookMetadataCardProps): JSX.Element {
   const productUrl = amazonProductUrl(isbn, associateTag);
   const showAffiliateDisclosure = associateTag.trim().length > 0;
+  // カーリルAPI規約上必須のリンクバック（#156）。ISBN-10 を導出できない
+  // （979 始まり）場合は仕様書に無い URL を推測せず、リンクを出さない。
+  const calilUrl = calilBookUrl(isbn);
 
   // 書影は共通コンポーネント（Amazon → OpenBD → プレースホルダ。#141 で共通化）。
   const coverArea = (
@@ -77,16 +81,29 @@ export function BookMetadataCard({
           }}
         >
           {titleArea}
-          <Button
-            variant="outlined"
-            startIcon={<OpenInNewIcon />}
-            href={productUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            sx={{ mt: 1.5 }}
-          >
-            Amazonで見る
-          </Button>
+          {/* 幅の狭い端末では折り返して縦積みになるようにする。 */}
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1.5 }}>
+            <Button
+              variant="outlined"
+              startIcon={<OpenInNewIcon />}
+              href={productUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Amazonで見る
+            </Button>
+            {calilUrl !== null && (
+              <Button
+                variant="outlined"
+                startIcon={<OpenInNewIcon />}
+                href={calilUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                カーリルで見る
+              </Button>
+            )}
+          </Box>
           {showAffiliateDisclosure && (
             <Typography
               data-testid="affiliate-disclosure"

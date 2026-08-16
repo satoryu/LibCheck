@@ -159,6 +159,37 @@ describe('検索履歴のメタデータ表示（#141・結合）', () => {
   });
 });
 
+describe('検索履歴のカーリルへのリンク（#156）', () => {
+  // カーリル図書館APIの仕様上、APIで取得した貸出状況を表示する場合は
+  // カーリルへのリンクが必須。履歴カードは図書館名を表示しないため、
+  // 一覧単位の帰属表示でリンクを担保する（詳細は docs/156-calil-linkback/design.md）。
+  // https://calil.jp/doc/api_ref.html
+  it('履歴があるとき、カーリルへのリンクを表示する', async () => {
+    const repo = new FakeSearchHistoryRepository([
+      {
+        isbn: '9784003101018',
+        searchedAt: new Date(2026, 1, 15),
+        libraryStatuses: { Tokyo_Chiyoda: 'available' },
+      },
+    ]);
+
+    renderPage(repo);
+
+    await screen.findByText(/9784003101018/);
+    const link = screen.getByRole('link', { name: /カーリル/ });
+    expect(link).toHaveAttribute('href', 'https://calil.jp/');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link.getAttribute('rel') ?? '').toContain('noopener');
+  });
+
+  it('履歴が空のときは貸出状況を表示しないため、帰属表示も出さない', async () => {
+    renderPage(new FakeSearchHistoryRepository());
+
+    await screen.findByText(/検索履歴はありません/);
+    expect(screen.queryByRole('link', { name: /カーリル/ })).not.toBeInTheDocument();
+  });
+});
+
 describe('検索履歴アイテムの横スクロール対策（#153）', () => {
   it('タイトルが長い書籍でも履歴行が横幅いっぱいに広がらないよう minWidth:0 が設定されている', async () => {
     // 長いタイトルの書籍を履歴行の flex item ラッパーに minWidth: 0 が

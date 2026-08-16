@@ -147,3 +147,42 @@ describe('LibraryAvailabilityCard', () => {
     expect(link.getAttribute('rel') ?? '').toContain('noopener');
   });
 });
+
+describe('LibraryAvailabilityCard カーリルへのリンク（#156）', () => {
+  // カーリル図書館APIの仕様上、APIで取得した図書館名を表示する場合は
+  // カーリルへのリンクが必須。図書館名そのものをリンクにして担保する。
+  // https://calil.jp/doc/api_ref.html
+  const status: LibraryStatus = {
+    systemId: 'Tokyo_Minato',
+    status: AvailabilityStatus.available,
+    libKeyStatuses: { みなと: '貸出可' },
+  };
+
+  test('図書館名がカーリルの図書館ページへのリンクになっている', () => {
+    renderWithProviders(
+      <LibraryAvailabilityCard library={library} status={status} />,
+    );
+
+    const link = screen.getByRole('link', { name: '港区立みなと図書館' });
+    expect(link).toHaveAttribute(
+      'href',
+      `https://calil.jp/library/123/${encodeURIComponent('港区立みなと図書館')}`,
+    );
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link.getAttribute('rel') ?? '').toContain('noopener');
+  });
+
+  test('libId が欠けていても systemId と libKey によるリンクを描画する', () => {
+    renderWithProviders(
+      <LibraryAvailabilityCard library={{ ...library, libId: '' }} status={status} />,
+    );
+
+    const link = screen.getByRole('link', { name: '港区立みなと図書館' });
+    expect(link).toHaveAttribute(
+      'href',
+      `https://calil.jp/library/search?s=Tokyo_Minato&k=${encodeURIComponent(
+        'みなと',
+      )}`,
+    );
+  });
+});
