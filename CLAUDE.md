@@ -96,7 +96,8 @@ When the Test Plan includes manual verification items (UI behavior, camera/barco
 1. Start the dev server (`npm run dev`, default `http://localhost:5173`), or emulate the production setup (Pages Functions) with `npm run pages:dev`.
 2. Open the app in a browser and verify each acceptance criterion manually (use the Chrome integration tools when available; Playwright does not install in this environment — see Known Pitfalls).
 3. For camera/barcode features, verify graceful handling when camera access is denied or unavailable.
-4. Check off the verified items in the PR Test Plan.
+4. **For any page reachable without login (public/unauthenticated routes), verify with a full navigation — a typed/pasted URL, an external link, or a reload — not only in-app (SPA) navigation from an already-booted session.** In-app navigation and a cold first load can hit different code paths (auth-restore timing, first-render effects), and a cold load is exactly what a crawler, a shared link, or an incognito visitor experiences. A bug here (#163: an auth-gate effect wiped an in-flight query only on cold boot into a newly-public route) passed review because only SPA-internal navigation was tested.
+5. Check off the verified items in the PR Test Plan.
 
 ## Merging
 
@@ -115,7 +116,7 @@ Merging is not the end of the work. An Issue/PR is done only when all of the fol
 ## Verification Principles
 
 - **Never implement from memory**: verify specs, commands, and constraints of external services (Cloudflare / Google / Workbox etc.) against official docs before implementing. Dashboard click-paths go stale quickly, so document procedures as API / CLI commands.
-- **Grep the blast radius before changing code**: find callers, tests, and fake implementations first, then design the change.
+- **Grep the blast radius before changing code**: find callers, tests, and fake implementations first, then design the change. When the plan is to replace only *part* of an implementation of a multi-method interface (e.g. swap one method's data source but keep another), grep the callers of **every** method on that interface, not just the one you're changing — a design that looks like a clean partial swap can silently break an unrelated method's callers (seen twice: #157's routing gate, #158's repository swap).
 - **Separate server state from client state**: for production issues, observe with curl (server/CDN state) and the browser (Service Worker, caches, cookies) independently before hypothesizing a cause.
 - **When touching the Service Worker / PWA, verify that updates actually reach users**: confirm in a browser that the new SW does not stay in `waiting` (`navigator.serviceWorker.getRegistration()`). Neither curl nor unit tests can catch this.
 
