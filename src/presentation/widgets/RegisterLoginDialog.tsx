@@ -6,12 +6,14 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Box from '@mui/material/Box';
 
+import type { Library } from '@/domain/models/library';
+import { libraryKey } from '@/domain/models/library';
 import { GoogleSignInControl } from '@/presentation/auth/GoogleSignInControl';
 
 export interface RegisterLoginDialogProps {
   open: boolean;
-  /** 選択中の図書館名（登録内容をログイン前に明示する）。 */
-  libraryNames: string[];
+  /** 選択中の図書館（登録内容をログイン前に明示する）。 */
+  libraries: Library[];
   onClose: () => void;
 }
 
@@ -26,7 +28,7 @@ export interface RegisterLoginDialogProps {
  */
 export function RegisterLoginDialog({
   open,
-  libraryNames,
+  libraries,
   onClose,
 }: RegisterLoginDialogProps): JSX.Element {
   return (
@@ -34,11 +36,12 @@ export function RegisterLoginDialog({
       <DialogTitle>ログインして図書館を登録</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          選択した{libraryNames.length}件の図書館を登録するにはログインが必要です。ログインすると、選択は保持されたまま登録が続行されます。
+          選択した{libraries.length}件の図書館を登録するにはログインが必要です。ログインすると、選択は保持されたまま登録が続行されます。
         </DialogContentText>
         <Box component="ul" sx={{ mt: 1.5, pl: 2.5, mb: 0 }}>
-          {libraryNames.map((name) => (
-            <li key={name}>{name}</li>
+          {/* formalName は図書館間で重複しうるため、一覧描画と同じ libraryKey を key に使う（#167 レビュー指摘）。 */}
+          {libraries.map((library) => (
+            <li key={libraryKey(library)}>{library.formalName}</li>
           ))}
         </Box>
       </DialogContent>

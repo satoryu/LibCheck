@@ -71,6 +71,15 @@ export function LibraryListPage(): JSX.Element {
     // へ丸ごと遷移し選択状態を破棄していたが、選び直しを強いる離脱要因に
     // なっていたため、選択を保持したままその場でログインするダイアログを
     // 開く形に変更した（#167）。ログイン完了は下の useEffect で検知する。
+    //
+    // 既知のトレードオフ: AuthProvider はセッション復元完了まで一瞬 user が
+    // null を返す（#163 と同種のタイミング）。ログイン済みユーザーが
+    // コールドロード直後・復元完了前に登録を押すと、このダイアログが一瞬
+    // 開いてから下の useEffect で自動的に登録・遷移する（結果は正しいが
+    // ダイアログが一瞬見える）。復元用のグローバルな isRestoring フラグを
+    // AuthProvider に追加すれば防げるが、影響範囲が全消費者に及ぶ割に
+    // 実際の発生条件（一覧の読み込み完了前に選択・登録まで完了する速さ）が
+    // 極めて狭いため、今回は許容する（#167 レビューで検討済み）。
     if (user === null) {
       setPendingRegister(true);
       return;
@@ -186,13 +195,15 @@ export function LibraryListPage(): JSX.Element {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <SubPageAppBar title={`${city}の図書館`} />
+      {/* 文言は functions/_shared/routeMeta.js の /library/add/:pref/:city の
+          description と揃える（検索結果のスニペットとページ本文を一致させる）。 */}
       <PublicPageIntro
-        description={`ログインすると、${city}の図書館を登録して蔵書を検索できます。`}
+        description={`${pref}${city}にある図書館の一覧です。ログインすると、この地域の図書館を登録して蔵書を検索できます。`}
       />
       {renderBody()}
       <RegisterLoginDialog
         open={pendingRegister}
-        libraryNames={selected.map((library) => library.formalName)}
+        libraries={selected}
         onClose={() => setPendingRegister(false)}
       />
     </Box>
