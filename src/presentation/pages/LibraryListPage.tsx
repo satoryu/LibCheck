@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { enqueueSnackbar } from 'notistack';
 import Box from '@mui/material/Box';
@@ -13,11 +13,14 @@ import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 
 import { libraryKey } from '@/domain/models/library';
+import type { Library } from '@/domain/models/library';
 import { useAuth } from '@/presentation/auth/AuthProvider';
 import { useLibraryList } from '@/presentation/hooks/useLibraryList';
 import { useRegisteredLibraryMutations } from '@/presentation/hooks/useRegisteredLibraries';
 import { useSelectedLibraries } from '@/presentation/hooks/useSelectedLibraries';
 import { ErrorStateWidget } from '@/presentation/widgets/ErrorStateWidget';
+import { PublicPageIntro } from '@/presentation/widgets/PublicPageIntro';
+import { RegisterLoginDialog } from '@/presentation/widgets/RegisterLoginDialog';
 import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
 
 /**
@@ -37,34 +40,63 @@ export function LibraryListPage(): JSX.Element {
   const { selected, isSelected, toggle, clear } = useSelectedLibraries();
   const { addAll } = useRegisteredLibraryMutations();
 
+  // 未ログインで登録を試みたときに開くログインダイアログの状態。
+  // true の間にログインが完了したら、選び直しなしで登録を自動続行する。
+  const [pendingRegister, setPendingRegister] = useState(false);
+
   // 選択状態はこの市区町村の一覧での一時的なもの。pref/city が変わったとき
   // （初回マウント含む）に必ずクリアし、別の街の選択が持ち越されて誤登録
   // されるのを防ぐ。同一ルートでパラメータだけ変わる遷移ではアンマウント
   // されないため、アンマウントではなく pref/city 依存でクリアする。
+  // ログインダイアログを開いたまま別の街へ遷移した場合、選択が空のまま
+  // ログイン完了時に登録が走ってしまうのを避けるため、ダイアログも閉じる。
   useEffect(() => {
     clear();
+    setPendingRegister(false);
   }, [pref, city, clear]);
 
-  const handleRegister = async (): Promise<void> => {
-    if (selected.length === 0) return;
-
-    // この画面は #158 で未ログインでも閲覧できるようになったが、登録は
-    // サーバ側が引き続き認証必須（#89）。401 のサイレント失敗にせず、
-    // ログインへの導線を示す（ランディングへ遷移。#155 の完了条件）。
-    if (user === null) {
-      enqueueSnackbar('図書館を登録するにはログインが必要です', {
-        variant: 'info',
-      });
-      navigate('/');
-      return;
-    }
-
-    await addAll([...selected]);
+  const registerSelected = async (libraries: Library[]): Promise<void> => {
+    await addAll(libraries);
     clear();
     enqueueSnackbar('図書館を登録しました');
     // 登録完了後は登録図書館の管理画面へ遷移し、登録結果を確認できるようにする。
     navigate('/library');
   };
+
+  const handleRegister = async (): Promise<void> => {
+    if (selected.length === 0) return;
+
+    // この画面は #158 で未ログインでも閲覧できるようになったが、登録は
+    // サーバ側が引き続き認証必須（#89）。以前は navigate('/') でランディング
+    // へ丸ごと遷移し選択状態を破棄していたが、選び直しを強いる離脱要因に
+    // なっていたため、選択を保持したままその場でログインするダイアログを
+    // 開く形に変更した（#167）。ログイン完了は下の useEffect で検知する。
+    //
+    // 既知のトレードオフ: AuthProvider はセッション復元完了まで一瞬 user が
+    // null を返す（#163 と同種のタイミング）。ログイン済みユーザーが
+    // コールドロード直後・復元完了前に登録を押すと、このダイアログが一瞬
+    // 開いてから下の useEffect で自動的に登録・遷移する（結果は正しいが
+    // ダイアログが一瞬見える）。復元用のグローバルな isRestoring フラグを
+    // AuthProvider に追加すれば防げるが、影響範囲が全消費者に及ぶ割に
+    // 実際の発生条件（一覧の読み込み完了前に選択・登録まで完了する速さ）が
+    // 極めて狭いため、今回は許容する（#167 レビューで検討済み）。
+    if (user === null) {
+      setPendingRegister(true);
+      return;
+    }
+
+    await registerSelected([...selected]);
+  };
+
+  // ログインダイアログを開いた後にログインが完了したら、選択していた図書館
+  // をそのまま登録して続行する。
+  useEffect(() => {
+    if (!pendingRegister || user === null) return;
+    setPendingRegister(false);
+    void registerSelected([...selected]);
+    // ログイン完了の瞬間の selected で1回だけ登録する。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, pendingRegister]);
 
   const renderBody = (): JSX.Element => {
     if (librariesQuery.isLoading) {
@@ -163,7 +195,17 @@ export function LibraryListPage(): JSX.Element {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <SubPageAppBar title={`${city}の図書館`} />
+      {/* 文言は functions/_shared/routeMeta.js の /library/add/:pref/:city の
+          description と揃える（検索結果のスニペットとページ本文を一致させる）。 */}
+      <PublicPageIntro
+        description={`${pref}${city}にある図書館の一覧です。ログインすると、この地域の図書館を登録して蔵書を検索できます。`}
+      />
       {renderBody()}
+      <RegisterLoginDialog
+        open={pendingRegister}
+        libraries={selected}
+        onClose={() => setPendingRegister(false)}
+      />
     </Box>
   );
 }

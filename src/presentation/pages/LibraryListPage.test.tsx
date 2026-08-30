@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -344,11 +344,21 @@ describe('図書館一覧のカーリルへのリンク（#156）', () => {
   });
 });
 
-describe('未ログインでの登録操作（#158）', () => {
+describe('未ログインでの登録操作（#158, #167）', () => {
   // この画面自体は #158 で未ログインでも閲覧できるようになったが、登録
-  // 操作はサーバ側が引き続き認証必須（#89）。クライアント側でも事前に
-  // チェックし、401 のサイレント失敗ではなくログインへの導線を示す。
-  test('未ログインで登録するとログインへ誘導され、登録APIは呼ばれない', async () => {
+  // 操作はサーバ側が引き続き認証必須（#89）。#167 以前は navigate('/') で
+  // 選択状態を破棄してランディングへ丸ごと遷移していたが、選択のやり直しを
+  // 強いる離脱要因になっていたため、選択を保持したままその場でログインし
+  // 登録を続行する形に変更した。
+  beforeEach(() => {
+    vi.stubEnv('VITE_AUTH_MOCK', 'true');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  test('未ログインで登録すると、選択を保持したままログインダイアログが開く', async () => {
     const libraries = [
       createLibrary({ formalName: '図書館1', address: '住所1', libId: '1' }),
     ];
@@ -365,14 +375,70 @@ describe('未ログインでの登録操作（#158）', () => {
       screen.getByRole('button', { name: /選択した図書館を登録する/ }),
     );
 
-    // 図書館一覧画面から遷移する（ログインゲート自体は routes 配列の外側
-    // ＝ createAppRouter() 側にのみ適用される設計のため、このテストハーネス
-    // 〈renderRouteWithProviders が使う routes〉では実際にランディングが
-    // 出るとは限らない。#157 design.md 参照）。
+    // 画面遷移はせず、ダイアログの中に選択中の図書館名が表示される。
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('図書館1');
+    // 一覧側の選択も破棄されていない。
+    expect(screen.getByText(/1件選択中/)).toBeInTheDocument();
+    // ログインするまで登録APIは呼ばれていない。
+    expect(registeredRepo.libs).toHaveLength(0);
+  });
+
+  test('ダイアログでログインすると、選択した図書館が自動で登録され管理画面へ遷移する', async () => {
+    const libraries = [
+      createLibrary({ formalName: '図書館1', address: '住所1', libId: '1' }),
+    ];
+    const registeredRepo = new FakeRegisteredLibraryRepository();
+
+    const { user } = renderPage(
+      new MockLibraryRepository(libraries),
+      registeredRepo,
+      null,
+    );
+
+    await user.click(await screen.findByText('図書館1'));
+    await user.click(
+      screen.getByRole('button', { name: /選択した図書館を登録する/ }),
+    );
+    await screen.findByRole('dialog');
+
+    await user.click(
+      screen.getByRole('button', { name: 'Dev ログイン（モック）' }),
+    );
+
+    // 選び直す操作なしに、選択していた図書館がそのまま登録される。
     await waitFor(() => {
-      expect(screen.queryByText('図書館1')).not.toBeInTheDocument();
+      expect(registeredRepo.libs).toHaveLength(1);
     });
-    // 登録APIは呼ばれていない。
+    expect(registeredRepo.libs[0].formalName).toBe('図書館1');
+    expect(await screen.findByText('登録図書館')).toBeInTheDocument();
+  });
+
+  test('ダイアログをキャンセルすると選択は残るが登録はされない', async () => {
+    const libraries = [
+      createLibrary({ formalName: '図書館1', address: '住所1', libId: '1' }),
+    ];
+    const registeredRepo = new FakeRegisteredLibraryRepository();
+
+    const { user } = renderPage(
+      new MockLibraryRepository(libraries),
+      registeredRepo,
+      null,
+    );
+
+    await user.click(await screen.findByText('図書館1'));
+    await user.click(
+      screen.getByRole('button', { name: /選択した図書館を登録する/ }),
+    );
+    await screen.findByRole('dialog');
+
+    await user.click(screen.getByRole('button', { name: 'キャンセル' }));
+
+    // MUI Dialog は Close 後も退場トランジションの間 DOM に残るため待つ。
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText(/1件選択中/)).toBeInTheDocument();
     expect(registeredRepo.libs).toHaveLength(0);
   });
 });

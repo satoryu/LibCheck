@@ -132,4 +132,22 @@ describe('CitySelectionPage', () => {
     expect(await screen.findByText('エラーが発生しました')).toBeInTheDocument();
     expect(screen.getByText('再試行')).toBeInTheDocument();
   });
+
+  it('未ログイン時はLibCheckの案内を表示する（#167）', async () => {
+    renderRouteWithProviders('/library/add/東京都', {
+      deps: depsWith(mockLibraryRepository([])),
+    });
+
+    expect(await screen.findByLabelText('LibCheckについて')).toBeInTheDocument();
+  });
+
+  it('ログイン中は案内を表示しない（#167）', async () => {
+    renderRouteWithProviders('/library/add/東京都', {
+      deps: depsWith(mockLibraryRepository([])),
+      authUser: { id: 'test-user', name: 'Test User' },
+    });
+
+    await screen.findByText('東京都の市区町村');
+    expect(screen.queryByLabelText('LibCheckについて')).not.toBeInTheDocument();
+  });
 });

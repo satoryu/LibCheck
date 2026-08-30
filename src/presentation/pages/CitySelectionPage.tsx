@@ -14,6 +14,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SearchIcon from '@mui/icons-material/Search';
 import { useCityList } from '@/presentation/hooks/useCityList';
 import { ErrorStateWidget } from '@/presentation/widgets/ErrorStateWidget';
+import { PublicPageIntro } from '@/presentation/widgets/PublicPageIntro';
 import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
 
 /**
@@ -103,6 +104,9 @@ export function CitySelectionPage() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <SubPageAppBar title={`${pref}の市区町村`} />
+      <PublicPageIntro
+        description={`${pref}の図書館一覧です。市区町村を選ぶと、その地域の図書館を確認できます。ログインすると登録して蔵書を検索できます。`}
+      />
       <Box sx={{ flexGrow: 1, overflow: 'auto' }}>{renderBody()}</Box>
     </Box>
   );
