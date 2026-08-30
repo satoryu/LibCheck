@@ -4,6 +4,8 @@ import { screen } from '@testing-library/react';
 import { renderWithProviders } from '@/test/testUtils';
 import { PrefectureSelectionPage } from '@/presentation/pages/PrefectureSelectionPage';
 
+const LOGGED_IN_USER = { id: 'test-user', name: 'Test User' };
+
 /**
  * Port of `test/presentation/pages/prefecture_selection_page_test.dart`.
  */
@@ -39,5 +41,19 @@ describe('PrefectureSelectionPage', () => {
 
     expect(screen.getByText('関東')).toBeInTheDocument();
     expect(screen.queryByText('北海道・東北')).not.toBeInTheDocument();
+  });
+
+  it('未ログイン時はLibCheckの案内を表示する（#167）', () => {
+    renderWithProviders(<PrefectureSelectionPage />);
+
+    expect(screen.getByLabelText('LibCheckについて')).toBeInTheDocument();
+  });
+
+  it('ログイン中は案内を表示しない（#167）', () => {
+    renderWithProviders(<PrefectureSelectionPage />, {
+      authUser: LOGGED_IN_USER,
+    });
+
+    expect(screen.queryByLabelText('LibCheckについて')).not.toBeInTheDocument();
   });
 });

@@ -15,6 +15,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import type { RegionGroup } from '@/domain/data/japanesePrefectures';
 import { JAPANESE_PREFECTURE_REGIONS } from '@/domain/data/japanesePrefectures';
+import { PublicPageIntro } from '@/presentation/widgets/PublicPageIntro';
 import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
 
 /**
@@ -31,6 +32,7 @@ export function PrefectureSelectionPage(): React.ReactElement {
   return (
     <Box>
       <SubPageAppBar title="都道府県を選択" />
+      <PublicPageIntro description="都道府県・市区町村から図書館を選んで登録できます。ログインすると、登録した図書館の蔵書をまとめて検索できます。" />
       <Box sx={{ p: 2 }}>
         <TextField
           fullWidth
