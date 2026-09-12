@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 
 import { AvailabilityStatus } from '@/domain/models/availabilityStatus';
@@ -6,6 +6,15 @@ import type { Library } from '@/domain/models/library';
 import type { LibraryStatus } from '@/domain/models/libraryStatus';
 import { renderWithProviders } from '@/test/testUtils';
 import { LibraryAvailabilityCard } from '@/presentation/widgets/LibraryAvailabilityCard';
+import { trackLibraryReservationLinkClick } from '@/analytics/events';
+
+// GA4 計測（#169）。
+vi.mock('@/analytics/events', () => ({
+  trackIsbnScanSuccess: vi.fn(),
+  trackBookSearchResultView: vi.fn(),
+  trackLibraryReservationLinkClick: vi.fn(),
+  trackAmazonAffiliateLinkClick: vi.fn(),
+}));
 
 const library: Library = {
   systemId: 'Tokyo_Minato',
@@ -184,5 +193,47 @@ describe('LibraryAvailabilityCard カーリルへのリンク（#156）', () => 
         'みなと',
       )}`,
     );
+  });
+});
+
+describe('LibraryAvailabilityCard GA4 計測（#169）', () => {
+  const trackClick = vi.mocked(trackLibraryReservationLinkClick);
+
+  beforeEach(() => {
+    trackClick.mockClear();
+  });
+
+  test('「予約する」のクリックを1回だけ計測する', async () => {
+    const status: LibraryStatus = {
+      systemId: 'Tokyo_Minato',
+      status: AvailabilityStatus.available,
+      reserveUrl: 'https://example.com/reserve',
+      libKeyStatuses: { みなと: '貸出可' },
+    };
+
+    const { user } = renderWithProviders(
+      <LibraryAvailabilityCard library={library} status={status} />,
+    );
+
+    await user.click(screen.getByRole('link', { name: '予約する' }));
+
+    expect(trackClick).toHaveBeenCalledTimes(1);
+  });
+
+  test('カーリルへのリンクバック（図書館名）では計測しない', async () => {
+    const status: LibraryStatus = {
+      systemId: 'Tokyo_Minato',
+      status: AvailabilityStatus.available,
+      reserveUrl: 'https://example.com/reserve',
+      libKeyStatuses: { みなと: '貸出可' },
+    };
+
+    const { user } = renderWithProviders(
+      <LibraryAvailabilityCard library={library} status={status} />,
+    );
+
+    await user.click(screen.getByRole('link', { name: '港区立みなと図書館' }));
+
+    expect(trackClick).not.toHaveBeenCalled();
   });
 });

@@ -34,7 +34,8 @@
 - ✅ **OAuth 同意画面の本番公開（#105）**: 「対象」= 本番環境。非機微スコープのみで審査不要。本番 Client ID へ移行済み
 - ✅ **公開仕上げ**（#116）: OGP/Twitter カード・robots.txt・`www` → apex 正規化（301）
 - ✅ **カスタムドメイン（#71）**: `libcheck.app`（apex 正規）を適用。配信・TLS・Functions・CSP・法務ページ・Google ログインを新ドメインで確認
-- ✅ **アクセス解析**（#76）: Cloudflare Web Analytics（ビーコン）を導入。Google Analytics は見送り
+- ✅ **アクセス解析**（#76）: Cloudflare Web Analytics（ビーコン）を導入。当初は PV/UU 把握が目的だったため Google Analytics は見送った
+- ✅ **GA4 のイベント計測**（#169）: 価値到達のファネル（ISBN 読み取り → 検索結果表示 → 図書館の予約リンク）と収益化（Amazon リンク）を最小4イベントで計測。#76 の「GA は見送り」は目的が PV 把握からイベント分析へ変わったため更新。Cloudflare Web Analytics とは併用
 - ✅ **公開後運用の runbook 化**（#119）: D1 バックアップ・復旧（Time Travel）とユーザーデータ削除手順を `cloudflare-runbook.md` に整備
 - ✅ **デザイン刷新「Knowledge Cartography」**（#138）: ランディングページ（#113、貸出カード意匠）で確立したトークンをアプリ全体のテーマへ展開。詳細は `docs/design-guidelines.md`
 - ✅ **PWA 対応**（#72）: インストール可能 + 高速化。個人データ API はキャッシュしない方針で導入
@@ -63,6 +64,7 @@ graph TD
       SW[Service Worker<br/>PWA・オフラインキャッシュ]
       AUTH[Google ログイン（GIS）]
       SENTRY[Sentry SDK]
+      GA[gtag.js（GA4 イベント計測）]
     end
     subgraph cf[Cloudflare]
       PAGES[Pages（静的配信）]
@@ -79,5 +81,6 @@ graph TD
     FN --> EXT
     PAGES --> UI
     SENTRY -.->|エラーレポート| ExtSentry[Sentry.io]
+    UI -.->|イベント| GA -.-> ExtGA[Google Analytics 4]
     PAGES -.-> CFA
 ```

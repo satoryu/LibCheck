@@ -1,7 +1,16 @@
-import { describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 import { BookMetadataCard } from '@/presentation/widgets/BookMetadataCard';
+import { trackAmazonAffiliateLinkClick } from '@/analytics/events';
+
+// GA4 計測（#169）。
+vi.mock('@/analytics/events', () => ({
+  trackIsbnScanSuccess: vi.fn(),
+  trackBookSearchResultView: vi.fn(),
+  trackLibraryReservationLinkClick: vi.fn(),
+  trackAmazonAffiliateLinkClick: vi.fn(),
+}));
 
 describe('BookMetadataCard', () => {
   test('タイトルを表示する', () => {
@@ -115,5 +124,29 @@ describe('BookMetadataCard カーリルへのリンク（#156）', () => {
     expect(
       screen.queryByRole('link', { name: /カーリルで見る/ }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('BookMetadataCard GA4 計測（#169）', () => {
+  const trackClick = vi.mocked(trackAmazonAffiliateLinkClick);
+
+  beforeEach(() => {
+    trackClick.mockClear();
+  });
+
+  test('「Amazonで見る」のクリックを1回だけ計測する', () => {
+    render(<BookMetadataCard isbn="9784873117584" title="リーダブルコード" />);
+
+    fireEvent.click(screen.getByRole('link', { name: /Amazonで見る/ }));
+
+    expect(trackClick).toHaveBeenCalledTimes(1);
+  });
+
+  test('「カーリルで見る」では計測しない（収益化イベントと混ぜない）', () => {
+    render(<BookMetadataCard isbn="9784873117584" title="リーダブルコード" />);
+
+    fireEvent.click(screen.getByRole('link', { name: /カーリルで見る/ }));
+
+    expect(trackClick).not.toHaveBeenCalled();
   });
 });

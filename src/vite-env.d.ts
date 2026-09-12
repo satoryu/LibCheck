@@ -13,6 +13,9 @@ interface ImportMetaEnv {
   readonly VITE_SENTRY_DSN?: string;
   // Google OAuth client ID (public; GIS needs no client secret). See authConfig.ts.
   readonly VITE_GOOGLE_CLIENT_ID?: string;
+  // GA4 measurement ID (public value, e.g. "G-XXXXXXXXXX"). Unset locally → no
+  // GA4 traffic, console output only. See analytics/gtag.ts.
+  readonly VITE_GA_MEASUREMENT_ID?: string;
   // Dev-only auth mock toggle ("true"). Gated by import.meta.env.DEV. See authConfig.ts.
   readonly VITE_AUTH_MOCK?: string;
 }

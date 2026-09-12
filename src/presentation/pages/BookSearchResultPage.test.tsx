@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 
 import { AvailabilityStatus } from '@/domain/models/availabilityStatus';
@@ -15,6 +15,15 @@ import {
   makeFakeDeps,
   FakeBookMetadataRepository,
 } from '@/test/testUtils';
+import { trackBookSearchResultView } from '@/analytics/events';
+
+// GA4 計測（#169）。イベント名ではなく「意味のある呼び出し」で検証する。
+vi.mock('@/analytics/events', () => ({
+  trackIsbnScanSuccess: vi.fn(),
+  trackBookSearchResultView: vi.fn(),
+  trackLibraryReservationLinkClick: vi.fn(),
+  trackAmazonAffiliateLinkClick: vi.fn(),
+}));
 
 class FakeLibraryRepository implements LibraryRepository {
   constructor(private readonly result: BookAvailability[] = []) {}
@@ -514,5 +523,109 @@ describe('BookSearchResultPage', () => {
     expect(
       screen.getByRole('link', { name: /Amazonで見る/ }),
     ).toBeInTheDocument();
+  });
+});
+
+describe('BookSearchResultPage GA4 計測（#169）', () => {
+  const trackView = vi.mocked(trackBookSearchResultView);
+
+  /** タイトル取得（OpenBD）の解決タイミングを制御して再レンダリングを起こす。 */
+  class DeferredBookMetadataRepository implements BookMetadataRepository {
+    private resolveFn: ((value: BookMetadata | null) => void) | null = null;
+
+    async getByIsbn(): Promise<BookMetadata | null> {
+      return new Promise((resolve) => {
+        this.resolveFn = resolve;
+      });
+    }
+    async getByIsbns(): Promise<Map<string, BookMetadata>> {
+      return new Map();
+    }
+    release(metadata: BookMetadata | null): void {
+      this.resolveFn?.(metadata);
+    }
+  }
+
+  const results: BookAvailability[] = [
+    {
+      isbn: '9784123456789',
+      libraryStatuses: {
+        Tokyo_Minato: {
+          systemId: 'Tokyo_Minato',
+          status: AvailabilityStatus.available,
+          libKeyStatuses: { みなと: '貸出可' },
+        },
+        Tokyo_Shibuya: {
+          systemId: 'Tokyo_Shibuya',
+          status: AvailabilityStatus.checkedOut,
+          libKeyStatuses: { しぶや: '貸出中' },
+        },
+      },
+    },
+  ];
+
+  beforeEach(() => {
+    // 他の describe のテストも結果画面を描画するため、各テストの直前に消す。
+    trackView.mockClear();
+  });
+
+  test('蔵書状況を確認できる状態になったら件数付きで計測する', async () => {
+    renderSubject({
+      libraryRepo: new FakeLibraryRepository(results),
+      registeredRepo: new FakeRegisteredLibraryRepository([library1, library2]),
+    });
+
+    await screen.findByText('貸出可能');
+
+    expect(trackView).toHaveBeenCalledTimes(1);
+    expect(trackView).toHaveBeenCalledWith({
+      searchedLibraryCount: 2,
+      holdingLibraryCount: 2,
+      availableLibraryCount: 1,
+    });
+  });
+
+  test('タイトル取得の遅延で再レンダリングされても再送しない', async () => {
+    const metadataRepo = new DeferredBookMetadataRepository();
+    renderSubject({
+      libraryRepo: new FakeLibraryRepository(results),
+      registeredRepo: new FakeRegisteredLibraryRepository([library1, library2]),
+      metadataRepo,
+    });
+
+    await screen.findByText('貸出可能');
+    expect(trackView).toHaveBeenCalledTimes(1);
+
+    // 蔵書状況の表示後にタイトルが届き、同じ画面が再描画される。
+    metadataRepo.release({
+      isbn: '9784123456789',
+      title: '吾輩は猫である',
+      coverImageUrl: undefined,
+    });
+
+    expect(await screen.findByText('吾輩は猫である')).toBeInTheDocument();
+    expect(trackView).toHaveBeenCalledTimes(1);
+  });
+
+  test('読み込み中・エラー時は計測しない', async () => {
+    renderSubject({
+      libraryRepo: new ErrorLibraryRepository(),
+      registeredRepo: new FakeRegisteredLibraryRepository([library1]),
+    });
+
+    await screen.findByText(/エラー/);
+
+    expect(trackView).not.toHaveBeenCalled();
+  });
+
+  test('図書館が未登録のときは計測しない（蔵書状況を確認できていないため）', async () => {
+    renderSubject({
+      libraryRepo: new FakeLibraryRepository(),
+      registeredRepo: new FakeRegisteredLibraryRepository(),
+    });
+
+    await screen.findByText(/図書館が登録されていません/);
+
+    expect(trackView).not.toHaveBeenCalled();
   });
 });

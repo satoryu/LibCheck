@@ -19,9 +19,11 @@ import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
 import SearchIcon from '@mui/icons-material/Search';
 import type { UseQueryResult } from '@tanstack/react-query';
 
+import { trackBookSearchResultView } from '@/analytics/events';
 import type { BookAvailability } from '@/domain/models/bookAvailability';
 import type { Library } from '@/domain/models/library';
 import { libraryKey } from '@/domain/models/library';
+import { countLibraryAvailability } from '@/presentation/utils/availabilityCounts';
 import { availabilityToHistoryStatuses } from '@/presentation/utils/availabilityToHistoryStatuses';
 import { resolveErrorMessage } from '@/presentation/utils/errorMessageResolver';
 import { useBookAvailability } from '@/presentation/hooks/useBookAvailability';
@@ -85,6 +87,37 @@ function useSaveHistoryOnResult(
     });
     // save（mutateAsync）は React Query が安定参照を保証するため依存に含められる。
   }, [isSuccess, data, registeredLibraries, isbn, save]);
+}
+
+/**
+ * 蔵書状況を確認できる状態になったことを ISBN ごとに1度だけ計測する（#169）。
+ *
+ * 「確認できる状態」＝ 結果表示（ResultState）の条件。登録図書館が0件の
+ * オンボーディング表示、読み込み中、エラー時は送らない。
+ *
+ * 送信済み ISBN を ref に持つことで、タイトル取得の遅延による再レンダリング、
+ * 再試行による再取得、StrictMode の二重 effect でも二重計測しない。
+ */
+function useTrackBookSearchResultView(
+  isbn: string,
+  availabilityQuery: UseQueryResult<BookAvailability[]>,
+  registeredLibraries: Library[] | undefined,
+): void {
+  const trackedIsbnRef = useRef<string | null>(null);
+
+  const { isSuccess, data } = availabilityQuery;
+  useEffect(() => {
+    if (!isSuccess || data === undefined) return;
+    if (registeredLibraries === undefined || registeredLibraries.length === 0) {
+      return;
+    }
+    if (trackedIsbnRef.current === isbn) return;
+    trackedIsbnRef.current = isbn;
+
+    trackBookSearchResultView(
+      countLibraryAvailability(findResultForIsbn(data, isbn), registeredLibraries),
+    );
+  }, [isSuccess, data, registeredLibraries, isbn]);
 }
 
 function IsbnSection({ isbn }: { isbn: string }): JSX.Element {
@@ -306,6 +339,7 @@ export function BookSearchResultPage(): JSX.Element {
   const availabilityQuery = useBookAvailability(isbn);
   const metadataQuery = useBookMetadata(isbn);
   useSaveHistoryOnResult(isbn, availabilityQuery, registeredQuery.data);
+  useTrackBookSearchResultView(isbn, availabilityQuery, registeredQuery.data);
 
   const metadata: MetadataProps = {
     title: metadataQuery.data?.title,
