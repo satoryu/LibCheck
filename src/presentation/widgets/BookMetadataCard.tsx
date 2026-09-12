@@ -5,6 +5,7 @@ import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
+import { trackAmazonAffiliateLinkClick } from '@/analytics/events';
 import { amazonProductUrl } from '@/domain/utils/amazonUrls';
 import { calilBookUrl } from '@/domain/utils/calilUrls';
 import { AMAZON_ASSOCIATE_TAG } from '@/presentation/config/amazonAffiliate';
@@ -89,6 +90,9 @@ export function BookMetadataCard({
               href={productUrl}
               target="_blank"
               rel="noopener noreferrer"
+              // 収益化側の指標（#169）。ユーザー価値（図書館の予約）とは
+              // 別イベントとして扱う。
+              onClick={() => trackAmazonAffiliateLinkClick()}
             >
               Amazonで見る
             </Button>

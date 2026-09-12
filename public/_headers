@@ -5,9 +5,16 @@
 # Report-Only で先行導入し違反が無いことを確認のうえ、enforce
 # （Content-Security-Policy）へ切り替えた（#93）。変更時は実依存
 # （GIS / OpenBD / Amazon 画像 / /api/*）をブラウザコンソールで再確認すること。
+#
+# GA4（#169）: gtag.js は www.googletagmanager.com から読み込み、計測は
+# *.google-analytics.com / *.analytics.google.com へ送られる（公式の CSP ガイド）。
+# 広告連携（Google 広告・Advertising Features）は使わないため doubleclick 等は
+# 許可しない。書影で img-src は既に https: を許可済みのため追加不要。
+# gtag.js のインラインスニペットは使わず src/analytics/gtag.ts から動的に
+# 読み込む（script-src に 'unsafe-inline' を足さないため）。
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(self), microphone=(), geolocation=(), browsing-topics=()
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; script-src 'self' https://accounts.google.com/gsi/client https://static.cloudflareinsights.com; connect-src 'self' https://api.openbd.jp https://accounts.google.com/gsi/ https://o472140.ingest.us.sentry.io https://cloudflareinsights.com; frame-src https://accounts.google.com/gsi/
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; script-src 'self' https://accounts.google.com/gsi/client https://static.cloudflareinsights.com https://www.googletagmanager.com; connect-src 'self' https://api.openbd.jp https://accounts.google.com/gsi/ https://o472140.ingest.us.sentry.io https://cloudflareinsights.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; frame-src https://accounts.google.com/gsi/

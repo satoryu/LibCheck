@@ -3,6 +3,15 @@ import { act, screen, waitFor } from '@testing-library/react';
 import { onlineManager } from '@tanstack/react-query';
 
 import { renderRouteWithProviders } from '@/test/testUtils';
+import { trackIsbnScanSuccess } from '@/analytics/events';
+
+// GA4 計測（#169）はイベント名ではなく「意味のある呼び出し」で検証する。
+vi.mock('@/analytics/events', () => ({
+  trackIsbnScanSuccess: vi.fn(),
+  trackBookSearchResultView: vi.fn(),
+  trackLibraryReservationLinkClick: vi.fn(),
+  trackAmazonAffiliateLinkClick: vi.fn(),
+}));
 
 // カメラ起動を伴うテスト用に @zxing/browser をモックする。
 // decodeFromVideoDevice が返す controls を差し替えてトーチ対応/非対応を再現し、
@@ -296,5 +305,91 @@ describe('BarcodeScannerPage オフライン保留（#144）', () => {
     await decode('9784003101018');
 
     expect(await screen.findByText('検索結果')).toBeInTheDocument();
+  });
+});
+
+describe('BarcodeScannerPage GA4 計測（#169）', () => {
+  let originalMediaDevices: PropertyDescriptor | undefined;
+  const trackScanSuccess = vi.mocked(trackIsbnScanSuccess);
+
+  function setNavigatorOnline(value: boolean): void {
+    Object.defineProperty(window.navigator, 'onLine', {
+      value,
+      configurable: true,
+    });
+    onlineManager.setOnline(value);
+  }
+
+  async function decode(barcode: string): Promise<void> {
+    await waitFor(() => {
+      expect(zxingMock.decodeCallback).toBeDefined();
+    });
+    await act(async () => {
+      zxingMock.decodeCallback?.({ getText: () => barcode });
+    });
+  }
+
+  beforeEach(() => {
+    trackScanSuccess.mockClear();
+    originalMediaDevices = Object.getOwnPropertyDescriptor(
+      navigator,
+      'mediaDevices',
+    );
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: () => Promise.resolve({}) },
+    });
+    zxingMock.controls.switchTorch = undefined;
+    zxingMock.startError = undefined;
+    zxingMock.decodeCallback = undefined;
+  });
+
+  afterEach(() => {
+    setNavigatorOnline(true);
+    zxingMock.decodeCallback = undefined;
+    if (originalMediaDevices) {
+      Object.defineProperty(navigator, 'mediaDevices', originalMediaDevices);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (navigator as any).mediaDevices;
+    }
+  });
+
+  test('ISBNを読み取れたら計測する', async () => {
+    renderRouteWithProviders('/scan');
+
+    await decode('9784003101018');
+
+    expect(trackScanSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  test('同じバーコードを続けて読んでも1回しか計測しない', async () => {
+    // zxing は同じコードを毎フレーム読むため、二重計測になりやすい。
+    renderRouteWithProviders('/scan');
+
+    await decode('9784003101018');
+    await decode('9784003101018');
+
+    expect(trackScanSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  test('ISBN以外のバーコード（価格コード）では計測しない', async () => {
+    renderRouteWithProviders('/scan');
+
+    await decode('1920093000903');
+
+    expect(trackScanSuccess).not.toHaveBeenCalled();
+  });
+
+  test('オフライン保留では計測しない（送信できず重複もし得るため）', async () => {
+    setNavigatorOnline(false);
+    renderRouteWithProviders('/scan');
+
+    await decode('9784003101018');
+
+    expect(
+      await screen.findByText('オフラインのため保留しました（1件）'),
+    ).toBeInTheDocument();
+    expect(trackScanSuccess).not.toHaveBeenCalled();
   });
 });

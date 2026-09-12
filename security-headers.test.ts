@@ -50,4 +50,11 @@ describe('public/_headers', () => {
     expect(csp).toMatch(/script-src[^;]*https:\/\/static\.cloudflareinsights\.com/);
     expect(csp).toMatch(/connect-src[^;]*https:\/\/cloudflareinsights\.com/);
   });
+
+  it('GA4（gtag.js）の読み込みと計測送信を許可している（#169）', () => {
+    expect(csp).toMatch(/script-src[^;]*https:\/\/www\.googletagmanager\.com/);
+    expect(csp).toMatch(/connect-src[^;]*https:\/\/\*\.google-analytics\.com/);
+    expect(csp).toMatch(/connect-src[^;]*https:\/\/\*\.analytics\.google\.com/);
+    expect(csp).toMatch(/connect-src[^;]*https:\/\/www\.googletagmanager\.com/);
+  });
 });

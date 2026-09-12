@@ -133,6 +133,9 @@ export default defineConfig(({ mode }) => {
       env: {
         VITE_GOOGLE_CLIENT_ID: '',
         VITE_AUTH_MOCK: '',
+        // GA4（#169）も同様。実測定 ID が漏れるとテストが gtag.js を読み込もうと
+        // してしまうため、既定では未設定にする。
+        VITE_GA_MEASUREMENT_ID: '',
       },
       // Custom env = jsdom + native AbortController restored (see custom-env.ts);
       // required because Node 25's undici Request rejects jsdom's AbortSignal.

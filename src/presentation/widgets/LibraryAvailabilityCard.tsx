@@ -5,6 +5,7 @@ import Card from '@mui/material/Card';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 
+import { trackLibraryReservationLinkClick } from '@/analytics/events';
 import { isReservable } from '@/domain/models/availabilityStatus';
 import type { Library } from '@/domain/models/library';
 import { statusForLibKey, type LibraryStatus } from '@/domain/models/libraryStatus';
@@ -71,6 +72,9 @@ export function LibraryAvailabilityCard({
             href={reserveUrl}
             target="_blank"
             rel="noopener noreferrer"
+            // 現時点の主要な価値到達イベント（#169）。別タブで開くため
+            // このページは離脱せず、送信が欠落しない。
+            onClick={() => trackLibraryReservationLinkClick()}
             sx={{ mt: 1 }}
           >
             予約する

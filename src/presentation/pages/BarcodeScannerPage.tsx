@@ -11,6 +11,7 @@ import FlashOnIcon from '@mui/icons-material/FlashOn';
 import FlashOffIcon from '@mui/icons-material/FlashOff';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 
+import { trackIsbnScanSuccess } from '@/analytics/events';
 import { interpretScannedBarcode } from '@/presentation/utils/scanInterpreter';
 import { usePendingScanMutations } from '@/presentation/hooks/usePendingScans';
 import { CameraErrorWidget } from '@/presentation/widgets/CameraErrorWidget';
@@ -94,6 +95,11 @@ export function BarcodeScannerPage(): JSX.Element {
           return;
         }
         isProcessingRef.current = true;
+        // 計測（#169）は遷移の直前・ガードの内側で行う。zxing は同じコードを
+        // 毎フレーム読むため、このガードの外に置くと二重計測になる。
+        // オフライン保留パス（上）では送らない（送信できないうえ、スロットル
+        // 間隔を超えると同じ ISBN で複数回発火し得るため）。
+        trackIsbnScanSuccess();
         navigator.vibrate?.(50);
         stopCamera();
         navigate(`/result/${interpretation.isbn}?source=scan`);

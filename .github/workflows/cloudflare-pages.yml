@@ -29,6 +29,10 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
           # Sentry DSN（公開値）。エラー監視（#118）。未設定なら無効。
           VITE_SENTRY_DSN: ${{ vars.SENTRY_DSN }}
+          # GA4 測定 ID（公開値）。アクセス解析（#169）。未設定なら計測しない。
+          # ビルド時にバンドルへ埋め込むため、Cloudflare Pages 側の環境変数では
+          # 管理しない（プレーン変数は deploy で消えるため）。
+          VITE_GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}
         run: npm run build
       # スキーマ→コードの順序を保証するため、デプロイの「前」に本番 D1 へ
       # マイグレーションを適用する（#83）。適用済みは d1_migrations 表で判定され
