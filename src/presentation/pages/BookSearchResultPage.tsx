@@ -114,8 +114,9 @@ function useTrackBookSearchResultView(
     if (trackedIsbnRef.current === isbn) return;
     trackedIsbnRef.current = isbn;
 
+    const result = findResultForIsbn(data, isbn);
     trackBookSearchResultView(
-      countLibraryAvailability(findResultForIsbn(data, isbn), registeredLibraries),
+      countLibraryAvailability(result, registeredLibraries),
     );
   }, [isSuccess, data, registeredLibraries, isbn]);
 }

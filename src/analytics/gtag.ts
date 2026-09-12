@@ -73,11 +73,19 @@ export function initAnalytics(): void {
  */
 export function trackEvent(name: string, params?: AnalyticsParams): void {
   if (import.meta.env.MODE === 'development') {
-    console.info('[analytics]', name, params);
+    if (params === undefined) {
+      console.info('[analytics]', name);
+    } else {
+      console.info('[analytics]', name, params);
+    }
   }
-  if (params === undefined) {
-    window.gtag?.('event', name);
-    return;
+  try {
+    if (params === undefined) {
+      window.gtag?.('event', name);
+      return;
+    }
+    window.gtag?.('event', name, params);
+  } catch {
+    // 計測は best-effort。gtag.js 側の失敗でリンク遷移や描画を壊さない。
   }
-  window.gtag?.('event', name, params);
 }

@@ -139,6 +139,17 @@ describe('analytics/gtag', () => {
 
       expect(dataLayerCalls()).toContainEqual(['event', 'isbn_scan_success']);
     });
+
+    test('gtag が例外を投げても呼び出し側には伝播しない', async () => {
+      // 計測は best-effort。リンクの onClick で投げるとユーザー操作を壊すため。
+      const { initAnalytics, trackEvent } = await importGtag();
+      initAnalytics();
+      window.gtag = () => {
+        throw new Error('gtag.js internal error');
+      };
+
+      expect(() => trackEvent('library_reservation_link_click')).not.toThrow();
+    });
   });
 
   describe('開発時の確認手段', () => {
@@ -149,10 +160,10 @@ describe('analytics/gtag', () => {
 
       trackEvent('amazon_affiliate_link_click');
 
+      // パラメータ無しのイベントで `undefined` を出力しない（読みづらいため）。
       expect(info).toHaveBeenCalledWith(
         '[analytics]',
         'amazon_affiliate_link_click',
-        undefined,
       );
     });
 
