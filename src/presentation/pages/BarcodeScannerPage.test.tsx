@@ -393,3 +393,73 @@ describe('BarcodeScannerPage GA4 計測（#169）', () => {
     expect(trackScanSuccess).not.toHaveBeenCalled();
   });
 });
+
+describe('BarcodeScannerPage トーチ対応端末での停止（#175）', () => {
+  let originalMediaDevices: PropertyDescriptor | undefined;
+  const originalStop = zxingMock.controls.stop;
+  const unhandled: unknown[] = [];
+  const onUnhandled = (reason: unknown): void => {
+    unhandled.push(reason);
+  };
+
+  async function decode(barcode: string): Promise<void> {
+    await waitFor(() => {
+      expect(zxingMock.decodeCallback).toBeDefined();
+    });
+    await act(async () => {
+      zxingMock.decodeCallback?.({ getText: () => barcode });
+    });
+  }
+
+  beforeEach(() => {
+    unhandled.length = 0;
+    process.on('unhandledRejection', onUnhandled);
+    originalMediaDevices = Object.getOwnPropertyDescriptor(
+      navigator,
+      'mediaDevices',
+    );
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: () => Promise.resolve({}) },
+    });
+    zxingMock.controls.switchTorch = vi.fn().mockResolvedValue(undefined);
+    zxingMock.startError = undefined;
+    zxingMock.decodeCallback = undefined;
+  });
+
+  afterEach(() => {
+    process.off('unhandledRejection', onUnhandled);
+    zxingMock.controls.stop = originalStop;
+    zxingMock.controls.switchTorch = undefined;
+    zxingMock.decodeCallback = undefined;
+    if (originalMediaDevices) {
+      Object.defineProperty(navigator, 'mediaDevices', originalMediaDevices);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (navigator as any).mediaDevices;
+    }
+  });
+
+  test('停止時の torch OFF が reject しても未処理 rejection にせず結果画面へ遷移する', async () => {
+    // トーチ対応端末では zxing の stop が async（トラック停止 → torch OFF）になり、
+    // 停止済みトラックへの torch OFF が reject する（Sentry LIBCHECK-3）。
+    // vi.fn は戻り値の Promise を自前で処理済みにしてしまうため素の関数で数える。
+    let stopCalls = 0;
+    zxingMock.controls.stop = () => {
+      stopCalls += 1;
+      return Promise.reject(
+        new DOMException('setPhotoOptions failed', 'UnknownError'),
+      );
+    };
+    renderRouteWithProviders('/scan');
+
+    await decode('9784003101018');
+
+    expect(await screen.findByText('検索結果')).toBeInTheDocument();
+    // 未処理 rejection の判定（マイクロタスク消化後）を待つ。遷移先の
+    // 結果画面の状態更新と重なるため act で包む。
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+    expect(stopCalls).toBe(1);
+    expect(unhandled).toEqual([]);
+  });
+});
