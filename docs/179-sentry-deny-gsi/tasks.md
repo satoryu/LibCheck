@@ -17,5 +17,5 @@ TDD（失敗するテストを書く → 実装 → 必要ならリファクタ�
 
 - [x] `npm test` / `npx tsc -b` / `npm run build` が通る
 - [x] ブラウザでの E2E 確認（偽 GIS スクリプトを route で差し替えて throw、Sentry 送信を route で捕捉。main は送信・本ブランチは非送信、自サイト由来は両方送信）
-- [ ] PR 作成・セルフレビュー
+- [x] PR 作成・セルフレビュー（#180。initSentry の未初期化分岐のテストを追加）
 - [ ] マージ → デプロイ監視 → `scripts/smoke.sh` → 本番バンドルに除外パターンが含まれることを確認 → Sentry の LIBCHECK-5 / 6 / 7 を resolved にして再発監視
