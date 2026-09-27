@@ -3,6 +3,7 @@ import { act, screen, waitFor } from '@testing-library/react';
 import { onlineManager } from '@tanstack/react-query';
 
 import { renderRouteWithProviders } from '@/test/testUtils';
+import { collectUnhandledRejections } from '@/test/unhandledRejections';
 import { trackIsbnScanSuccess } from '@/analytics/events';
 
 // GA4 計測（#169）はイベント名ではなく「意味のある呼び出し」で検証する。
@@ -44,6 +45,29 @@ vi.mock('@zxing/browser', () => ({
     }
   },
 }));
+
+/** zxing のコールバック登録を待ち、バーコードのデコード成功を再現する。 */
+async function decode(barcode: string): Promise<void> {
+  await waitFor(() => {
+    expect(zxingMock.decodeCallback).toBeDefined();
+  });
+  await act(async () => {
+    zxingMock.decodeCallback?.({ getText: () => barcode });
+  });
+}
+
+function setNavigatorOnline(value: boolean): void {
+  Object.defineProperty(window.navigator, 'onLine', {
+    value,
+    configurable: true,
+  });
+  // 実ブラウザでは offline イベントで React Query の onlineManager も
+  // オフラインになり、networkMode 既定（'online'）のクエリ/ミューテーションは
+  // 一時停止する。jsdom ではイベント発火のタイミング（Provider マウント前後）
+  // に依存しないよう、onlineManager を直接切り替えて再現する。これを
+  // しないと「オフライン中に保留キューへ保存できない」バグを見逃す。
+  onlineManager.setOnline(value);
+}
 
 /**
  * In jsdom there is no real camera. We make `navigator.mediaDevices`
@@ -224,28 +248,6 @@ describe('BarcodeScannerPage フラッシュ', () => {
 describe('BarcodeScannerPage オフライン保留（#144）', () => {
   let originalMediaDevices: PropertyDescriptor | undefined;
 
-  function setNavigatorOnline(value: boolean): void {
-    Object.defineProperty(window.navigator, 'onLine', {
-      value,
-      configurable: true,
-    });
-    // 実ブラウザでは offline イベントで React Query の onlineManager も
-    // オフラインになり、networkMode 既定（'online'）のクエリ/ミューテーションは
-    // 一時停止する。jsdom ではイベント発火のタイミング（Provider マウント前後）
-    // に依存しないよう、onlineManager を直接切り替えて再現する。これを
-    // しないと「オフライン中に保留キューへ保存できない」バグを見逃す。
-    onlineManager.setOnline(value);
-  }
-
-  async function decode(isbn: string): Promise<void> {
-    await waitFor(() => {
-      expect(zxingMock.decodeCallback).toBeDefined();
-    });
-    await act(async () => {
-      zxingMock.decodeCallback?.({ getText: () => isbn });
-    });
-  }
-
   beforeEach(() => {
     originalMediaDevices = Object.getOwnPropertyDescriptor(
       navigator,
@@ -312,23 +314,6 @@ describe('BarcodeScannerPage GA4 計測（#169）', () => {
   let originalMediaDevices: PropertyDescriptor | undefined;
   const trackScanSuccess = vi.mocked(trackIsbnScanSuccess);
 
-  function setNavigatorOnline(value: boolean): void {
-    Object.defineProperty(window.navigator, 'onLine', {
-      value,
-      configurable: true,
-    });
-    onlineManager.setOnline(value);
-  }
-
-  async function decode(barcode: string): Promise<void> {
-    await waitFor(() => {
-      expect(zxingMock.decodeCallback).toBeDefined();
-    });
-    await act(async () => {
-      zxingMock.decodeCallback?.({ getText: () => barcode });
-    });
-  }
-
   beforeEach(() => {
     trackScanSuccess.mockClear();
     originalMediaDevices = Object.getOwnPropertyDescriptor(
@@ -391,5 +376,59 @@ describe('BarcodeScannerPage GA4 計測（#169）', () => {
       await screen.findByText('オフラインのため保留しました（1件）'),
     ).toBeInTheDocument();
     expect(trackScanSuccess).not.toHaveBeenCalled();
+  });
+});
+
+describe('BarcodeScannerPage トーチ対応端末での停止（#175）', () => {
+  let originalMediaDevices: PropertyDescriptor | undefined;
+  const originalStop = zxingMock.controls.stop;
+  const unhandled = collectUnhandledRejections();
+
+  beforeEach(() => {
+    originalMediaDevices = Object.getOwnPropertyDescriptor(
+      navigator,
+      'mediaDevices',
+    );
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: () => Promise.resolve({}) },
+    });
+    zxingMock.controls.switchTorch = vi.fn().mockResolvedValue(undefined);
+    zxingMock.startError = undefined;
+    zxingMock.decodeCallback = undefined;
+  });
+
+  afterEach(() => {
+    zxingMock.controls.stop = originalStop;
+    zxingMock.controls.switchTorch = undefined;
+    zxingMock.decodeCallback = undefined;
+    if (originalMediaDevices) {
+      Object.defineProperty(navigator, 'mediaDevices', originalMediaDevices);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (navigator as any).mediaDevices;
+    }
+  });
+
+  test('停止時の torch OFF が reject しても未処理 rejection にせず結果画面へ遷移する', async () => {
+    // トーチ対応端末では zxing の stop が async（トラック停止 → torch OFF）になり、
+    // 停止済みトラックへの torch OFF が reject する（Sentry LIBCHECK-3）。
+    // reject を返すモックは vi.fn ではなく素の関数で書く（collectUnhandledRejections 参照）。
+    let stopCalls = 0;
+    zxingMock.controls.stop = () => {
+      stopCalls += 1;
+      return Promise.reject(
+        new DOMException('setPhotoOptions failed', 'UnknownError'),
+      );
+    };
+    renderRouteWithProviders('/scan');
+
+    await decode('9784003101018');
+
+    expect(await screen.findByText('検索結果')).toBeInTheDocument();
+    // 遷移先の結果画面の状態更新と重なるため act で包む。
+    await act(() => unhandled.flush());
+    expect(stopCalls).toBe(1);
+    expect(unhandled.reasons).toEqual([]);
   });
 });

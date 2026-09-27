@@ -13,6 +13,7 @@ import KeyboardIcon from '@mui/icons-material/Keyboard';
 
 import { trackIsbnScanSuccess } from '@/analytics/events';
 import { interpretScannedBarcode } from '@/presentation/utils/scanInterpreter';
+import { stopScannerSafely } from '@/presentation/utils/stopScannerSafely';
 import { usePendingScanMutations } from '@/presentation/hooks/usePendingScans';
 import { CameraErrorWidget } from '@/presentation/widgets/CameraErrorWidget';
 import { CameraPermissionErrorWidget } from '@/presentation/widgets/CameraPermissionErrorWidget';
@@ -50,11 +51,7 @@ export function BarcodeScannerPage(): JSX.Element {
 
   const stopCamera = (): void => {
     if (controlsRef.current !== null) {
-      try {
-        controlsRef.current.stop();
-      } catch {
-        // ignore stop errors
-      }
+      stopScannerSafely(controlsRef.current);
       controlsRef.current = null;
     }
   };
@@ -147,7 +144,7 @@ export function BarcodeScannerPage(): JSX.Element {
           },
         );
         if (cancelled) {
-          controls.stop();
+          stopScannerSafely(controls);
           return;
         }
         controlsRef.current = controls;
