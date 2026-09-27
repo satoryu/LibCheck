@@ -15,21 +15,25 @@
 const SW_URL = '/sw.js';
 const SW_SCOPE = '/';
 
-/** テストで差し替えるためのグローバル。既定は実ブラウザのもの。 */
+/**
+ * テストで差し替えるためのグローバル（使うメンバーだけに絞る）。既定は実ブラウザのもの。
+ * `serviceWorker` は非対応環境では存在しないため省略可能にする。
+ */
 export type ServiceWorkerEnv = {
-  navigator: Navigator;
-  window: Window;
-  document: Document;
+  navigator: { serviceWorker?: Pick<ServiceWorkerContainer, 'register'> };
+  window: Pick<Window, 'addEventListener'>;
+  document: Pick<Document, 'readyState'>;
 };
 
 /** アプリ起動時（main.tsx）に一度だけ呼ぶ。 */
 export function registerServiceWorker(
   env: ServiceWorkerEnv = { navigator, window, document },
 ): void {
-  if (!('serviceWorker' in env.navigator)) return;
+  const container = env.navigator.serviceWorker;
+  if (container == null) return;
 
   const register = (): void => {
-    env.navigator.serviceWorker
+    container
       .register(SW_URL, { scope: SW_SCOPE })
       .catch((error: unknown) => {
         console.warn('[pwa] Service Worker の登録に失敗しました', error);

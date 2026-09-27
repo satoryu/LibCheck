@@ -49,6 +49,13 @@ describe('PWA 設定', () => {
     expect(mainTsx).toContain('registerServiceWorker()');
   });
 
+  it('SW 登録は本番ビルドでのみ行う（dev は SW を生成しないため。#176）', () => {
+    expect(viteConfig).toContain('devOptions: { enabled: false }');
+    expect(mainTsx).toMatch(
+      /if \(import\.meta\.env\.PROD\) \{\s*registerServiceWorker\(\);\s*\}/,
+    );
+  });
+
   it('新 SW が即 activate する（skipWaiting/clientsClaim。無いと更新が永遠に届かない）', () => {
     expect(viteConfig).toContain('skipWaiting: true');
     expect(viteConfig).toContain('clientsClaim: true');

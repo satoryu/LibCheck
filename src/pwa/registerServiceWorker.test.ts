@@ -24,22 +24,25 @@ function makeEnv(options: {
 } {
   const calls: RegisterCall[] = [];
   const loadListeners: Array<() => void> = [];
-  const register = (url: string, opts?: RegistrationOptions): Promise<unknown> => {
-    calls.push({ url, options: opts });
-    return (options.registerResult ?? (() => Promise.resolve({})))();
+  const register = (
+    url: string | URL,
+    opts?: RegistrationOptions,
+  ): Promise<ServiceWorkerRegistration> => {
+    calls.push({ url: String(url), options: opts });
+    return (options.registerResult ?? (() => Promise.resolve({})))() as Promise<ServiceWorkerRegistration>;
   };
-  const navigator = (options.withServiceWorker ?? true)
-    ? { serviceWorker: { register } }
-    : {};
-  const env = {
-    navigator,
+  const env: ServiceWorkerEnv = {
+    navigator:
+      (options.withServiceWorker ?? true) ? { serviceWorker: { register } } : {},
     window: {
-      addEventListener: (type: string, listener: () => void) => {
-        if (type === 'load') loadListeners.push(listener);
+      addEventListener: (type: string, listener: EventListenerOrEventListenerObject) => {
+        if (type === 'load' && typeof listener === 'function') {
+          loadListeners.push(() => listener(new Event('load')));
+        }
       },
     },
     document: { readyState: options.readyState },
-  } as unknown as ServiceWorkerEnv;
+  };
   return {
     env,
     calls,
