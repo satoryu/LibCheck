@@ -23,5 +23,5 @@ TDD（失敗するテストを書く → 実装 → 必要ならリファクタ�
 - [x] `dist/index.html` に `registerSW.js` の script タグが無く、`dist/registerSW.js` が生成されないことを確認
 - [x] ブラウザ検証（build + preview）: SW が登録され `waiting` に留まらない / `register` を reject させても `unhandledrejection` が 0 件
 - [x] 旧方式 → 新方式の更新検証（main のビルドで SW を入れた状態から本ブランチのビルドへ切り替え、`getRegistration()` が `active` のみになる）
-- [ ] PR 作成・セルフレビュー
+- [x] PR 作成・セルフレビュー（#178。型の絞り込みと本番限定登録の回帰ガードを追加）
 - [ ] マージ → デプロイ監視 → `scripts/smoke.sh` → 本番で `getRegistration()` 確認 → Sentry の LIBCHECK-4 / 8 / 9 を resolved にして再発監視
