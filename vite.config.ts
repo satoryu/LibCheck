@@ -20,7 +20,10 @@ export default defineConfig(({ mode }) => {
 
   // PWA（#72）: インストール可能＋高速化に限定。静的アセットのみ precache し、
   // /api/* と Calil プロキシは SW でキャッシュしない（個人データ残存・古データ表示の回避）。
-  // 登録は外部 registerSW.js（injectRegister: 'script'）で CSP（script-src 'self'）に適合。
+  // 登録はプラグインに自動注入させず（injectRegister: false）、アプリの
+  // src/pwa/registerServiceWorker.ts から catch 付きで行う（#176。生成される
+  // registerSW.js は reject を catch せず Sentry のノイズになっていた）。
+  // SW のファイル名・スコープは既定（sw.js / "/"）のままで、同モジュールの定数と対応する。
   // vitest 実行時はビルドに関係しないため無効化する。
   const isTest = process.env.VITEST === "true";
   const pwaPlugins = isTest
@@ -28,7 +31,7 @@ export default defineConfig(({ mode }) => {
     : [
         VitePWA({
           registerType: "autoUpdate",
-          injectRegister: "script",
+          injectRegister: false,
           // dev では SW を動かさない（キャッシュ起因の混乱回避）。検証は build/preview か本番で。
           devOptions: { enabled: false },
           includeAssets: [
@@ -38,7 +41,7 @@ export default defineConfig(({ mode }) => {
           workbox: {
             // autoUpdate を実際に機能させるための必須設定。これが無いと新 SW は
             // waiting のまま activate せず、ユーザーが永遠に旧版を見続ける
-            // （injectRegister:'script' は SKIP_WAITING メッセージを送らないため、
+            // （自前の登録は SKIP_WAITING メッセージを送らないため、
             // SW 自身が install 後に即 activate + 既存クライアント制御する）。
             skipWaiting: true,
             clientsClaim: true,

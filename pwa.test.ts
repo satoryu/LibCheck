@@ -9,6 +9,7 @@ import { resolve } from 'node:path';
  * 生成物（dist/sw.js）はビルド後のみ存在するため、設定ソースを検証する。
  */
 const viteConfig = readFileSync(resolve(process.cwd(), 'vite.config.ts'), 'utf8');
+const mainTsx = readFileSync(resolve(process.cwd(), 'src/main.tsx'), 'utf8');
 
 describe('PWA 設定', () => {
   it('manifest は standalone・テーマ色・192/512/maskable アイコンを持つ', () => {
@@ -40,9 +41,12 @@ describe('PWA 設定', () => {
     expect(runtimeCachingBlock).not.toContain('calil');
   });
 
-  it('SW 登録は外部スクリプト（CSP script-src self 適合・inline 不使用）', () => {
-    expect(viteConfig).toContain('injectRegister: "script"');
+  it('SW 登録はプラグインに自動注入させず、アプリ（main.tsx）から catch 付きで行う（#176）', () => {
+    // 生成される registerSW.js は register() の reject を catch せず、
+    // 未処理 rejection として Sentry に送られていた（LIBCHECK-4/8/9）。
+    expect(viteConfig).toContain('injectRegister: false');
     expect(viteConfig).toContain('registerType: "autoUpdate"');
+    expect(mainTsx).toContain('registerServiceWorker()');
   });
 
   it('新 SW が即 activate する（skipWaiting/clientsClaim。無いと更新が永遠に届かない）', () => {
