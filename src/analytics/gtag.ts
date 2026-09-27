@@ -6,8 +6,8 @@
  *   なら初期化せず、GA4 へ一切送信しない。
  * - CSP（public/_headers）は `script-src 'unsafe-inline'` を許可していないため、
  *   Google 公式のインラインスニペットは使えない。代わりにこのモジュールから
- *   gtag.js を動的に読み込む（外部 src はホスト許可で通る）。PWA の registerSW
- *   と同じ方針。
+ *   gtag.js を動的に読み込む（外部 src はホスト許可で通る）。PWA の SW 登録
+ *   （src/pwa/registerServiceWorker.ts）と同じくアプリのバンドルから行う方針。
  * - SPA のページビューは GA4 の拡張計測（history イベント）に任せ、手動送信は
  *   しない（手動で足すと二重計上になる）。
  */
