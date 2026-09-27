@@ -102,4 +102,22 @@ describe('initSentry', () => {
       }),
     );
   });
+
+  test('DSN 未設定なら初期化しない', () => {
+    vi.stubEnv('VITE_SENTRY_DSN', '');
+    vi.stubEnv('DEV', false);
+
+    initSentry();
+
+    expect(Sentry.init).not.toHaveBeenCalled();
+  });
+
+  test('開発時（DEV）は DSN があっても初期化しない', () => {
+    vi.stubEnv('VITE_SENTRY_DSN', 'https://public@o0.ingest.sentry.io/0');
+    vi.stubEnv('DEV', true);
+
+    initSentry();
+
+    expect(Sentry.init).not.toHaveBeenCalled();
+  });
 });
