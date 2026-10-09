@@ -69,6 +69,15 @@ describe('checkWithPolling', () => {
     expect(result.complete).toBe(false);
   });
 
+  it('既定では最大15回（約30秒）ポーリングして打ち切る', async () => {
+    const fetchFn = vi.fn(async () => json({ session: 's1', continue: 1, books: {} }));
+
+    const result = await checkWithPolling({ fetchFn, appKey: 'KEY', isbn: '9784000000000', systemIds: ['A'], sleep: async () => {} });
+
+    expect(fetchFn).toHaveBeenCalledTimes(1 + 15);
+    expect(result.complete).toBe(false);
+  });
+
   it.each([
     ['HTTP エラー', async () => new Response('x', { status: 503 })],
     ['JSON でない', async () => new Response('<html>', { status: 200 })],

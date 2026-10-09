@@ -108,7 +108,7 @@ export function TrialCheckSection({
       {trial.isPending && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }} role="status">
           <CircularProgress size={20} />
-          <Typography variant="body2">図書館に問い合わせています（20秒ほどかかることがあります）</Typography>
+          <Typography variant="body2">図書館に問い合わせています（30秒ほどかかることがあります）</Typography>
         </Box>
       )}
       {trial.isError && <TrialError error={trial.error} />}

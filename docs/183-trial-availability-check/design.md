@@ -74,7 +74,7 @@ export async function consumeTrialQuota(db, { ipHash, bookRequests, now }) // �
 
 ### 4. `functions/_shared/calilCheck.js`（新規）
 
-- `checkWithPolling(fetchFn, appKey, { isbn, systemIds }, { intervalMs: 2000, maxPolls: 10 })`: 初回 `check` → `continue === 1` の間 2秒間隔でポーリング（仕様書どおり）。最長約20秒。超えたら現時点の結果を「確認中」として返す。
+- `checkWithPolling(fetchFn, appKey, { isbn, systemIds }, { intervalMs: 2000, maxPolls: 15 })`: 初回 `check` → `continue === 1` の間 2秒間隔でポーリング（仕様書どおり）。最長約30秒。超えたら現時点の結果を「確認中」として返す。
 
 ### 5. `functions/api/trial/check.js`（新規・`onRequestPost`）
 
@@ -140,7 +140,7 @@ sequenceDiagram
       F-->>B: 429 {reason}
     else
       F->>C: check（書籍リクエスト n）
-      loop continue=1 の間（2秒間隔・最大10回）
+      loop continue=1 の間（2秒間隔・最大15回）
         F->>C: check?session=…
       end
       F-->>B: 200 図書館ごとの状態
@@ -166,7 +166,7 @@ export interface TrialCheckResult {
 
 1. **上限の初期値の妥当性**: ログインユーザーの実際の消費は未計測のまま 300 で開始する。`trial_usage` の実績と、ログインユーザーの検索失敗（HTTP エラー）が増えていないかを見て調整する。
 2. **カーリル側の IP 判定**: Cloudflare の送信元 IP が分散していれば実際の上限はもっと緩いが、保証はないため共有前提で設計する。
-3. **応答時間**: 図書館システムによってはポーリングが長引く。最大10回（約20秒）で打ち切り、`complete: false` で「確認中の図書館があります」と表示する。Pages Functions で I/O を待つ時間は CPU 時間に数えられない前提で、`wrangler pages dev` と本番で確認する。
+3. **応答時間**: 図書館システムによってはポーリングが長引く。最大15回（約30秒）で打ち切り、`complete: false` で「確認中の図書館があります」と表示する。Pages Functions で I/O を待つ時間は CPU 時間に数えられない前提で、`wrangler pages dev` と本番で確認する。
 4. **キャッシュの鮮度**: 貸出状況は変わるため TTL は10分にとどめる。
 5. **新しいシークレット `TRIAL_IP_SALT`**: 本番への登録が必要（`wrangler pages secret put`。CI の wrangler-action か `npx` で）。登録前にデプロイされた場合はハッシュ化できないため、体験版を 503 で止める（安全側）。
 6. **#159 との整合**: #159 の「未ログインでの蔵書状況表示は却下」は、体験版を上限付きで導入する本設計で更新される。#159 に本Issueでの判断を追記する。

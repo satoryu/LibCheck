@@ -21,7 +21,7 @@ export interface TrialCheckResponse {
 export interface TrialCheckApiClientOptions {
   fetchFn?: typeof fetch;
   baseUrl?: string;
-  /** サーバ側でポーリングするため最長約20秒かかる。余裕を持たせる。 */
+  /** サーバ側でポーリングするため最長約30秒（＋各問い合わせの時間）かかる。余裕を持たせる。 */
   httpTimeoutMs?: number;
 }
 
@@ -34,7 +34,7 @@ export class TrialCheckApiClient {
   constructor(options: TrialCheckApiClientOptions = {}) {
     this.fetchFn = options.fetchFn ?? globalThis.fetch.bind(globalThis);
     this.baseUrl = options.baseUrl ?? '/api/trial/check';
-    this.httpTimeoutMs = options.httpTimeoutMs ?? 40_000;
+    this.httpTimeoutMs = options.httpTimeoutMs ?? 60_000;
   }
 
   async check(args: { isbn: string; pref: string; city: string }): Promise<TrialCheckResponse> {

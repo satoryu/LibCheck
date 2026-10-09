@@ -27,6 +27,15 @@ const RESULT_CACHE_TTL = 600;
 /** 本文の上限（ISBN・都道府県・市区町村だけなので十分小さい）。 */
 const MAX_BODY_BYTES = 1024;
 
+/**
+ * POST 以外。Pages は動詞別のハンドラ（onRequestPost）を優先し、それ以外の
+ * メソッドだけがここに来る。未定義だと SPA フォールバックの HTML が 200 で返るため、
+ * 明示的に 405 にする。
+ */
+export async function onRequest() {
+  return new Response('Method Not Allowed', { status: 405, headers: { allow: 'POST' } });
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 

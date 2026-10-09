@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createSqliteD1 } from '../../_shared/testing/sqliteD1';
-import { onRequestPost } from './check.js';
+import { onRequest, onRequestPost } from './check.js';
 
 const ISBN = '9784003101018'; // 有効な ISBN-13
 const SHIGA = [
@@ -199,5 +199,12 @@ describe('POST /api/trial/check', () => {
 
     expect(res.status).toBe(500);
     expect(calil).not.toHaveBeenCalled();
+  });
+
+  it('POST 以外は 405（SPA の HTML を返さない）', async () => {
+    const res = await onRequest({ request: new Request('https://libcheck.app/api/trial/check') } as never);
+
+    expect(res.status).toBe(405);
+    expect(res.headers.get('allow')).toBe('POST');
   });
 });

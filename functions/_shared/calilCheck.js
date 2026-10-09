@@ -12,8 +12,12 @@ import { checkResponseFromJson } from '../../src/data/models/checkResponse.ts';
 
 const CALIL_CHECK_URL = 'https://api.calil.jp/check';
 const POLLING_INTERVAL_MS = 2000;
-/** 最大ポーリング回数（2秒 × 10 = 約20秒で打ち切る）。 */
-const MAX_POLLS = 10;
+/**
+ * 最大ポーリング回数（2秒 × 15 = 約30秒で打ち切る）。初回は図書館システムの
+ * 応答が遅く20秒では終わらないことがあった（野洲市で実測）。ログインユーザー向けの
+ * クライアント側ポーリング（最大60秒）より短くし、待ち時間を抑える。
+ */
+const MAX_POLLS = 15;
 /** 1回の HTTP 問い合わせのタイムアウト。 */
 const REQUEST_TIMEOUT_MS = 10_000;
 
