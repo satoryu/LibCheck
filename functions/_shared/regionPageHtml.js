@@ -22,14 +22,20 @@ const SITE_ORIGIN = 'https://libcheck.app';
 const MOBILE_LIBRARY_CATEGORY = 'BM';
 
 // JS 起動までの短い間だけ表示される本文の最小限の見た目。SPA の描画で丸ごと
-// 置き換わる（CSP は style-src 'unsafe-inline' を許可済み）。
+// 置き換わるため、切り替わりの差が目立たないようアプリの配色トークン
+// （src/presentation/theme/tokens.ts の KC_COLORS）に合わせる。
+// CSP は style-src 'unsafe-inline' を許可済み。
 const STYLE =
   '<style>' +
-  '.lc-static{max-width:720px;margin:0 auto;padding:16px;font-family:system-ui,sans-serif;line-height:1.6;color:#1f2a2a}' +
+  'body{background:#F4F1E8}' +
+  '.lc-static{max-width:720px;margin:0 auto;padding:16px;font-family:system-ui,sans-serif;line-height:1.6;color:#23302D}' +
+  '.lc-static a{color:#00796B}' +
+  '.lc-static p{color:#5A6360}' +
   '.lc-static ol{list-style:none;display:flex;flex-wrap:wrap;gap:4px;padding:0;margin:0 0 8px;font-size:.85rem}' +
-  '.lc-static ol li+li::before{content:"›";margin-right:4px}' +
-  '.lc-static h1{font-size:1.4rem;margin:8px 0}' +
-  '.lc-static h2{font-size:1.1rem;margin:20px 0 8px}' +
+  '.lc-static ol li+li::before{content:"/";margin-right:4px;color:#5A6360}' +
+  '.lc-static h1{font-size:1.25rem;margin:8px 0}' +
+  '.lc-static h2{font-size:1.05rem;margin:20px 0 8px}' +
+  '.lc-static h3{font-size:.85rem;margin:12px 0 4px;color:#5A6360}' +
   '.lc-static ul{padding-left:1.2em}' +
   '</style>';
 

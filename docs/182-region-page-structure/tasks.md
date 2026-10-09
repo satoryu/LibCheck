@@ -55,9 +55,10 @@ TDD で進める（失敗するテストを先に書く → 実装 → リファ
 
 ## 7. 全体確認
 
-- [ ] `npm test` / `npx tsc -b` / `npm run build` が通る
-- [ ] `npm run pages:dev` で代表ページを `curl` し、AC1〜AC8 を確認（h1・title・description・canonical・robots・パンくず・内部リンク・JSON-LD の妥当性・noindex）
-- [ ] ブラウザ（Chrome 連携）のコールドロードで、地域ページとトップの表示・ちらつき・登録フロー（`VITE_AUTH_MOCK=true`）を確認（AC9）
+- [x] `npm test` / `npx tsc -b` / `npm run build` が通る
+- [x] `npm run pages:dev` で代表ページを `curl` し、AC1〜AC8 を確認（h1・title・description・canonical・robots・パンくず・内部リンク・JSON-LD の妥当性・noindex）
+- [x] ブラウザ（Chrome 連携）のコールドロードで、地域ページとトップの表示・ちらつき・登録フロー（`VITE_AUTH_MOCK=true`）を確認（AC9）
+  - Playwright + システム Chrome で実施。通信を絞ると JS 起動まで約2秒、差し込み HTML が見えるため、配色をアプリのトークンに合わせて切り替わりの差を抑えた
 - [ ] PR を作成し、Test Plan に代表ページの確認結果を記載する
 - [ ] セルフレビューをPRに記載し、指摘を修正する
 - [ ] マージ後: 本番デプロイを `gh run watch` → `scripts/smoke.sh` → 本番の代表ページを `curl` で確認し、結果を PR / Issue に記録する
