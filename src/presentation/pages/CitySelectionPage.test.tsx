@@ -1,7 +1,8 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 
 import { makeFakeDeps, renderRouteWithProviders } from '@/test/testUtils';
+import { regionPath } from '@/presentation/regionPage/regionPageContent';
 import type { AppDependencies } from '@/app/dependencies';
 import type { BookAvailability } from '@/domain/models/bookAvailability';
 import type { Library } from '@/domain/models/library';
@@ -149,5 +150,60 @@ describe('CitySelectionPage', () => {
 
     await screen.findByText('東京都の市区町村');
     expect(screen.queryByLabelText('LibCheckについて')).not.toBeInTheDocument();
+  });
+
+  describe('見出し・パンくず・内部リンク（#182）', () => {
+    const libraries = [
+      createLibrary({ pref: '東京都', city: '港区', libId: '1' }),
+      createLibrary({ pref: '東京都', city: '港区', libId: '2' }),
+      createLibrary({ pref: '東京都', city: '新宿区', libId: '3' }),
+    ];
+
+    it('h1 に市区町村数・館数を表示する', async () => {
+      renderRouteWithProviders('/library/add/東京都', {
+        deps: depsWith(mockLibraryRepository(libraries)),
+      });
+
+      expect(
+        await screen.findByRole('heading', { level: 1, name: '東京都の図書館（2市区町村・3館）' }),
+      ).toBeInTheDocument();
+    });
+
+    it('市区町村は館数付きの <a href> で、市区町村ページへ移動できる', async () => {
+      const { user } = renderRouteWithProviders('/library/add/東京都', {
+        deps: depsWith(mockLibraryRepository(libraries)),
+      });
+
+      const link = await screen.findByRole('link', { name: /港区/ });
+      expect(link).toHaveAttribute('href', regionPath('東京都', '港区'));
+      expect(link).toHaveTextContent('2館');
+
+      await user.click(link);
+      expect(await screen.findByText('港区の図書館')).toBeInTheDocument();
+    });
+
+    it('パンくずから都道府県一覧へリンクする', async () => {
+      renderRouteWithProviders('/library/add/東京都', {
+        deps: depsWith(mockLibraryRepository(libraries)),
+      });
+
+      const nav = screen.getByRole('navigation', { name: 'パンくずリスト' });
+      expect(within(nav).getByRole('link', { name: '都道府県から探す' })).toHaveAttribute(
+        'href',
+        regionPath(),
+      );
+      expect(within(nav).getByText('東京都')).toHaveAttribute('aria-current', 'page');
+    });
+
+    it('未知の都道府県は「見つかりませんでした」を見出しにする（エラー表示にしない）', async () => {
+      renderRouteWithProviders(`/library/add/${encodeURIComponent('滋賀')}`, {
+        deps: depsWith(errorLibraryRepository()),
+      });
+
+      expect(
+        await screen.findByRole('heading', { level: 1, name: 'この地域の図書館は見つかりませんでした' }),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('エラーが発生しました')).not.toBeInTheDocument();
+    });
   });
 });

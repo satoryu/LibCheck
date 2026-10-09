@@ -6,7 +6,7 @@ import { GoogleSignInControl } from '@/presentation/auth/GoogleSignInControl';
 import { KC_COLORS as C, KC_SERIF } from '@/presentation/theme/tokens';
 
 export interface PublicPageIntroProps {
-  /** このページ固有の一言説明。functions/_shared/routeMeta.js の対応ルートの description と揃える。 */
+  /** このページ固有の一言説明。地域ページでは配信 HTML の meta description と同じ文言（regionPageContent.ts）を渡す。 */
   description: string;
 }
 

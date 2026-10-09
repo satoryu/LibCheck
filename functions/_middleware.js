@@ -1,18 +1,30 @@
 /**
  * ルート直下の Pages Functions ミドルウェア（#157）。
  *
- * URL に応じて配信 HTML の `<title>` / `<meta name="robots">` を書き換える。
- * `/api/*` と非HTMLレスポンス（静的アセット）は `next()` の結果をそのまま
- * 返し、一切手を加えない。`HTMLRewriter` が Pages Functions で動くことは
+ * URL に応じて配信 HTML の `<head>` と、地域ページでは本文（`#root`）も
+ * 書き換える。`/api/*` と非HTMLレスポンス（静的アセット）は `next()` の結果を
+ * そのまま返し、一切手を加えない。`HTMLRewriter` が Pages Functions で動くことは
  * `npx wrangler pages dev` によるローカルエミュレーションで実機検証済み
  * （docs/157-seo-foundation/design.md）。
  *
- * `/` はエントリを持たないため無変更で返す（#151 で作り込んだ既定メタを
- * そのまま使う。ランディングは元々公開・indexable）。それ以外の既知ルート・
- * 未知のパスはすべて `noindex` を付与する（#157 時点ではどのルートも実際には
- * 未ログインで公開していないため）。
+ * - `/`: `<head>` は #151 で作り込んだ既定メタ（`SoftwareApplication` を含む）の
+ *   まま。`#root` にだけ地域ページへのリンクを差し込む（#182）。
+ * - 地域ページ（`/library/add` 以下）: 静的な図書館データ（`/data/libraries/{pref}.json`）
+ *   から title / description / canonical / OGP / JSON-LD / 本文を組み立てて差し込む
+ *   （#182。JS を実行しないクローラにも本文が見えるようにする。JS が動く環境では
+ *   SPA が `#root` を同じ内容で置き換える）。データにない地域は `noindex`。
+ * - 個人向けページ・未知のパス: `noindex`（#157）。
  */
 import { findRouteMeta } from './_shared/routeMeta.js';
+import { renderJsonLd, renderRootHtml, renderTopRootHtml } from './_shared/regionPageHtml.js';
+import {
+  buildCityPageContent,
+  buildPrefectureIndexContent,
+  buildPrefecturePageContent,
+  isKnownPrefecture,
+} from '../src/presentation/regionPage/regionPageContent.ts';
+
+const SITE_ORIGIN = 'https://libcheck.app';
 
 export async function onRequest(context) {
   const { request, next } = context;
@@ -29,11 +41,17 @@ export async function onRequest(context) {
   }
 
   if (url.pathname === '/') {
-    return response;
+    return new HTMLRewriter()
+      .on('#root', {
+        element(el) {
+          el.setInnerContent(renderTopRootHtml(), { html: true });
+        },
+      })
+      .transform(response);
   }
 
-  const meta = findRouteMeta(url.pathname);
-  if (meta === null) {
+  const routeMeta = findRouteMeta(url.pathname);
+  if (routeMeta === null) {
     // 未知のパスも安全側で noindex にする。
     return new HTMLRewriter()
       .on('meta[name="robots"]', {
@@ -44,45 +62,79 @@ export async function onRequest(context) {
       .transform(response);
   }
 
-  const rewriter = new HTMLRewriter()
+  const canonicalUrl = `${SITE_ORIGIN}${url.pathname}`;
+
+  if (routeMeta.region !== undefined) {
+    const content = await loadRegionContent(routeMeta, context);
+    if (content === null) {
+      // 図書館データを一時的に取得できなかった。実在するページを noindex に
+      // しないよう内容の書き換えは諦め、canonical だけ自身に向ける
+      // （index.html 既定の canonical はトップを指しているため）。
+      return rewriteCanonical(new HTMLRewriter(), canonicalUrl).transform(response);
+    }
+    return rewriteRegionPage(response, content, canonicalUrl);
+  }
+
+  // 個人向けページ等、未ログインでは公開していないルート（#157）。
+  return new HTMLRewriter()
     .on('title', {
       element(el) {
-        el.setInnerContent(meta.title);
+        el.setInnerContent(routeMeta.title);
       },
     })
     .on('meta[property="og:title"]', {
       element(el) {
-        el.setAttribute('content', meta.title);
+        el.setAttribute('content', routeMeta.title);
       },
-    });
-
-  if (meta.noindex) {
-    // 個人向けページ等、まだ公開していないルート（#157）。
-    rewriter.on('meta[name="robots"]', {
+    })
+    .on('meta[name="robots"]', {
       element(el) {
         el.setAttribute('content', 'noindex');
       },
-    });
-    return rewriter.transform(response);
-  }
-
-  // 公開済みルート（#158〜）。description/canonical/OGP まで書き換える。
-  // robots は index.html の既定値（index,follow）のままでよいため触らない。
-  const canonicalUrl = `https://libcheck.app${url.pathname}`;
-  rewriter
-    .on('meta[name="description"]', {
-      element(el) {
-        el.setAttribute('content', meta.description);
-      },
     })
+    .transform(response);
+}
+
+/**
+ * 地域ページの内容を組み立てる。図書館データを取得できなかった場合は null。
+ * 未知の都道府県・データにない市区町村は `kind: 'notFound'` になる。
+ */
+async function loadRegionContent({ region, params }, context) {
+  if (region === 'index') return buildPrefectureIndexContent();
+
+  // 未知の都道府県は SPA フォールバックで index.html が返るため、取得前に弾く。
+  const libraries = isKnownPrefecture(params.pref)
+    ? await fetchPrefectureLibraries(params.pref, context)
+    : [];
+  if (libraries === null) return null;
+
+  return region === 'city'
+    ? buildCityPageContent(params.pref, params.city, libraries)
+    : buildPrefecturePageContent(params.pref, libraries);
+}
+
+async function fetchPrefectureLibraries(pref, { env, request }) {
+  const dataUrl = new URL(`/data/libraries/${encodeURIComponent(pref)}.json`, request.url);
+  try {
+    const res = await env.ASSETS.fetch(dataUrl);
+    const type = res.headers.get('content-type') ?? '';
+    if (!res.ok || !type.includes('json')) {
+      throw new Error(`HTTP ${res.status} (${type})`);
+    }
+    const libraries = await res.json();
+    if (!Array.isArray(libraries)) throw new Error('配列ではない');
+    return libraries;
+  } catch (err) {
+    console.error(`図書館データの取得に失敗しました（${pref}）: ${err}`);
+    return null;
+  }
+}
+
+function rewriteCanonical(rewriter, canonicalUrl) {
+  return rewriter
     .on('link[rel="canonical"]', {
       element(el) {
         el.setAttribute('href', canonicalUrl);
-      },
-    })
-    .on('meta[property="og:description"]', {
-      element(el) {
-        el.setAttribute('content', meta.description);
       },
     })
     .on('meta[property="og:url"]', {
@@ -90,6 +142,59 @@ export async function onRequest(context) {
         el.setAttribute('content', canonicalUrl);
       },
     });
+}
 
-  return rewriter.transform(response);
+function rewriteRegionPage(response, content, canonicalUrl) {
+  const jsonLd = renderJsonLd(content);
+  const rewriter = new HTMLRewriter()
+    .on('title', {
+      element(el) {
+        el.setInnerContent(content.title);
+      },
+    })
+    .on('meta[property="og:title"]', {
+      element(el) {
+        el.setAttribute('content', content.title);
+      },
+    })
+    .on('script[type="application/ld+json"]', {
+      element(el) {
+        // トップの SoftwareApplication を、このページの構造化データに置き換える。
+        // JSON-LD は renderJsonLd が `<` をエスケープ済みのため html: true で入れる
+        // （text 扱いだと `&` 等がエンティティ化され JSON が壊れる）。
+        if (jsonLd === null) el.remove();
+        else el.setInnerContent(jsonLd, { html: true });
+      },
+    })
+    .on('#root', {
+      element(el) {
+        el.setInnerContent(renderRootHtml(content), { html: true });
+      },
+    });
+
+  if (content.kind === 'notFound') {
+    // 0館（データにない地域）のページ。薄いページとして評価されないよう noindex。
+    // canonical は index.html 既定（トップ）のままだと noindex と食い違うため自身に向ける。
+    return rewriteCanonical(rewriter, canonicalUrl)
+      .on('meta[name="robots"]', {
+        element(el) {
+          el.setAttribute('content', 'noindex');
+        },
+      })
+      .transform(response);
+  }
+
+  // robots は index.html の既定値（index,follow）のままでよいため触らない。
+  return rewriteCanonical(rewriter, canonicalUrl)
+    .on('meta[name="description"]', {
+      element(el) {
+        el.setAttribute('content', content.description);
+      },
+    })
+    .on('meta[property="og:description"]', {
+      element(el) {
+        el.setAttribute('content', content.description);
+      },
+    })
+    .transform(response);
 }

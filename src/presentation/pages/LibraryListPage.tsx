@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { enqueueSnackbar } from 'notistack';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -15,11 +15,17 @@ import Typography from '@mui/material/Typography';
 import { libraryKey } from '@/domain/models/library';
 import type { Library } from '@/domain/models/library';
 import { useAuth } from '@/presentation/auth/AuthProvider';
-import { useLibraryList } from '@/presentation/hooks/useLibraryList';
+import { usePrefectureLibraries } from '@/presentation/hooks/usePrefectureLibraries';
 import { useRegisteredLibraryMutations } from '@/presentation/hooks/useRegisteredLibraries';
 import { useSelectedLibraries } from '@/presentation/hooks/useSelectedLibraries';
 import { ErrorStateWidget } from '@/presentation/widgets/ErrorStateWidget';
+import {
+  APP_SUMMARY,
+  buildCityPageContent,
+  regionBreadcrumbs,
+} from '@/presentation/regionPage/regionPageContent';
 import { PublicPageIntro } from '@/presentation/widgets/PublicPageIntro';
+import { RegionPageHeader } from '@/presentation/widgets/RegionPageHeader';
 import { RegisterLoginDialog } from '@/presentation/widgets/RegisterLoginDialog';
 import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
 
@@ -28,6 +34,9 @@ import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
  *
  * `lib/presentation/pages/library_list_page.dart` の移植。
  * チェックボックスで図書館を選択し、登録ボタンで一括登録する。
+ *
+ * #182: 地域ページとして h1・パンくず・同じ都道府県の他の市区町村へのリンクを
+ * 持つ。文言は配信 HTML と同じ regionPageContent.ts から取る。
  */
 export function LibraryListPage(): JSX.Element {
   const params = useParams<{ pref: string; city: string }>();
@@ -36,7 +45,17 @@ export function LibraryListPage(): JSX.Element {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const librariesQuery = useLibraryList({ pref, city });
+  // 館数・他の市区町村も出すため、都道府県単位で取得して絞り込む。
+  const prefectureQuery = usePrefectureLibraries(pref);
+  const prefectureLibraries = prefectureQuery.data;
+  const libraries = useMemo(
+    () => (prefectureLibraries ?? []).filter((library) => library.city === city),
+    [prefectureLibraries, city],
+  );
+  const content =
+    prefectureLibraries === undefined
+      ? null
+      : buildCityPageContent(pref, city, prefectureLibraries);
   const { selected, isSelected, toggle, clear } = useSelectedLibraries();
   const { addAll } = useRegisteredLibraryMutations();
 
@@ -99,7 +118,7 @@ export function LibraryListPage(): JSX.Element {
   }, [user, pendingRegister]);
 
   const renderBody = (): JSX.Element => {
-    if (librariesQuery.isLoading) {
+    if (prefectureQuery.isLoading) {
       return (
         <Box
           sx={{
@@ -117,18 +136,16 @@ export function LibraryListPage(): JSX.Element {
       );
     }
 
-    if (librariesQuery.isError) {
+    if (prefectureQuery.isError) {
       return (
         <ErrorStateWidget
-          error={librariesQuery.error}
+          error={prefectureQuery.error}
           onRetry={() => {
-            void librariesQuery.refetch();
+            void prefectureQuery.refetch();
           }}
         />
       );
     }
-
-    const libraries = librariesQuery.data ?? [];
 
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
@@ -195,12 +212,34 @@ export function LibraryListPage(): JSX.Element {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <SubPageAppBar title={`${city}の図書館`} />
-      {/* 文言は functions/_shared/routeMeta.js の /library/add/:pref/:city の
-          description と揃える（検索結果のスニペットとページ本文を一致させる）。 */}
+      {/* 文言は配信 HTML の meta description と同じ（regionPageContent.ts）。 */}
       <PublicPageIntro
-        description={`${pref}${city}にある図書館の一覧です。ログインすると、この地域の図書館を登録して蔵書を検索できます。`}
+        description={content?.kind === 'city' ? content.description : APP_SUMMARY}
+      />
+      <RegionPageHeader
+        breadcrumbs={regionBreadcrumbs(pref, city)}
+        heading={content?.h1 ?? `${pref}${city}の図書館`}
       />
       {renderBody()}
+      {content?.kind === 'city' && content.otherCities.length > 0 && (
+        <Box component="section" sx={{ px: 2, pb: 3 }}>
+          <Typography component="h2" variant="subtitle1" sx={{ fontWeight: 700 }}>
+            {`${pref}の他の市区町村`}
+          </Typography>
+          <Box
+            component="ul"
+            sx={{ listStyle: 'none', p: 0, m: 0, mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1.5 }}
+          >
+            {content.otherCities.map((other) => (
+              <li key={other.path}>
+                <Link component={RouterLink} to={other.path} variant="body2">
+                  {`${other.name}（${other.libraryCount}館）`}
+                </Link>
+              </li>
+            ))}
+          </Box>
+        </Box>
+      )}
       <RegisterLoginDialog
         open={pendingRegister}
         libraries={selected}

@@ -20,13 +20,13 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { writeSitemap } from './generateSitemap.mjs';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
 const OUTPUT_DIR = path.join(REPO_ROOT, 'public', 'data', 'libraries');
-const SITEMAP_PATH = path.join(REPO_ROOT, 'public', 'sitemap.xml');
 const CALIL_LIBRARY_ENDPOINT = 'https://api.calil.jp/library';
 const REQUEST_INTERVAL_MS = 500;
-const BASE_URL = 'https://libcheck.app';
 
 /**
  * 全47都道府県。`src/domain/data/japanesePrefectures.ts` の
@@ -76,64 +76,6 @@ export function mapCalilLibraryToLibrary(raw) {
   };
 }
 
-function escapeXml(value) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&apos;');
-}
-
-function urlEntry(loc, { changefreq, priority } = {}) {
-  const parts = [`<loc>${escapeXml(loc)}</loc>`];
-  if (changefreq !== undefined) parts.push(`<changefreq>${changefreq}</changefreq>`);
-  if (priority !== undefined) parts.push(`<priority>${priority}</priority>`);
-  return `  <url>\n    ${parts.join('\n    ')}\n  </url>`;
-}
-
-/**
- * sitemap.xml の全文を生成する。
- *
- * `staticPaths` は `/` のような固定ページ、`citiesByPrefecture` は
- * 都道府県名 → 市区町村名配列（重複排除・ソート済み想定）のマップ。
- * 都道府県一覧ページ（`/library/add`）と、都道府県ごとのページ
- * （`/library/add/{pref}`。市区町村が0件でも出力する）・市区町村ごとの
- * ページ（`/library/add/{pref}/{city}`）を機械的に列挙する。
- */
-export function buildSitemapXml({ baseUrl, staticPaths, citiesByPrefecture }) {
-  const urls = [];
-
-  for (const { path: p, changefreq, priority } of staticPaths) {
-    urls.push(urlEntry(`${baseUrl}${p}`, { changefreq, priority }));
-  }
-
-  urls.push(
-    urlEntry(`${baseUrl}/library/add`, { changefreq: 'monthly', priority: '0.8' }),
-  );
-
-  for (const [pref, cities] of Object.entries(citiesByPrefecture)) {
-    const prefPath = `${baseUrl}/library/add/${encodeURIComponent(pref)}`;
-    urls.push(urlEntry(prefPath, { changefreq: 'monthly', priority: '0.6' }));
-
-    for (const city of cities) {
-      urls.push(
-        urlEntry(`${prefPath}/${encodeURIComponent(city)}`, {
-          changefreq: 'monthly',
-          priority: '0.5',
-        }),
-      );
-    }
-  }
-
-  return (
-    '<?xml version="1.0" encoding="UTF-8"?>\n' +
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-    urls.join('\n') +
-    '\n</urlset>\n'
-  );
-}
-
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -171,7 +113,7 @@ async function main() {
 
   await mkdir(OUTPUT_DIR, { recursive: true });
 
-  const citiesByPrefecture = {};
+  const librariesByPrefecture = {};
   let totalLibraries = 0;
 
   for (const [index, pref] of prefectures.entries()) {
@@ -179,8 +121,7 @@ async function main() {
     const libraries = await fetchLibrariesForPrefecture(pref, appKey);
     totalLibraries += libraries.length;
 
-    const cities = Array.from(new Set(libraries.map((lib) => lib.city))).sort();
-    citiesByPrefecture[pref] = cities;
+    librariesByPrefecture[pref] = libraries;
 
     const outPath = path.join(OUTPUT_DIR, `${pref}.json`);
     await writeFile(outPath, JSON.stringify(libraries), 'utf-8');
@@ -190,17 +131,19 @@ async function main() {
     }
   }
 
-  const sitemap = buildSitemapXml({
-    baseUrl: BASE_URL,
-    staticPaths: [{ path: '/', changefreq: 'monthly', priority: '1.0' }],
-    citiesByPrefecture,
+  // sitemap.xml は図書館データから scripts/generateSitemap.mjs と同じ方法で
+  // 生成する（#182）。lastmod は実行日。
+  const urlCount = await writeSitemap({
+    librariesByPrefecture,
+    lastmod: new Date().toISOString().slice(0, 10),
   });
-  await writeFile(SITEMAP_PATH, sitemap, 'utf-8');
 
+  const cityCount = Object.values(librariesByPrefecture)
+    .map((libraries) => new Set(libraries.map((lib) => lib.city)).size)
+    .reduce((a, b) => a + b, 0);
   console.log(
     `完了: ${prefectures.length}都道府県、図書館 ${totalLibraries}件、` +
-      `市区町村 ${Object.values(citiesByPrefecture).flat().length}件。` +
-      `sitemap.xml を更新しました。`,
+      `市区町村 ${cityCount}件。sitemap.xml を更新しました（${urlCount} URL）。`,
   );
 }
 

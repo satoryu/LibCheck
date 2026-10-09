@@ -4,6 +4,7 @@ import { HeroCard } from '@/presentation/landing/HeroCard';
 import { HowItWorks } from '@/presentation/landing/HowItWorks';
 import { Features } from '@/presentation/landing/Features';
 import { Trust } from '@/presentation/landing/Trust';
+import { RegionLinks } from '@/presentation/landing/RegionLinks';
 import { LandingFooter } from '@/presentation/landing/LandingFooter';
 import { LANDING_COLORS as C } from '@/presentation/landing/landingTokens';
 
@@ -13,7 +14,7 @@ import { LANDING_COLORS as C } from '@/presentation/landing/landingTokens';
  * 本アプリを紹介し、Google ログインへ誘導する。署名的要素は「貸出カード」
  * （HeroCard）。背景は羊皮紙＋ごく薄い罫線（ruled paper）で世界観を支える。
  *
- * 構成: ヒーロー → 使い方 → できること → 安心 → フッター。
+ * 構成: ヒーロー → 使い方 → できること → 地域から探す（#182）→ 安心 → フッター。
  * 本文は中央寄せの単一カラム、フッターのみ全幅の緑青帯で締める。
  */
 export function LandingPage(): JSX.Element {
@@ -50,6 +51,7 @@ export function LandingPage(): JSX.Element {
         <HeroCard />
         <HowItWorks />
         <Features />
+        <RegionLinks />
         <Trust />
       </Box>
       <LandingFooter />

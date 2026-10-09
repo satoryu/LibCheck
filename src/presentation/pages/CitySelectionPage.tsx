@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link as RouterLink, useParams } from 'react-router-dom';
 import {
   Box,
   CircularProgress,
@@ -12,24 +12,36 @@ import {
 } from '@mui/material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SearchIcon from '@mui/icons-material/Search';
-import { useCityList } from '@/presentation/hooks/useCityList';
+import { usePrefectureLibraries } from '@/presentation/hooks/usePrefectureLibraries';
+import {
+  APP_SUMMARY,
+  buildPrefecturePageContent,
+  regionBreadcrumbs,
+} from '@/presentation/regionPage/regionPageContent';
 import { ErrorStateWidget } from '@/presentation/widgets/ErrorStateWidget';
 import { PublicPageIntro } from '@/presentation/widgets/PublicPageIntro';
+import { RegionPageHeader } from '@/presentation/widgets/RegionPageHeader';
 import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
 
 /**
  * 市区町村選択ページ。
  *
  * `lib/presentation/pages/city_selection_page.dart` の移植。
+ *
+ * #182: 都道府県ページとして h1・パンくずを持ち、市区町村は館数付きの
+ * `<a href>` にする（クローラが市区町村ページへたどれるように）。
  */
 export function CitySelectionPage() {
-  const navigate = useNavigate();
   const { pref = '' } = useParams<{ pref: string }>();
-  const citiesAsync = useCityList(pref);
+  const prefectureQuery = usePrefectureLibraries(pref);
+  const content =
+    prefectureQuery.data === undefined
+      ? null
+      : buildPrefecturePageContent(pref, prefectureQuery.data);
   const [searchQuery, setSearchQuery] = useState('');
 
   const renderBody = () => {
-    if (citiesAsync.isLoading) {
+    if (prefectureQuery.isLoading) {
       return (
         <Box
           sx={{
@@ -47,22 +59,22 @@ export function CitySelectionPage() {
       );
     }
 
-    if (citiesAsync.isError) {
+    if (prefectureQuery.isError) {
       return (
         <ErrorStateWidget
-          error={citiesAsync.error}
+          error={prefectureQuery.error}
           onRetry={() => {
-            void citiesAsync.refetch();
+            void prefectureQuery.refetch();
           }}
         />
       );
     }
 
-    const cities = citiesAsync.data ?? [];
+    const cities = content?.kind === 'prefecture' ? content.cities : [];
     const filteredCities =
       searchQuery === ''
         ? cities
-        : cities.filter((city) => city.includes(searchQuery));
+        : cities.filter((city) => city.name.includes(searchQuery));
 
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -85,13 +97,8 @@ export function CitySelectionPage() {
         <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
           <List>
             {filteredCities.map((city) => (
-              <ListItemButton
-                key={city}
-                onClick={() =>
-                  navigate(`/library/add/${pref}/${city}`)
-                }
-              >
-                <ListItemText primary={city} />
+              <ListItemButton key={city.path} component={RouterLink} to={city.path}>
+                <ListItemText primary={city.name} secondary={`${city.libraryCount}館`} />
                 <ChevronRightIcon />
               </ListItemButton>
             ))}
@@ -104,8 +111,13 @@ export function CitySelectionPage() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <SubPageAppBar title={`${pref}の市区町村`} />
+      {/* 文言は配信 HTML の meta description と同じ（regionPageContent.ts）。 */}
       <PublicPageIntro
-        description={`${pref}の図書館一覧です。市区町村を選ぶと、その地域の図書館を確認できます。ログインすると登録して蔵書を検索できます。`}
+        description={content?.kind === 'prefecture' ? content.description : APP_SUMMARY}
+      />
+      <RegionPageHeader
+        breadcrumbs={regionBreadcrumbs(pref)}
+        heading={content?.h1 ?? `${pref}の図書館`}
       />
       <Box sx={{ flexGrow: 1, overflow: 'auto' }}>{renderBody()}</Box>
     </Box>
