@@ -194,5 +194,16 @@ describe('CitySelectionPage', () => {
       );
       expect(within(nav).getByText('東京都')).toHaveAttribute('aria-current', 'page');
     });
+
+    it('未知の都道府県は「見つかりませんでした」を見出しにする（エラー表示にしない）', async () => {
+      renderRouteWithProviders(`/library/add/${encodeURIComponent('滋賀')}`, {
+        deps: depsWith(errorLibraryRepository()),
+      });
+
+      expect(
+        await screen.findByRole('heading', { level: 1, name: 'この地域の図書館は見つかりませんでした' }),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('エラーが発生しました')).not.toBeInTheDocument();
+    });
   });
 });

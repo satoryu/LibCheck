@@ -49,4 +49,26 @@ describe('usePrefectureLibraries', () => {
     expect(getLibraries).toHaveBeenCalledTimes(1);
     expect(getLibraries).toHaveBeenCalledWith({ pref: '東京都' });
   });
+
+  test('未知の都道府県は取得せずに空配列を返す（配信 HTML と同じく「見つかりません」にする）', async () => {
+    const getLibraries = vi.fn(async () => {
+      throw new Error('JSON ではない');
+    });
+    const repository: LibraryRepository = {
+      getLibraries,
+      checkBookAvailability: async (): Promise<BookAvailability[]> => [],
+    };
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <DependenciesProvider value={makeFakeDeps({ libraryRepository: repository })}>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </DependenciesProvider>
+    );
+
+    const { result } = renderHook(() => usePrefectureLibraries('滋賀'), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toEqual([]);
+    expect(getLibraries).not.toHaveBeenCalled();
+  });
 });
