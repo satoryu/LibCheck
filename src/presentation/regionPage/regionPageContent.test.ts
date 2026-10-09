@@ -109,6 +109,17 @@ describe('buildCityPageContent', () => {
     ]);
   });
 
+  it('体験版（#183）の見出しと説明を返す', () => {
+    const content = buildCityPageContent('滋賀県', '野洲市', SHIGA);
+    if (content.kind !== 'city') throw new Error('city を期待');
+
+    expect(content.trial).toEqual({
+      heading: 'この本、野洲市の図書館で借りられる？',
+      description:
+        '本の裏表紙にある ISBN（978 で始まる13桁の番号）を入力すると、野洲市の図書館で借りられるか・予約できるかを、ログインせずに1冊調べられます。',
+    });
+  });
+
   it('未知の都道府県・データにない市区町村は notFound', () => {
     expect(buildCityPageContent('滋賀', '野洲市', SHIGA).kind).toBe('notFound');
     expect(buildCityPageContent('滋賀県', '存在しない市', SHIGA).kind).toBe('notFound');
@@ -159,7 +170,12 @@ describe('文言', () => {
       buildCityPageContent('滋賀県', '野洲市', SHIGA),
       buildPrefecturePageContent('滋賀県', SHIGA),
       buildPrefectureIndexContent(),
-    ].flatMap((c) => ('description' in c ? [c.title, c.description, c.h1] : [c.title, c.h1]));
+    ].flatMap((c) => [
+      c.title,
+      c.h1,
+      ...('description' in c ? [c.description] : []),
+      ...('trial' in c ? [c.trial.heading, c.trial.description] : []),
+    ]);
 
     for (const text of texts) {
       for (const word of FORBIDDEN_WORDS) {

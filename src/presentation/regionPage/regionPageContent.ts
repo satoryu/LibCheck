@@ -43,6 +43,8 @@ export interface CityPageContent {
   breadcrumbs: BreadcrumbItem[];
   libraries: RegionLibrary[];
   otherCities: RegionCityLink[];
+  /** ログインなしの体験版（#183）の見出しと説明。 */
+  trial: { heading: string; description: string };
 }
 
 export interface PrefecturePageContent {
@@ -167,6 +169,12 @@ export function buildCityPageContent(
     breadcrumbs: regionBreadcrumbs(pref, city),
     libraries,
     otherCities: cityLinks(pref, prefLibraries).filter((c) => c.name !== city),
+    trial: {
+      heading: `この本、${city}の図書館で借りられる？`,
+      description:
+        `本の裏表紙にある ISBN（978 で始まる13桁の番号）を入力すると、${city}の図書館で` +
+        '借りられるか・予約できるかを、ログインせずに1冊調べられます。',
+    },
   };
 }
 

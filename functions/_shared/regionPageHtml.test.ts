@@ -73,6 +73,19 @@ describe('renderRootHtml', () => {
     expect(html).toContain(`<a href="${regionPath('滋賀県', '大津市')}">大津市（1館）</a>`);
   });
 
+  it('市区町村ページ: 体験版（#183）の見出し・説明・ISBN 入力欄を、図書館一覧より前に含む', () => {
+    const html = renderRootHtml(cityContent());
+
+    expect(html).toContain('<h2>この本、野洲市の図書館で借りられる？</h2>');
+    expect(html).toContain('ログインせずに1冊調べられます');
+    expect(html).toMatch(/<input[^>]+name="isbn"/);
+    expect(html).toContain('この地域の図書館で調べる');
+    expect(html).toContain('<noscript>');
+    // インラインのイベントハンドラは CSP 違反になるため使わない。
+    expect(html).not.toMatch(/\son[a-z]+=/);
+    expect(html.indexOf('借りられる？')).toBeLessThan(html.indexOf('掲載している図書館'));
+  });
+
   it('都道府県ページ: h1 と館数付きの市区町村リンクを含む', () => {
     const content = buildPrefecturePageContent('滋賀県', SHIGA);
     if (content.kind !== 'prefecture') throw new Error('prefecture を期待');
