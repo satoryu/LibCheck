@@ -48,10 +48,10 @@ TDD で進める（失敗するテストを先に書く → 実装 → リファ
 
 ## 6. sitemap
 
-- [ ] `scripts/generateSitemap.test.mjs`（または既存 `generateLibraryData.test.mjs` の更新）に失敗するテストを書く
+- [x] `scripts/generateSitemap.test.mjs`（または既存 `generateLibraryData.test.mjs` の更新）に失敗するテストを書く
   - 全 URL に `lastmod`、priority の段階化、0館の市区町村・都道府県を出さない、件数（1 + 1 + 47 + 1,481）
-- [ ] `scripts/generateSitemap.mjs` を実装し、`generateLibraryData.mjs` から呼ぶ。`package.json` に `generate:sitemap` を追加
-- [ ] `npm run generate:sitemap -- --lastmod=<実装日>` で `public/sitemap.xml` を再生成してコミット
+- [x] `scripts/generateSitemap.mjs` を実装し、`generateLibraryData.mjs` から呼ぶ。`package.json` に `generate:sitemap` を追加
+- [x] `npm run generate:sitemap -- --lastmod=<実装日>` で `public/sitemap.xml` を再生成してコミット
 
 ## 7. 全体確認
 

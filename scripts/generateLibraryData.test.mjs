@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest';
 
 import {
   JAPANESE_PREFECTURES,
-  buildSitemapXml,
   mapCalilLibraryToLibrary,
 } from './generateLibraryData.mjs';
 import { allPrefectures } from '../src/domain/data/japanesePrefectures.ts';
@@ -79,66 +78,5 @@ describe('mapCalilLibraryToLibrary', () => {
     const result = mapCalilLibraryToLibrary(raw);
     expect(result.systemId).toBe('');
     expect(result.formalName).toBe('');
-  });
-});
-
-describe('buildSitemapXml', () => {
-  test('静的パス・都道府県・市区町村ページを含む sitemap XML を生成する', () => {
-    const xml = buildSitemapXml({
-      baseUrl: 'https://libcheck.app',
-      staticPaths: [{ path: '/', changefreq: 'monthly', priority: '1.0' }],
-      citiesByPrefecture: {
-        東京都: ['港区', '大田区'],
-        大阪府: ['大阪市'],
-      },
-    });
-
-    expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-    expect(xml).toContain('<loc>https://libcheck.app/</loc>');
-    expect(xml).toContain(
-      `<loc>https://libcheck.app/library/add/${encodeURIComponent('東京都')}</loc>`,
-    );
-    expect(xml).toContain(
-      `<loc>https://libcheck.app/library/add/${encodeURIComponent('東京都')}/${encodeURIComponent('港区')}</loc>`,
-    );
-    expect(xml).toContain(
-      `<loc>https://libcheck.app/library/add/${encodeURIComponent('大阪府')}/${encodeURIComponent('大阪市')}</loc>`,
-    );
-  });
-
-  test('都道府県一覧ページ自体（/library/add）も含む', () => {
-    const xml = buildSitemapXml({
-      baseUrl: 'https://libcheck.app',
-      staticPaths: [],
-      citiesByPrefecture: { 東京都: ['港区'] },
-    });
-
-    expect(xml).toContain('<loc>https://libcheck.app/library/add</loc>');
-  });
-
-  test('市区町村が0件の都道府県でも都道府県ページ自体は含む', () => {
-    const xml = buildSitemapXml({
-      baseUrl: 'https://libcheck.app',
-      staticPaths: [],
-      citiesByPrefecture: { 鳥取県: [] },
-    });
-
-    expect(xml).toContain(
-      `<loc>https://libcheck.app/library/add/${encodeURIComponent('鳥取県')}</loc>`,
-    );
-  });
-
-  test('URL の件数が想定どおり（静的1 + 都道府県一覧1 + 都道府県2 + 市区町村3）', () => {
-    const xml = buildSitemapXml({
-      baseUrl: 'https://libcheck.app',
-      staticPaths: [{ path: '/', changefreq: 'monthly', priority: '1.0' }],
-      citiesByPrefecture: {
-        東京都: ['港区', '大田区'],
-        大阪府: ['大阪市'],
-      },
-    });
-
-    const count = (xml.match(/<url>/g) ?? []).length;
-    expect(count).toBe(1 + 1 + 2 + 3);
   });
 });
