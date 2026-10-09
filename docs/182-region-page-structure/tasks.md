@@ -39,11 +39,12 @@ TDD で進める（失敗するテストを先に書く → 実装 → リファ
 
 ## 5. SPA
 
-- [ ] `RegionBreadcrumbs` のテスト → 実装
-- [ ] `LibraryListPage.test.tsx`: h1・パンくず・他の市区町村リンク（`<a href>`）・新しい intro 文言のテストを追加し失敗させる → 実装。既存の選択・登録・未ログイン時ログインダイアログのテストが通ることを確認
-- [ ] `CitySelectionPage.test.tsx`: h1・パンくず・市区町村が `<a href>`・館数表示・検索フィルタ維持 → 実装
-- [ ] `PrefectureSelectionPage.test.tsx`: h1・パンくず・都道府県が `<a href>` → 実装
-- [ ] `RegionLinks` のテスト → 実装し、`LandingPage` に組み込む
+- [x] `RegionBreadcrumbs` のテスト → 実装
+- [x] `LibraryListPage.test.tsx`: h1・パンくず・他の市区町村リンク（`<a href>`）・新しい intro 文言のテストを追加し失敗させる → 実装。既存の選択・登録・未ログイン時ログインダイアログのテストが通ることを確認
+- [x] `CitySelectionPage.test.tsx`: h1・パンくず・市区町村が `<a href>`・館数表示・検索フィルタ維持 → 実装
+- [x] `PrefectureSelectionPage.test.tsx`: h1・パンくず・都道府県が `<a href>` → 実装
+- [x] `RegionLinks` のテスト → 実装し、`LandingPage` に組み込む
+- [x] 都道府県単位の取得フック `usePrefectureLibraries` を追加し、使われなくなった `useCityList` / `useLibraryList` を削除（`useSelectedLibraries` のテストは専用ファイルへ移動）
 
 ## 6. sitemap
 

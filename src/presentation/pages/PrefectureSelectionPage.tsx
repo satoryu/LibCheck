@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Typography,
   Box,
@@ -15,16 +15,24 @@ import SearchIcon from '@mui/icons-material/Search';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import type { RegionGroup } from '@/domain/data/japanesePrefectures';
 import { JAPANESE_PREFECTURE_REGIONS } from '@/domain/data/japanesePrefectures';
+import {
+  buildPrefectureIndexContent,
+  regionPath,
+} from '@/presentation/regionPage/regionPageContent';
 import { PublicPageIntro } from '@/presentation/widgets/PublicPageIntro';
+import { RegionPageHeader } from '@/presentation/widgets/RegionPageHeader';
 import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
 
 /**
  * 都道府県選択画面。
  *
  * `lib/presentation/pages/prefecture_selection_page.dart` の移植。
+ *
+ * #182: 都道府県一覧ページとして h1・パンくずを持ち、都道府県は `<a href>` にする。
  */
+const INDEX_CONTENT = buildPrefectureIndexContent();
+
 export function PrefectureSelectionPage(): React.ReactElement {
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredRegions = buildFilteredRegions(searchQuery);
@@ -32,7 +40,9 @@ export function PrefectureSelectionPage(): React.ReactElement {
   return (
     <Box>
       <SubPageAppBar title="都道府県を選択" />
-      <PublicPageIntro description="都道府県・市区町村から図書館を選んで登録できます。ログインすると、登録した図書館の蔵書をまとめて検索できます。" />
+      {/* 文言は配信 HTML の meta description と同じ（regionPageContent.ts）。 */}
+      <PublicPageIntro description={INDEX_CONTENT.description} />
+      <RegionPageHeader breadcrumbs={INDEX_CONTENT.breadcrumbs} heading={INDEX_CONTENT.h1} />
       <Box sx={{ p: 2 }}>
         <TextField
           fullWidth
@@ -51,7 +61,7 @@ export function PrefectureSelectionPage(): React.ReactElement {
       </Box>
       <List>
         {filteredRegions.map((region) => (
-          <RegionSection key={region.name} region={region} onSelect={(pref) => navigate(`/library/add/${pref}`)} />
+          <RegionSection key={region.name} region={region} />
         ))}
       </List>
     </Box>
@@ -60,10 +70,9 @@ export function PrefectureSelectionPage(): React.ReactElement {
 
 interface RegionSectionProps {
   region: RegionGroup;
-  onSelect: (pref: string) => void;
 }
 
-function RegionSection({ region, onSelect }: RegionSectionProps): React.ReactElement {
+function RegionSection({ region }: RegionSectionProps): React.ReactElement {
   const theme = useTheme();
   return (
     <Box>
@@ -76,7 +85,7 @@ function RegionSection({ region, onSelect }: RegionSectionProps): React.ReactEle
         </Typography>
       </Box>
       {region.prefectures.map((pref) => (
-        <ListItemButton key={pref} onClick={() => onSelect(pref)}>
+        <ListItemButton key={pref} component={RouterLink} to={regionPath(pref)}>
           <ListItemText primary={pref} />
           <ListItemIcon sx={{ minWidth: 'auto' }}>
             <ChevronRightIcon />

@@ -72,6 +72,10 @@ export interface NotFoundContent {
 }
 
 const SITE_SUFFIX = ' — LibCheck';
+
+/** アプリの機能の一言説明。データ読み込み前の案内などに使う。 */
+export const APP_SUMMARY =
+  '本のバーコードを読み取るだけで、登録した図書館で借りられるか・予約できるかを確認できます。';
 const INDEX_NAME = '都道府県から探す';
 const INDEX_HEADING = '対応している図書館を都道府県から探す';
 /** description に列挙する館名の上限。 */
@@ -99,7 +103,7 @@ export function regionPath(pref?: string, city?: string): string {
   return path;
 }
 
-function breadcrumbsFor(pref?: string, city?: string): BreadcrumbItem[] {
+export function regionBreadcrumbs(pref?: string, city?: string): BreadcrumbItem[] {
   const items: BreadcrumbItem[] = [
     { name: 'トップ', path: '/' },
     { name: INDEX_NAME, path: regionPath() },
@@ -111,7 +115,7 @@ function breadcrumbsFor(pref?: string, city?: string): BreadcrumbItem[] {
   return items;
 }
 
-/** 市区町村名 → 館数（名前順）。既存 `useCityList` と同じ並び順にする。 */
+/** 市区町村名 → 館数（名前順）。旧 `useCityList` と同じ並び順（文字列ソート）。 */
 function cityLinks(pref: string, prefLibraries: Library[]): RegionCityLink[] {
   const counts = new Map<string, number>();
   for (const library of prefLibraries) {
@@ -160,7 +164,7 @@ export function buildCityPageContent(
       `${place}の図書館${libraries.length}館（${named}${more}）に対応。` +
       '本のバーコードを読み取るだけで、登録した図書館で借りられるか・予約できるかをまとめて確認できます。',
     h1: `${place}の図書館（${libraries.length}館）`,
-    breadcrumbs: breadcrumbsFor(pref, city),
+    breadcrumbs: regionBreadcrumbs(pref, city),
     libraries,
     otherCities: cityLinks(pref, prefLibraries).filter((c) => c.name !== city),
   };
@@ -183,7 +187,7 @@ export function buildPrefecturePageContent(
       `${pref}の${scale}に対応。` +
       '市区町村を選んで図書館を登録すると、本のバーコードを読み取るだけで借りられるか・予約できるかを確認できます。',
     h1: `${pref}の図書館（${cities.length}市区町村・${prefLibraries.length}館）`,
-    breadcrumbs: breadcrumbsFor(pref),
+    breadcrumbs: regionBreadcrumbs(pref),
     cities,
     libraryCount: prefLibraries.length,
   };
@@ -197,7 +201,7 @@ export function buildPrefectureIndexContent(): PrefectureIndexContent {
       '全国の公共図書館・大学図書館などに対応しています。' +
       '都道府県・市区町村を選んで図書館を登録すると、本のバーコードを読み取るだけで借りられるか・予約できるかを確認できます。',
     h1: INDEX_HEADING,
-    breadcrumbs: breadcrumbsFor(),
+    breadcrumbs: regionBreadcrumbs(),
     regions: JAPANESE_PREFECTURE_REGIONS.map((region) => ({
       name: region.name,
       prefectures: region.prefectures.map((pref) => ({ name: pref, path: regionPath(pref) })),

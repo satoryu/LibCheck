@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SnackbarProvider } from 'notistack';
@@ -18,6 +18,7 @@ import { AuthProvider } from '@/presentation/auth/AuthProvider';
 import { SelectedLibrariesProvider } from '@/presentation/hooks/useSelectedLibraries';
 import { routes } from '@/app/router';
 import { renderRouteWithProviders, makeFakeDeps } from '@/test/testUtils';
+import { regionPath } from '@/presentation/regionPage/regionPageContent';
 
 class MockLibraryRepository implements LibraryRepository {
   constructor(private readonly libs: Library[]) {}
@@ -440,5 +441,73 @@ describe('未ログインでの登録操作（#158, #167）', () => {
     });
     expect(screen.getByText(/1件選択中/)).toBeInTheDocument();
     expect(registeredRepo.libs).toHaveLength(0);
+  });
+});
+
+describe('地域ページの見出し・パンくず・内部リンク（#182）', () => {
+  const libraries = [
+    createLibrary({ formalName: '港区立みなと図書館', address: '東京都港区芝浦3-16-25', libId: '1' }),
+    createLibrary({ formalName: '港区立三田図書館', address: '東京都港区芝5-28-4', libId: '2' }),
+    createLibrary({ formalName: '新宿区立中央図書館', address: '東京都新宿区大久保3-1-1', city: '新宿区', libId: '3' }),
+  ];
+
+  test('h1 に都道府県・市区町村名と館数を表示する', async () => {
+    renderPage(new MockLibraryRepository(libraries), new FakeRegisteredLibraryRepository());
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: '東京都港区の図書館（2館）' }),
+    ).toBeInTheDocument();
+  });
+
+  test('パンくずから都道府県ページへリンクする', async () => {
+    renderPage(new MockLibraryRepository(libraries), new FakeRegisteredLibraryRepository());
+
+    const nav = screen.getByRole('navigation', { name: 'パンくずリスト' });
+    expect(within(nav).getByRole('link', { name: '東京都' })).toHaveAttribute(
+      'href',
+      regionPath('東京都'),
+    );
+  });
+
+  test('同じ都道府県の他の市区町村へのリンクを館数付きで表示する', async () => {
+    renderPage(new MockLibraryRepository(libraries), new FakeRegisteredLibraryRepository());
+
+    expect(await screen.findByRole('link', { name: '新宿区（1館）' })).toHaveAttribute(
+      'href',
+      regionPath('東京都', '新宿区'),
+    );
+    expect(screen.getByRole('heading', { level: 2, name: '東京都の他の市区町村' })).toBeInTheDocument();
+  });
+
+  test('一覧には自分の市区町村の図書館だけを表示する', async () => {
+    renderPage(new MockLibraryRepository(libraries), new FakeRegisteredLibraryRepository());
+
+    await screen.findByText('港区立みなと図書館');
+    expect(screen.queryByText('新宿区立中央図書館')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('checkbox')).toHaveLength(2);
+  });
+
+  test('未ログイン時の案内は館数・館名を含む文言にする', async () => {
+    renderPage(new MockLibraryRepository(libraries), new FakeRegisteredLibraryRepository(), null);
+
+    const intro = screen.getByLabelText('LibCheckについて');
+    await waitFor(() =>
+      expect(intro).toHaveTextContent('東京都港区の図書館2館（港区立みなと図書館、港区立三田図書館）に対応。'),
+    );
+    expect(intro).not.toHaveTextContent('蔵書を検索');
+  });
+
+  test('データにない市区町村は「見つかりませんでした」を見出しにする', async () => {
+    renderRouteWithProviders('/library/add/東京都/存在しない区', {
+      deps: makeFakeDeps({
+        libraryRepository: new MockLibraryRepository(libraries),
+        registeredLibraryRepository: new FakeRegisteredLibraryRepository(),
+      }),
+      authUser: LOGGED_IN_USER,
+    });
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'この地域の図書館は見つかりませんでした' }),
+    ).toBeInTheDocument();
   });
 });

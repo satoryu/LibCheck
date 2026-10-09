@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { screen } from '@testing-library/react';
 
 import { renderWithProviders } from '@/test/testUtils';
+import { regionPath } from '@/presentation/regionPage/regionPageContent';
 import { PrefectureSelectionPage } from '@/presentation/pages/PrefectureSelectionPage';
 
 const LOGGED_IN_USER = { id: 'test-user', name: 'Test User' };
@@ -55,5 +56,15 @@ describe('PrefectureSelectionPage', () => {
     });
 
     expect(screen.queryByLabelText('LibCheckについて')).not.toBeInTheDocument();
+  });
+
+  it('h1 と、都道府県ページへの <a href> を表示する（#182）', () => {
+    renderWithProviders(<PrefectureSelectionPage />);
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: '対応している図書館を都道府県から探す' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '東京都' })).toHaveAttribute('href', regionPath('東京都'));
+    expect(screen.getByRole('navigation', { name: 'パンくずリスト' })).toBeInTheDocument();
   });
 });
