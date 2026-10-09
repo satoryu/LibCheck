@@ -511,3 +511,33 @@ describe('地域ページの見出し・パンくず・内部リンク（#182）
     ).toBeInTheDocument();
   });
 });
+
+describe('ログインなしの体験版（#183）', () => {
+  const libraries = [
+    createLibrary({ formalName: '港区立みなと図書館', address: '東京都港区芝浦3-16-25', libId: '1' }),
+  ];
+
+  test('見出しの下に体験版、その下に登録一覧（見出しに飛び先の id）を置く', async () => {
+    renderPage(new MockLibraryRepository(libraries), new FakeRegisteredLibraryRepository(), null);
+
+    const trial = await screen.findByRole('heading', { level: 2, name: 'この本、港区の図書館で借りられる？' });
+    const register = screen.getByRole('heading', { level: 2, name: '図書館を選んで登録する' });
+    expect(register).toHaveAttribute('id', 'register-libraries');
+    // 体験版 → 登録一覧の順に並ぶ。
+    expect(trial.compareDocumentPosition(register) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: 'ISBN' })).toBeInTheDocument();
+  });
+
+  test('データにない市区町村では体験版を出さない', async () => {
+    renderRouteWithProviders('/library/add/東京都/存在しない区', {
+      deps: makeFakeDeps({
+        libraryRepository: new MockLibraryRepository(libraries),
+        registeredLibraryRepository: new FakeRegisteredLibraryRepository(),
+      }),
+      authUser: null,
+    });
+
+    await screen.findByRole('heading', { level: 1, name: 'この地域の図書館は見つかりませんでした' });
+    expect(screen.queryByRole('textbox', { name: 'ISBN' })).not.toBeInTheDocument();
+  });
+});

@@ -27,6 +27,10 @@ import {
 import { PublicPageIntro } from '@/presentation/widgets/PublicPageIntro';
 import { RegionPageHeader } from '@/presentation/widgets/RegionPageHeader';
 import { RegisterLoginDialog } from '@/presentation/widgets/RegisterLoginDialog';
+import {
+  REGISTER_LIBRARIES_ANCHOR,
+  TrialCheckSection,
+} from '@/presentation/widgets/TrialCheckSection';
 import { SubPageAppBar } from '@/presentation/widgets/SubPageAppBar';
 
 /**
@@ -220,6 +224,25 @@ export function LibraryListPage(): JSX.Element {
         breadcrumbs={regionBreadcrumbs(pref, city)}
         heading={content?.h1 ?? `${pref}${city}の図書館`}
       />
+      {/* ログインなしの体験版（#183）。既存の登録一覧はその下に残す。 */}
+      {content?.kind === 'city' && (
+        <TrialCheckSection
+          pref={pref}
+          city={city}
+          heading={content.trial.heading}
+          description={content.trial.description}
+        />
+      )}
+      {content?.kind === 'city' && (
+        <Typography
+          id={REGISTER_LIBRARIES_ANCHOR}
+          component="h2"
+          variant="subtitle1"
+          sx={{ px: 2, pt: 3, fontWeight: 700 }}
+        >
+          図書館を選んで登録する
+        </Typography>
+      )}
       {renderBody()}
       {content?.kind === 'city' && content.otherCities.length > 0 && (
         <Box component="section" sx={{ px: 2, pb: 3 }}>

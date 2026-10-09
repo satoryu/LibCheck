@@ -45,15 +45,16 @@ TDD で進める（失敗するテストを先に書く → 実装 → リファ
 
 ## 7. SPA
 
-- [ ] ドメインモデル `TrialCheckResult` とリポジトリ（interface / impl / client）＋テスト。`AppDependencies` と `makeFakeDeps` に追加
-- [ ] `useTrialCheck` フック＋テスト
-- [ ] `TrialCheckSection` ＋テスト（入力検証・送信・進捗・結果表示・カーリルへのリンク・予約リンク・上限到達時の案内・省略館数・登録への誘導）
-- [ ] `LibraryListPage` に組み込み、既存テストが通ることを確認
-- [ ] GA4 イベント `trial_check_submit` / `trial_check_result` を追加＋テスト
+- [x] ドメインモデル `TrialCheckResult` とリポジトリ（interface / impl / client）＋テスト。`AppDependencies` と `makeFakeDeps` に追加
+- [x] `useTrialCheck` フック＋テスト
+- [x] `TrialCheckSection` ＋テスト（入力検証・送信・進捗・結果表示・カーリルへのリンク・予約リンク・上限到達時の案内・省略館数・登録への誘導）
+- [x] `LibraryListPage` に組み込み、既存テストが通ることを確認
+- [x] GA4 イベント `trial_check_submit` / `trial_check_result` を追加＋テスト
 
 ## 8. プライバシーポリシー
 
-- [ ] ログイン必須の記述を改め、IP ハッシュの短期保存を追記
+- [x] ログイン必須の記述を改め、IP ハッシュの短期保存を追記
+- [x] 利用規約（terms.html）の「利用にはログインが必要」も同様に改めた
 
 ## 9. 全体確認
 

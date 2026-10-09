@@ -6,6 +6,8 @@ import {
   trackBookSearchResultView,
   trackIsbnScanSuccess,
   trackLibraryReservationLinkClick,
+  trackTrialCheckResult,
+  trackTrialCheckSubmit,
 } from './events';
 
 vi.mock('./gtag', () => ({ trackEvent: vi.fn() }));
@@ -53,5 +55,28 @@ describe('analytics/events', () => {
     trackAmazonAffiliateLinkClick();
 
     expect(trackEventMock).toHaveBeenCalledWith('amazon_affiliate_link_click');
+  });
+
+  test('体験版の実行（#183）', () => {
+    trackTrialCheckSubmit();
+
+    expect(trackEventMock).toHaveBeenCalledWith('trial_check_submit');
+  });
+
+  test('体験版の結果（結果の種別と蔵書状況の件数）', () => {
+    trackTrialCheckResult('found', { searchedLibraryCount: 3, holdingLibraryCount: 2, availableLibraryCount: 1 });
+
+    expect(trackEventMock).toHaveBeenCalledWith('trial_check_result', {
+      outcome: 'found',
+      searched_library_count: 3,
+      holding_library_count: 2,
+      available_library_count: 1,
+    });
+  });
+
+  test('体験版の結果（上限到達・失敗は件数なし）', () => {
+    trackTrialCheckResult('rate_limited');
+
+    expect(trackEventMock).toHaveBeenCalledWith('trial_check_result', { outcome: 'rate_limited' });
   });
 });

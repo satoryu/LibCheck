@@ -36,7 +36,9 @@ export function calilBookUrl(isbn: string): string | null {
  * フォールバックする）は、同じく仕様書が示す第二形式
  * `/library/search?s={システムID}&k={Libkey}` を用いる。
  */
-export function calilLibraryUrl(library: Library): string {
+export function calilLibraryUrl(
+  library: Pick<Library, 'libId' | 'formalName' | 'systemId' | 'libKey'>,
+): string {
   const { libId, formalName, systemId, libKey } = library;
 
   if (libId.length > 0 && formalName.length > 0) {
