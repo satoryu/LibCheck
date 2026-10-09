@@ -267,7 +267,10 @@ describe('_middleware.js', () => {
       expect(res.__ops['meta[name="robots"]'].attrs.content).toBe('noindex');
       expect(res.__ops['script[type="application/ld+json"]'].removed).toBe(true);
       expect(res.__ops['#root'].inner?.content).toContain('この地域の図書館は見つかりませんでした');
-      expect(res.__rewriterSelectors).not.toContain('link[rel="canonical"]');
+      // noindex と「正規 URL はトップ」（index.html 既定）が食い違わないよう、自身に向ける。
+      expect(res.__ops['link[rel="canonical"]'].attrs.href).toBe(
+        `https://libcheck.app/library/add/${PREF}/${encodeURIComponent('存在しない市')}`,
+      );
     });
 
     it('未知の都道府県は図書館データを読まずに noindex にする', async () => {

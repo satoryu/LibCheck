@@ -174,7 +174,8 @@ function rewriteRegionPage(response, content, canonicalUrl) {
 
   if (content.kind === 'notFound') {
     // 0館（データにない地域）のページ。薄いページとして評価されないよう noindex。
-    return rewriter
+    // canonical は index.html 既定（トップ）のままだと noindex と食い違うため自身に向ける。
+    return rewriteCanonical(rewriter, canonicalUrl)
       .on('meta[name="robots"]', {
         element(el) {
           el.setAttribute('content', 'noindex');
