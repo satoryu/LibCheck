@@ -9,3 +9,8 @@ CALIL_APP_KEY=your_calil_app_key_here
 
 # (任意) Google OAuth クライアント ID。/api/me が ID トークンの aud 検証に使う。
 # GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
+
+# 体験版（#183）の接続元 IP をハッシュ化するソルト。未設定だと /api/trial/check は 503。
+# 本番は secret_text で登録する（wrangler pages secret put TRIAL_IP_SALT）。
+# 生成例: openssl rand -hex 32
+TRIAL_IP_SALT=your_random_salt_here

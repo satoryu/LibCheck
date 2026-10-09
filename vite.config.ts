@@ -104,7 +104,7 @@ export default defineConfig(({ mode }) => {
       ];
 
   return {
-    plugins: [react(), ...pwaPlugins, devPersistencePlugin()],
+    plugins: [react(), ...pwaPlugins, devPersistencePlugin({ calilAppKey })],
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),

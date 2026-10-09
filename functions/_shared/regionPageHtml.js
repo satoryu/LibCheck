@@ -86,6 +86,24 @@ function renderLibraries(libraries) {
   );
 }
 
+/**
+ * 体験版（#183）の入口。結果の表示は JS（SPA）が行うため、JS 非実行時は
+ * 送信しても何も起きないことを noscript で伝える。
+ */
+function renderTrialForm(trial) {
+  return (
+    `<h2>${escapeHtml(trial.heading)}</h2>` +
+    `<p>${escapeHtml(trial.description)}</p>` +
+    // インラインのイベントハンドラは CSP（script-src に 'unsafe-inline' なし）で
+    // 禁止のため付けない。JS 非実行時に送信しても同じページが再読み込みされるだけ。
+    '<form>' +
+    '<label>ISBN <input name="isbn" inputmode="numeric" autocomplete="off" maxlength="17" placeholder="978…"></label> ' +
+    '<button type="submit">この地域の図書館で調べる</button>' +
+    '</form>' +
+    '<noscript><p>JavaScript を有効にすると調べられます。</p></noscript>'
+  );
+}
+
 function main(inner) {
   return `${STYLE}<main class="lc-static">${inner}</main>`;
 }
@@ -97,6 +115,7 @@ export function renderRootHtml(content) {
         renderBreadcrumbs(content.breadcrumbs) +
           `<h1>${escapeHtml(content.h1)}</h1>` +
           `<p>${escapeHtml(content.description)}</p>` +
+          renderTrialForm(content.trial) +
           `<h2>掲載している図書館</h2>${renderLibraries(content.libraries)}` +
           (content.otherCities.length > 0
             ? `<h2>${escapeHtml(content.pref)}の他の市区町村</h2>${renderCityLinks(content.otherCities)}`

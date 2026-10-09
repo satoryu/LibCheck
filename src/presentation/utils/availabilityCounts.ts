@@ -2,6 +2,7 @@ import type { LibraryAvailabilityCounts } from '@/analytics/events';
 import { AvailabilityStatus } from '@/domain/models/availabilityStatus';
 import type { BookAvailability } from '@/domain/models/bookAvailability';
 import type { Library } from '@/domain/models/library';
+import type { TrialCheckResult } from '@/domain/models/trialCheckResult';
 import { statusForLibKey } from '@/domain/models/libraryStatus';
 
 /**
@@ -28,13 +29,7 @@ export function countLibraryAvailability(
     const systemStatus = result?.libraryStatuses[library.systemId];
     if (systemStatus === undefined) continue;
     const status = statusForLibKey(systemStatus, library.libKey);
-    if (
-      status === AvailabilityStatus.notFound ||
-      status === AvailabilityStatus.error ||
-      status === AvailabilityStatus.unknown
-    ) {
-      continue;
-    }
+    if (!isHolding(status)) continue;
     holdingLibraryCount += 1;
     if (status === AvailabilityStatus.available) {
       availableLibraryCount += 1;
@@ -46,4 +41,26 @@ export function countLibraryAvailability(
     holdingLibraryCount,
     availableLibraryCount,
   };
+}
+
+/**
+ * 体験版（#183）の結果を、同じ基準（蔵書あり・貸出可能）で集計する。
+ */
+export function countTrialAvailability(result: TrialCheckResult): LibraryAvailabilityCounts {
+  const holding = result.libraries.filter((library) => isHolding(library.status));
+  return {
+    searchedLibraryCount: result.libraries.length,
+    holdingLibraryCount: holding.length,
+    availableLibraryCount: holding.filter((library) => library.status === AvailabilityStatus.available)
+      .length,
+  };
+}
+
+/** その館に蔵書がある状態か（「貸出中」「予約中」等も含む）。 */
+function isHolding(status: AvailabilityStatus): boolean {
+  return (
+    status !== AvailabilityStatus.notFound &&
+    status !== AvailabilityStatus.error &&
+    status !== AvailabilityStatus.unknown
+  );
 }

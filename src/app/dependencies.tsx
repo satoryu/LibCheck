@@ -5,18 +5,21 @@ import type { RegisteredLibraryRepository } from "@/domain/repositories/register
 import type { SearchHistoryRepository } from "@/domain/repositories/searchHistoryRepository";
 import type { BookMetadataRepository } from "@/domain/repositories/bookMetadataRepository";
 import type { PendingScanRepository } from "@/domain/repositories/pendingScanRepository";
+import type { TrialCheckRepository } from "@/domain/repositories/trialCheckRepository";
 import { CalilApiClient } from "@/data/datasources/calilApiClient";
 import { CALIL_API_CONFIG } from "@/data/datasources/calilApiConfig";
 import { OpenBdApiClient } from "@/data/datasources/openBdApiClient";
 import { StaticLibraryDataSource } from "@/data/datasources/staticLibraryDataSource";
 import { RegisteredLibraryApiClient } from "@/data/datasources/registeredLibraryApiClient";
 import { SearchHistoryApiClient } from "@/data/datasources/searchHistoryApiClient";
+import { TrialCheckApiClient } from "@/data/datasources/trialCheckApiClient";
 import { WebLocalStorageRepository } from "@/data/repositories/localStorageRepositoryImpl";
 import { LibraryRepositoryImpl } from "@/data/repositories/libraryRepositoryImpl";
 import { ServerRegisteredLibraryRepositoryImpl } from "@/data/repositories/serverRegisteredLibraryRepositoryImpl";
 import { ServerSearchHistoryRepositoryImpl } from "@/data/repositories/serverSearchHistoryRepositoryImpl";
 import { BookMetadataRepositoryImpl } from "@/data/repositories/bookMetadataRepositoryImpl";
 import { PendingScanRepositoryImpl } from "@/data/repositories/pendingScanRepositoryImpl";
+import { TrialCheckRepositoryImpl } from "@/data/repositories/trialCheckRepositoryImpl";
 
 export interface AppDependencies {
   localStorageRepository: LocalStorageRepository;
@@ -27,6 +30,7 @@ export interface AppDependencies {
   searchHistoryRepository: SearchHistoryRepository;
   bookMetadataRepository: BookMetadataRepository;
   pendingScanRepository: PendingScanRepository;
+  trialCheckRepository: TrialCheckRepository;
 }
 
 export function createDefaultDependencies(): AppDependencies {
@@ -55,6 +59,8 @@ export function createDefaultDependencies(): AppDependencies {
   const pendingScanRepository = new PendingScanRepositoryImpl(
     localStorageRepository,
   );
+  // ログインなしの体験版（#183）。認証不要の /api/trial/check を使う。
+  const trialCheckRepository = new TrialCheckRepositoryImpl(new TrialCheckApiClient());
 
   return {
     localStorageRepository,
@@ -65,6 +71,7 @@ export function createDefaultDependencies(): AppDependencies {
     searchHistoryRepository,
     bookMetadataRepository,
     pendingScanRepository,
+    trialCheckRepository,
   };
 }
 

@@ -18,6 +18,8 @@ import { routes } from "@/app/router";
 import type { LocalStorageRepository } from "@/domain/repositories/localStorageRepository";
 import type { BookMetadata } from "@/domain/models/bookMetadata";
 import type { BookMetadataRepository } from "@/domain/repositories/bookMetadataRepository";
+import type { TrialCheckRepository } from "@/domain/repositories/trialCheckRepository";
+import type { TrialCheckResult } from "@/domain/models/trialCheckResult";
 import { CalilApiClient } from "@/data/datasources/calilApiClient";
 import { OpenBdApiClient } from "@/data/datasources/openBdApiClient";
 import { StaticLibraryDataSource } from "@/data/datasources/staticLibraryDataSource";
@@ -75,6 +77,23 @@ export class FakeBookMetadataRepository implements BookMetadataRepository {
   }
 }
 
+/**
+ * 体験版（#183）のフェイク。既定は対象館が無い完了済みの結果を返す。
+ * テストでは `check` を差し替えて使う。
+ */
+export class FakeTrialCheckRepository implements TrialCheckRepository {
+  calls: { isbn: string; pref: string; city: string }[] = [];
+  constructor(
+    private readonly respond: (args: { isbn: string; pref: string; city: string }) => Promise<TrialCheckResult> =
+      async (args) => ({ isbn: args.isbn, libraries: [], omittedLibraryCount: 0, complete: true }),
+  ) {}
+
+  async check(args: { isbn: string; pref: string; city: string }): Promise<TrialCheckResult> {
+    this.calls.push(args);
+    return this.respond(args);
+  }
+}
+
 export function makeFakeDeps(
   overrides?: Partial<AppDependencies>,
 ): AppDependencies {
@@ -123,6 +142,8 @@ export function makeFakeDeps(
   const pendingScanRepository =
     overrides?.pendingScanRepository ??
     new PendingScanRepositoryImpl(localStorageRepository);
+  const trialCheckRepository =
+    overrides?.trialCheckRepository ?? new FakeTrialCheckRepository();
 
   return {
     localStorageRepository,
@@ -133,6 +154,7 @@ export function makeFakeDeps(
     searchHistoryRepository,
     bookMetadataRepository,
     pendingScanRepository,
+    trialCheckRepository,
   };
 }
 

@@ -13,6 +13,12 @@ import { orderedMigrationStatements } from "./vite-dev-migrations";
  * するので、build / vitest（configureServer 不実行）ではフラグ不要。
  *
  * 認証は dev のため AUTH_MOCK=1（モックトークンを受理）で動かす。
+ *
+ * #183: ログインなしの体験版（/api/trial/check）も同じ仕組みで動かす。体験版は
+ * 上限の判定に batch の結果（RETURNING）を使い、静的な図書館データを env.ASSETS
+ * で読み、src/ の TS を import するため、アダプタは batch の結果を返し、ASSETS は
+ * public/ から配信し、関数は Vite の ssrLoadModule で読み込む（素の import() では
+ * Node 22 が TS を読めない）。
  */
 
 interface SqliteStatement {
@@ -47,13 +53,16 @@ function makeD1Adapter(db: SqliteDb) {
     async batch(stmts: { _sql: string; _args: unknown[] }[]) {
       db.exec("BEGIN");
       try {
-        for (const s of stmts) db.prepare(s._sql).run(...s._args);
+        // D1 と同じく、文ごとの結果（RETURNING の行を含む）を返す。
+        const results = stmts.map((s) => ({
+          results: db.prepare(s._sql).all(...s._args),
+        }));
         db.exec("COMMIT");
+        return results;
       } catch (e) {
         db.exec("ROLLBACK");
         throw e;
       }
-      return [];
     },
   };
 }
@@ -85,7 +94,12 @@ async function writeWebResponse(res: ServerResponse, response: Response): Promis
   res.end(await response.text());
 }
 
-export function devPersistencePlugin(): Plugin {
+export interface DevPersistenceOptions {
+  /** 体験版（/api/trial/check）がカーリルを呼ぶための appkey（.env.local の CALIL_APP_KEY）。 */
+  calilAppKey?: string;
+}
+
+export function devPersistencePlugin(options: DevPersistenceOptions = {}): Plugin {
   return {
     name: "dev-persistence-d1",
     async configureServer(server) {
@@ -111,7 +125,6 @@ export function devPersistencePlugin(): Plugin {
       const DatabaseSyncCtor = sqlite.DatabaseSync;
       const fs = await import("node:fs");
       const path = await import("node:path");
-      const { pathToFileURL } = await import("node:url");
 
       const root = process.cwd();
       const db = new DatabaseSyncCtor(path.resolve(root, ".dev.d1.sqlite"));
@@ -130,11 +143,26 @@ export function devPersistencePlugin(): Plugin {
         db.exec(stmt + ";");
       }
 
+      const publicDir = path.resolve(root, "public");
       const env = {
         DB: makeD1Adapter(db),
         AUTH_MOCK: "1",
         GOOGLE_CLIENT_ID: "dev",
         SESSION_SECRET: "dev-session-secret",
+        CALIL_APP_KEY: options.calilAppKey ?? "",
+        TRIAL_IP_SALT: "dev-trial-salt",
+        // Pages の env.ASSETS 相当: public/ の静的ファイルを返す。
+        ASSETS: {
+          async fetch(input: URL | string) {
+            const pathname = decodeURIComponent(new URL(String(input)).pathname);
+            const file = path.resolve(publicDir, `.${pathname}`);
+            if (!file.startsWith(publicDir) || !fs.existsSync(file)) {
+              return new Response("Not Found", { status: 404 });
+            }
+            const type = file.endsWith(".json") ? "application/json" : "application/octet-stream";
+            return new Response(fs.readFileSync(file), { headers: { "content-type": type } });
+          },
+        },
       };
 
       const routes: Record<string, string> = {
@@ -144,14 +172,16 @@ export function devPersistencePlugin(): Plugin {
         "/api/me": "functions/api/me.js",
         "/api/registered-libraries": "functions/api/registered-libraries.js",
         "/api/search-history": "functions/api/search-history.js",
+        "/api/trial/check": "functions/api/trial/check.js",
       };
 
       for (const [route, file] of Object.entries(routes)) {
-        const moduleUrl = pathToFileURL(path.resolve(root, file)).href;
+        const modulePath = path.resolve(root, file);
         server.middlewares.use(route, (req, res) => {
           void (async () => {
             try {
-              const mod = (await import(moduleUrl)) as {
+              const mod = (await server.ssrLoadModule(modulePath)) as {
+                onRequest?: (c: unknown) => Promise<Response>;
                 onRequestGet?: (c: unknown) => Promise<Response>;
                 onRequestPut?: (c: unknown) => Promise<Response>;
                 onRequestPost?: (c: unknown) => Promise<Response>;
@@ -167,13 +197,17 @@ export function devPersistencePlugin(): Plugin {
                 POST: mod.onRequestPost,
                 DELETE: mod.onRequestDelete,
               };
-              const handler = byMethod[request.method];
+              const handler = byMethod[request.method] ?? mod.onRequest;
               if (handler === undefined) {
                 res.statusCode = 405;
                 res.end();
                 return;
               }
-              const response = await handler({ request, env });
+              const response = await handler({
+                request,
+                env,
+                waitUntil: (p: Promise<unknown>) => void p,
+              });
               await writeWebResponse(res, response);
             } catch (e) {
               res.statusCode = 500;

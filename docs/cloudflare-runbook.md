@@ -23,6 +23,7 @@ LibCheck の本番は **Cloudflare Pages + Pages Functions + D1** で構成す�
 | `CALIL_APP_KEY` | カーリル API キー（サーバ注入・クライアント非公開） |
 | `GOOGLE_CLIENT_ID` | Google ID トークン検証の `aud`（公開値だが保持目的で secret_text） |
 | `SESSION_SECRET` | セッション JWT(HS256) の署名鍵（#91） |
+| `TRIAL_IP_SALT` | 体験版（#183）で接続元 IP をハッシュ化するソルト（`openssl rand -hex 32`）。未設定だと `/api/trial/check` は 503 |
 
 設定例（Cloudflare API・トークンは一時ファイル経由で値は出さない）:
 ```bash

@@ -17,7 +17,7 @@ import { DependenciesProvider } from '@/app/dependencies';
 import { AuthProvider } from '@/presentation/auth/AuthProvider';
 import { SelectedLibrariesProvider } from '@/presentation/hooks/useSelectedLibraries';
 import { routes } from '@/app/router';
-import { renderRouteWithProviders, makeFakeDeps } from '@/test/testUtils';
+import { FakeTrialCheckRepository, renderRouteWithProviders, makeFakeDeps } from '@/test/testUtils';
 import { regionPath } from '@/presentation/regionPage/regionPageContent';
 
 class MockLibraryRepository implements LibraryRepository {
@@ -509,5 +509,65 @@ describe('地域ページの見出し・パンくず・内部リンク（#182）
     expect(
       await screen.findByRole('heading', { level: 1, name: 'この地域の図書館は見つかりませんでした' }),
     ).toBeInTheDocument();
+  });
+});
+
+describe('ログインなしの体験版（#183）', () => {
+  const libraries = [
+    createLibrary({ formalName: '港区立みなと図書館', address: '東京都港区芝浦3-16-25', libId: '1' }),
+  ];
+
+  test('見出しの下に体験版、その下に登録一覧（見出しに飛び先の id）を置く', async () => {
+    renderPage(new MockLibraryRepository(libraries), new FakeRegisteredLibraryRepository(), null);
+
+    const trial = await screen.findByRole('heading', { level: 2, name: 'この本、港区の図書館で借りられる？' });
+    const register = screen.getByRole('heading', { level: 2, name: '図書館を選んで登録する' });
+    expect(register).toHaveAttribute('id', 'register-libraries');
+    // 体験版 → 登録一覧の順に並ぶ。
+    expect(trial.compareDocumentPosition(register) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole('textbox', { name: 'ISBN' })).toBeInTheDocument();
+  });
+
+  test('データにない市区町村では体験版を出さない', async () => {
+    renderRouteWithProviders('/library/add/東京都/存在しない区', {
+      deps: makeFakeDeps({
+        libraryRepository: new MockLibraryRepository(libraries),
+        registeredLibraryRepository: new FakeRegisteredLibraryRepository(),
+      }),
+      authUser: null,
+    });
+
+    await screen.findByRole('heading', { level: 1, name: 'この地域の図書館は見つかりませんでした' });
+    expect(screen.queryByRole('textbox', { name: 'ISBN' })).not.toBeInTheDocument();
+  });
+
+  test('他の市区町村へ移動したら、前の市区町村の体験版の結果を消す', async () => {
+    const twoCities = [
+      ...libraries,
+      createLibrary({ formalName: '新宿区立中央図書館', address: '東京都新宿区大久保3-1-1', city: '新宿区', libId: '2' }),
+    ];
+    const { user } = renderRouteWithProviders(ROUTE, {
+      deps: makeFakeDeps({
+        libraryRepository: new MockLibraryRepository(twoCities),
+        registeredLibraryRepository: new FakeRegisteredLibraryRepository(),
+        trialCheckRepository: new FakeTrialCheckRepository(async (args) => ({
+          isbn: args.isbn,
+          complete: true,
+          omittedLibraryCount: 0,
+          libraries: [],
+        })),
+      }),
+      authUser: null,
+    });
+
+    await user.type(await screen.findByRole('textbox', { name: 'ISBN' }), '9784003101018');
+    await user.click(screen.getByRole('button', { name: 'この地域の図書館で調べる' }));
+    await screen.findByRole('list', { name: '調べた結果' });
+
+    await user.click(screen.getByRole('link', { name: '新宿区（1館）' }));
+
+    await screen.findByRole('heading', { level: 1, name: '東京都新宿区の図書館（1館）' });
+    expect(screen.queryByRole('list', { name: '調べた結果' })).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'ISBN' })).toHaveValue('');
   });
 });

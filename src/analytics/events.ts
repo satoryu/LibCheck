@@ -46,3 +46,29 @@ export function trackLibraryReservationLinkClick(): void {
 export function trackAmazonAffiliateLinkClick(): void {
   trackEvent('amazon_affiliate_link_click');
 }
+
+/** 体験版（#183）の結果の種別。 */
+export type TrialCheckOutcome = 'found' | 'not_found' | 'rate_limited' | 'error';
+
+/** 地域ページの体験版（ログインなしの蔵書確認）を実行した。 */
+export function trackTrialCheckSubmit(): void {
+  trackEvent('trial_check_submit');
+}
+
+/**
+ * 体験版の結果が出た。`found` / `not_found` は蔵書状況の件数を伴う。
+ * 体験版 → 図書館の登録（既存のファネル）への到達を評価するために使う。
+ */
+export function trackTrialCheckResult(
+  outcome: TrialCheckOutcome,
+  counts?: LibraryAvailabilityCounts,
+): void {
+  trackEvent('trial_check_result', {
+    outcome,
+    ...(counts && {
+      searched_library_count: counts.searchedLibraryCount,
+      holding_library_count: counts.holdingLibraryCount,
+      available_library_count: counts.availableLibraryCount,
+    }),
+  });
+}
