@@ -17,7 +17,7 @@ import { DependenciesProvider } from '@/app/dependencies';
 import { AuthProvider } from '@/presentation/auth/AuthProvider';
 import { SelectedLibrariesProvider } from '@/presentation/hooks/useSelectedLibraries';
 import { routes } from '@/app/router';
-import { renderRouteWithProviders, makeFakeDeps } from '@/test/testUtils';
+import { FakeTrialCheckRepository, renderRouteWithProviders, makeFakeDeps } from '@/test/testUtils';
 import { regionPath } from '@/presentation/regionPage/regionPageContent';
 
 class MockLibraryRepository implements LibraryRepository {
@@ -539,5 +539,35 @@ describe('ログインなしの体験版（#183）', () => {
 
     await screen.findByRole('heading', { level: 1, name: 'この地域の図書館は見つかりませんでした' });
     expect(screen.queryByRole('textbox', { name: 'ISBN' })).not.toBeInTheDocument();
+  });
+
+  test('他の市区町村へ移動したら、前の市区町村の体験版の結果を消す', async () => {
+    const twoCities = [
+      ...libraries,
+      createLibrary({ formalName: '新宿区立中央図書館', address: '東京都新宿区大久保3-1-1', city: '新宿区', libId: '2' }),
+    ];
+    const { user } = renderRouteWithProviders(ROUTE, {
+      deps: makeFakeDeps({
+        libraryRepository: new MockLibraryRepository(twoCities),
+        registeredLibraryRepository: new FakeRegisteredLibraryRepository(),
+        trialCheckRepository: new FakeTrialCheckRepository(async (args) => ({
+          isbn: args.isbn,
+          complete: true,
+          omittedLibraryCount: 0,
+          libraries: [],
+        })),
+      }),
+      authUser: null,
+    });
+
+    await user.type(await screen.findByRole('textbox', { name: 'ISBN' }), '9784003101018');
+    await user.click(screen.getByRole('button', { name: 'この地域の図書館で調べる' }));
+    await screen.findByRole('list', { name: '調べた結果' });
+
+    await user.click(screen.getByRole('link', { name: '新宿区（1館）' }));
+
+    await screen.findByRole('heading', { level: 1, name: '東京都新宿区の図書館（1館）' });
+    expect(screen.queryByRole('list', { name: '調べた結果' })).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'ISBN' })).toHaveValue('');
   });
 });
