@@ -4,12 +4,12 @@ TDD で進める（失敗するテストを先に書く → 実装 → リファ
 
 ## 1. スパイク: Pages Functions から `src/` の TS モジュールを import できるか
 
-- [ ] 最小の純粋 TS モジュールを `src/presentation/regionPage/` に置き、`_middleware.js` から相対 import して `npm run pages:dev` で動作を確認する
-- [ ] 結果を design.md の「懸念点 1」に追記する（不可なら代替案に切り替え、設計を更新してから進める）
+- [x] 最小の純粋 TS モジュールを `src/presentation/regionPage/` に置き、`_middleware.js` から相対 import して `npm run pages:dev` で動作を確認する
+- [x] 結果を design.md の「懸念点 1」に追記する（不可なら代替案に切り替え、設計を更新してから進める）
 
 ## 2. ページ内容の純粋関数 `regionPageContent.ts`
 
-- [ ] `regionPageContent.test.ts` に失敗するテストを書く
+- [x] `regionPageContent.test.ts` に失敗するテストを書く
   - 市区町村: title / description（館数・館名3件・「ほか」の有無）/ h1 / パンくず / 他の市区町村（自分を除く・館数付き・ソート済み）
   - 館名の前後空白を除く
   - 都道府県: 市区町村数・館数・市区町村リンク
@@ -17,25 +17,25 @@ TDD で進める（失敗するテストを先に書く → 実装 → リファ
   - 未知の都道府県・データにない市区町村は `notFound`
   - パスは `encodeURIComponent` 済み
   - 文言に「蔵書を検索」「蔵書検索」を含まない
-- [ ] 実装してテストを通す
+- [x] 実装してテストを通す
 
 ## 3. HTML / JSON-LD 生成 `functions/_shared/regionPageHtml.js`
 
-- [ ] `regionPageHtml.test.ts` に失敗するテストを書く
+- [x] `regionPageHtml.test.ts` に失敗するテストを書く
   - `renderRootHtml`: h1・パンくず（`<a href>`、最後はリンクなし）・図書館一覧・他の市区町村リンク・カーリルのクレジット
   - `renderJsonLd`: `JSON.parse` できる / `BreadcrumbList`（position・最後の item 省略）/ `Library`（BM を除く・geo の緯度経度の順序）/ 都道府県・index は `BreadcrumbList` のみ
   - エスケープ: `<script>` や `"` を含む地名・館名が HTML で無害化され、JSON-LD に `</script>` が現れない
-- [ ] 実装してテストを通す
+- [x] 実装してテストを通す
 
 ## 4. `routeMeta.js` / `_middleware.js`
 
-- [ ] `routeMeta.test.ts` を更新（地域ルートがマッチ情報を返す、個人向けルートは従来どおり noindex）
-- [ ] `_middleware.test.ts` に失敗するテストを追加（フェイク HTMLRewriter / フェイク `env.ASSETS`）
+- [x] `routeMeta.test.ts` を更新（地域ルートがマッチ情報を返す、個人向けルートは従来どおり noindex）
+- [x] `_middleware.test.ts` に失敗するテストを追加（フェイク HTMLRewriter / フェイク `env.ASSETS`）
   - 市区町村ページ: title / description / canonical / og / JSON-LD 置換 / `#root` 差し込みのハンドラを登録する
   - 未知の都道府県（ASSETS を呼ばない）・データにない市区町村・JSON 取得失敗 → robots を noindex
   - `/`: head は変えず `#root` にだけ差し込む
   - 個人向けルート・未知ルート・`/api/*`・非 HTML は従来どおり
-- [ ] 実装してテストを通す
+- [x] 実装してテストを通す
 
 ## 5. SPA
 

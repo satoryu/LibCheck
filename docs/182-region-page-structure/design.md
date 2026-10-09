@@ -170,6 +170,7 @@ sequenceDiagram
 ## 懸念点とリスク
 
 1. **Pages Functions から `src/` の TS を import できるか**（最重要・タスク1でスパイク）: wrangler の esbuild は相対パスの TS を解決できるはずだが、#157 の時点では「別ビルドなので import しない」としていた。`npx wrangler pages dev` で確認し、ダメなら文言モジュールを `functions/_shared/` 側の JS に置いて SPA から import する、もしくは二重管理 + 一致を検証するテストに切り替える。
+   - **スパイク結果（2026-10-10）: 可能**。`src/presentation/regionPage/` の TS（`src/domain/data/japanesePrefectures.ts` を相対 import）を `_middleware.js` から相対パスで import し、`npm run build` → `npx wrangler pages dev` で応答を確認できた。パスエイリアス `@/` は使わないこと（Functions のバンドルは tsconfig の paths を解決しない前提で設計する）。
 2. **初期表示のちらつき**: JS 起動までの一瞬、差し込んだ簡素な HTML が見え、その後 SPA の画面に替わる。ログイン済みユーザーがトップを開いたときも地域リンクが一瞬見える。最小限のスタイルで見た目の差を抑え、ブラウザで許容範囲かを確認する。
 3. **Googlebot が見るのは JS 実行後の DOM**: エッジの HTML と SPA の描画内容がずれると、評価が割れる。共通モジュールで同じビューモデルから描画することで防ぐ。
 4. **ミドルウェアの負荷**: 1リクエストごとに都道府県 JSON（最大約340KB）を読み、パースする。静的アセットはエッジでキャッシュされるため取得は速いが、実測（`wrangler pages dev` と本番の応答時間）で確認する。

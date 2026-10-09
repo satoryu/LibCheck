@@ -14,9 +14,9 @@
  * セグメント（`:pref` 等）を持たないエントリも `params` を無視するだけの
  * 関数として統一し、`findRouteMeta` の実装をシンプルに保つ。
  *
- * #158: `/library/add` 系3ルートを公開（`noindex: false`）。都道府県名・
- * 市区町村名をタイトル・説明文に反映する。それ以外は #157 のまま
- * `noindex: true`（#159 が ISBN検索結果ページを公開する際に同様に更新する）。
+ * #158: `/library/add` 系3ルートを公開。#182 で、これらは `region`（地域ページの
+ * 種別）だけを持つエントリに変えた（内容は図書館データからミドルウェアが組み立てる）。
+ * それ以外は #157 のまま `noindex: true`。
  */
 export const ROUTE_META = [
   {
@@ -31,27 +31,12 @@ export const ROUTE_META = [
     title: () => '検索履歴 — LibCheck',
     description: () => '',
   },
-  {
-    pattern: '/library/add',
-    noindex: false,
-    title: () => '図書館を追加 — LibCheck',
-    description: () =>
-      '都道府県・市区町村から図書館を選んで登録できます。ログインすると、登録した図書館の蔵書をまとめて検索できます。',
-  },
-  {
-    pattern: '/library/add/:pref',
-    noindex: false,
-    title: (p) => `${p.pref}の図書館一覧 — LibCheck`,
-    description: (p) =>
-      `${p.pref}の図書館一覧です。市区町村を選ぶと、その地域の図書館を確認できます。ログインすると登録して蔵書を検索できます。`,
-  },
-  {
-    pattern: '/library/add/:pref/:city',
-    noindex: false,
-    title: (p) => `${p.pref}${p.city}の図書館 — LibCheck`,
-    description: (p) =>
-      `${p.pref}${p.city}にある図書館の一覧です。ログインすると、この地域の図書館を登録して蔵書を検索できます。`,
-  },
+  // 地域ページ（#158 で公開）。title / description / 本文 / 構造化データは
+  // 図書館データに依存するため、ここでは種別だけを持ち、ミドルウェアが
+  // src/presentation/regionPage/regionPageContent.ts で組み立てる（#182）。
+  { pattern: '/library/add', region: 'index' },
+  { pattern: '/library/add/:pref', region: 'prefecture' },
+  { pattern: '/library/add/:pref/:city', region: 'city' },
   {
     pattern: '/scan',
     noindex: true,
@@ -76,6 +61,9 @@ export const ROUTE_META = [
  * `pathname` に一致する `ROUTE_META` のエントリを、動的セグメントの値を
  * 展開したメタ情報として返す。無ければ `null`。
  *
+ * 地域ページは `{ region, params }`（`region` は 'index' | 'prefecture' | 'city'）、
+ * それ以外は `{ noindex, title, description }` を返す。
+ *
  * パターンは `:` で始まるセグメントをワイルドカードとして扱う（1セグメント
  * のみに一致し、階層をまたがない）。それ以外のセグメントは完全一致が必要。
  */
@@ -83,6 +71,9 @@ export function findRouteMeta(pathname) {
   for (const entry of ROUTE_META) {
     const params = matchPattern(pathname, entry.pattern);
     if (params === null) continue;
+    if (entry.region !== undefined) {
+      return { region: entry.region, params };
+    }
     return {
       noindex: entry.noindex,
       title: entry.title(params),
@@ -107,7 +98,12 @@ function matchPattern(pathname, pattern) {
   for (let i = 0; i < patternSegments.length; i++) {
     const patternSegment = patternSegments[i];
     if (patternSegment.startsWith(':')) {
-      params[patternSegment.slice(1)] = decodeURIComponent(pathSegments[i]);
+      try {
+        params[patternSegment.slice(1)] = decodeURIComponent(pathSegments[i]);
+      } catch {
+        // 不正なパーセントエンコーディング（URIError）は未知のパスとして扱う。
+        return null;
+      }
     } else if (patternSegment !== pathSegments[i]) {
       return null;
     }

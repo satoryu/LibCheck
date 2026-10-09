@@ -16,36 +16,27 @@ describe('findRouteMeta', () => {
     expect(findRouteMeta('/library/add/東京都/港区/extra')).toBeNull();
   });
 
-  describe('地域ページ（#158・公開済み）', () => {
-    it('/library/add は noindex を持たず、固有タイトルを返す', () => {
-      const meta = findRouteMeta('/library/add');
-      expect(meta).not.toBeNull();
-      expect(meta.noindex).toBe(false);
-      expect(meta.title).toContain('LibCheck');
-      expect(meta.description).toBeTruthy();
+  it('不正なパーセントエンコーディングは例外にせず null（未知のパス扱い）', () => {
+    expect(findRouteMeta('/library/add/%E0%A4%A')).toBeNull();
+  });
+
+  describe('地域ページ（#158 で公開、#182 で内容はミドルウェアが組み立てる）', () => {
+    it('/library/add は region: index を返す', () => {
+      expect(findRouteMeta('/library/add')).toEqual({ region: 'index', params: {} });
     });
 
-    it('/library/add/:pref は都道府県名をタイトル・説明文に反映する', () => {
-      const meta = findRouteMeta('/library/add/東京都');
-      expect(meta).not.toBeNull();
-      expect(meta.noindex).toBe(false);
-      expect(meta.title).toContain('東京都');
-      expect(meta.description).toContain('東京都');
+    it('/library/add/:pref は region: prefecture と、デコード済みの都道府県名を返す', () => {
+      expect(findRouteMeta(`/library/add/${encodeURIComponent('東京都')}`)).toEqual({
+        region: 'prefecture',
+        params: { pref: '東京都' },
+      });
     });
 
-    it('URLエンコードされた都道府県名も正しくデコードして反映する', () => {
-      const meta = findRouteMeta(`/library/add/${encodeURIComponent('東京都')}`);
-      expect(meta.title).toContain('東京都');
-    });
-
-    it('/library/add/:pref/:city は都道府県名・市区町村名の両方を反映する', () => {
-      const meta = findRouteMeta('/library/add/東京都/港区');
-      expect(meta).not.toBeNull();
-      expect(meta.noindex).toBe(false);
-      expect(meta.title).toContain('東京都');
-      expect(meta.title).toContain('港区');
-      expect(meta.description).toContain('東京都');
-      expect(meta.description).toContain('港区');
+    it('/library/add/:pref/:city は region: city と都道府県名・市区町村名を返す', () => {
+      expect(findRouteMeta('/library/add/東京都/港区')).toEqual({
+        region: 'city',
+        params: { pref: '東京都', city: '港区' },
+      });
     });
   });
 
