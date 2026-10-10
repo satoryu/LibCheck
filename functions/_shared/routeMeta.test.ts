@@ -48,6 +48,11 @@ describe('findRouteMeta', () => {
     it('/guide/:slug.html（本番では 308 で転送される前のパス）も static', () => {
       expect(findRouteMeta('/guide/bookstore.html')).toEqual({ static: true });
     });
+
+    it('存在しないガイドは未知のパス（null → noindex）。SPA フォールバックの HTML をインデックスさせない', () => {
+      expect(findRouteMeta('/guide/no-such-guide')).toBeNull();
+      expect(findRouteMeta('/guide/no-such-guide.html')).toBeNull();
+    });
   });
 
   describe('個人向けページ（引き続き非公開）', () => {

@@ -18,6 +18,11 @@
  * 種別）だけを持つエントリに変えた（内容は図書館データからミドルウェアが組み立てる）。
  * それ以外は #157 のまま `noindex: true`。
  */
+import { GUIDE_PAGES } from '../../src/presentation/guide/guidePages.ts';
+
+/** 実在する使い方ガイドのスラッグ（拡張子なし）。 */
+const GUIDE_SLUGS = new Set(GUIDE_PAGES.map((guide) => guide.slug));
+
 export const ROUTE_META = [
   {
     pattern: '/library',
@@ -40,7 +45,13 @@ export const ROUTE_META = [
   // 使い方ガイド（#184）。public/guide/*.html の静的ページで、title・canonical・
   // 構造化データはページ自身が持つ。ミドルウェアは手を加えない（未知のパス扱いで
   // noindex にしない）。`:slug` は `bookstore.html` のような拡張子付きにも一致する。
-  { pattern: '/guide/:slug', static: true },
+  // 存在しないスラッグには SPA フォールバックの index.html が返るため、実在する
+  // ガイドに限る（それ以外は未知のパスとして noindex）。
+  {
+    pattern: '/guide/:slug',
+    static: true,
+    accepts: (params) => GUIDE_SLUGS.has(params.slug.replace(/\.html$/, '')),
+  },
   {
     pattern: '/scan',
     noindex: true,
@@ -76,6 +87,7 @@ export function findRouteMeta(pathname) {
   for (const entry of ROUTE_META) {
     const params = matchPattern(pathname, entry.pattern);
     if (params === null) continue;
+    if (entry.accepts && !entry.accepts(params)) continue;
     if (entry.static) {
       return { static: true };
     }
