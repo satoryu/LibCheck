@@ -7,6 +7,7 @@ import {
   buildSitemapXml,
   cityPriority,
   parseLastmodArg,
+  readGuideSlugs,
   readLibrariesByPrefecture,
 } from './generateSitemap.mjs';
 
@@ -84,6 +85,30 @@ describe('buildSitemapXml', () => {
   });
 });
 
+describe('buildSitemapXml（使い方ガイド、#184）', () => {
+  test('ガイドを拡張子なしの URL で、lastmod・priority 0.6 付きで含む', () => {
+    const xml = buildSitemapXml({
+      baseUrl: BASE_URL,
+      librariesByPrefecture: { 東京都: libs('港区', 1) },
+      guideSlugs: ['bookstore', 'barcode'],
+      lastmod: LASTMOD,
+    });
+
+    for (const slug of ['bookstore', 'barcode']) {
+      const block = urlBlock(xml, `${BASE_URL}/guide/${slug}`);
+      expect(block).toContain(`<lastmod>${LASTMOD}</lastmod>`);
+      expect(block).toContain('<priority>0.6</priority>');
+    }
+    expect(xml).not.toContain('.html');
+  });
+
+  test('guideSlugs を省略すればガイドは含めない', () => {
+    const xml = buildSitemapXml({ baseUrl: BASE_URL, librariesByPrefecture: {}, lastmod: LASTMOD });
+
+    expect(xml).not.toContain('/guide/');
+  });
+});
+
 describe('cityPriority', () => {
   test.each([
     [1, '0.3'],
@@ -109,6 +134,22 @@ describe('parseLastmodArg', () => {
 
   test('形式が不正なら例外', () => {
     expect(() => parseLastmodArg(['--lastmod=2026/10/10'], new Date())).toThrow();
+  });
+});
+
+describe('readGuideSlugs', () => {
+  let dir;
+  afterEach(async () => {
+    if (dir) await rm(dir, { recursive: true, force: true });
+  });
+
+  test('ディレクトリの *.html からスラッグを名前順で返す（CSS 等は無視）', async () => {
+    dir = await mkdtemp(path.join(tmpdir(), 'libcheck-guide-'));
+    await writeFile(path.join(dir, 'nearby-libraries.html'), '');
+    await writeFile(path.join(dir, 'barcode.html'), '');
+    await writeFile(path.join(dir, 'guide.css'), '');
+
+    expect(await readGuideSlugs(dir)).toEqual(['barcode', 'nearby-libraries']);
   });
 });
 

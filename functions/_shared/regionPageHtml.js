@@ -15,6 +15,7 @@ import {
   buildPrefectureIndexContent,
   regionPath,
 } from '../../src/presentation/regionPage/regionPageContent.ts';
+import { GUIDE_PAGES, guideHref } from '../../src/presentation/guide/guidePages.ts';
 
 const SITE_ORIGIN = 'https://libcheck.app';
 
@@ -104,6 +105,12 @@ function renderTrialForm(trial) {
   );
 }
 
+/** 使い方ガイド（#184）へのリンク。 */
+function renderGuideLinks() {
+  const lis = GUIDE_PAGES.map((g) => `<li>${link(guideHref(g.slug), g.title)}</li>`);
+  return `<h2>使い方ガイド</h2><ul>${lis.join('')}</ul>`;
+}
+
 function main(inner) {
   return `${STYLE}<main class="lc-static">${inner}</main>`;
 }
@@ -116,6 +123,7 @@ export function renderRootHtml(content) {
           `<h1>${escapeHtml(content.h1)}</h1>` +
           `<p>${escapeHtml(content.description)}</p>` +
           renderTrialForm(content.trial) +
+          renderGuideLinks() +
           `<h2>掲載している図書館</h2>${renderLibraries(content.libraries)}` +
           (content.otherCities.length > 0
             ? `<h2>${escapeHtml(content.pref)}の他の市区町村</h2>${renderCityLinks(content.otherCities)}`
@@ -149,6 +157,7 @@ export function renderTopRootHtml() {
   return main(
     '<h1>LibCheck</h1>' +
       '<p>本のバーコードを読み取るだけで、登録した図書館で借りられるか・予約できるかをまとめて確認できるアプリです。</p>' +
+      renderGuideLinks() +
       '<h2>対応している図書館を地域から探す</h2>' +
       `<p>${link(regionPath(), '都道府県から探す')}</p>` +
       renderRegions(index.regions),

@@ -18,6 +18,11 @@
  * 種別）だけを持つエントリに変えた（内容は図書館データからミドルウェアが組み立てる）。
  * それ以外は #157 のまま `noindex: true`。
  */
+import { GUIDE_PAGES } from '../../src/presentation/guide/guidePages.ts';
+
+/** 実在する使い方ガイドのスラッグ（拡張子なし）。 */
+const GUIDE_SLUGS = new Set(GUIDE_PAGES.map((guide) => guide.slug));
+
 export const ROUTE_META = [
   {
     pattern: '/library',
@@ -37,6 +42,16 @@ export const ROUTE_META = [
   { pattern: '/library/add', region: 'index' },
   { pattern: '/library/add/:pref', region: 'prefecture' },
   { pattern: '/library/add/:pref/:city', region: 'city' },
+  // 使い方ガイド（#184）。public/guide/*.html の静的ページで、title・canonical・
+  // 構造化データはページ自身が持つ。ミドルウェアは手を加えない（未知のパス扱いで
+  // noindex にしない）。`:slug` は `bookstore.html` のような拡張子付きにも一致する。
+  // 存在しないスラッグには SPA フォールバックの index.html が返るため、実在する
+  // ガイドに限る（それ以外は未知のパスとして noindex）。
+  {
+    pattern: '/guide/:slug',
+    static: true,
+    accepts: (params) => GUIDE_SLUGS.has(params.slug.replace(/\.html$/, '')),
+  },
   {
     pattern: '/scan',
     noindex: true,
@@ -62,7 +77,8 @@ export const ROUTE_META = [
  * 展開したメタ情報として返す。無ければ `null`。
  *
  * 地域ページは `{ region, params }`（`region` は 'index' | 'prefecture' | 'city'）、
- * それ以外は `{ noindex, title, description }` を返す。
+ * 静的ページ（使い方ガイド）は `{ static: true }`、それ以外は
+ * `{ noindex, title, description }` を返す。
  *
  * パターンは `:` で始まるセグメントをワイルドカードとして扱う（1セグメント
  * のみに一致し、階層をまたがない）。それ以外のセグメントは完全一致が必要。
@@ -71,6 +87,10 @@ export function findRouteMeta(pathname) {
   for (const entry of ROUTE_META) {
     const params = matchPattern(pathname, entry.pattern);
     if (params === null) continue;
+    if (entry.accepts && !entry.accepts(params)) continue;
+    if (entry.static) {
+      return { static: true };
+    }
     if (entry.region !== undefined) {
       return { region: entry.region, params };
     }

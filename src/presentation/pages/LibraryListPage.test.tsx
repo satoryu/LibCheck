@@ -570,4 +570,14 @@ describe('ログインなしの体験版（#183）', () => {
     expect(screen.queryByRole('list', { name: '調べた結果' })).not.toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'ISBN' })).toHaveValue('');
   });
+
+  test('使い方ガイド（#184）を体験版の後・登録一覧の前に置く', async () => {
+    renderPage(new MockLibraryRepository(libraries), new FakeRegisteredLibraryRepository(), null);
+
+    const trial = await screen.findByRole('heading', { level: 2, name: 'この本、港区の図書館で借りられる？' });
+    const guide = screen.getByRole('region', { name: '使い方ガイド' });
+    const register = screen.getByRole('heading', { level: 2, name: '図書館を選んで登録する' });
+    expect(trial.compareDocumentPosition(guide) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(guide.compareDocumentPosition(register) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
 });

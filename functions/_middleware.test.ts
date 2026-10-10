@@ -312,6 +312,21 @@ describe('_middleware.js', () => {
     });
   });
 
+  it('使い方ガイド（静的ページ）は HTMLRewriter を適用せずそのまま返す（#184）', async () => {
+    globalThis.HTMLRewriter = FakeHTMLRewriter as unknown as typeof HTMLRewriter;
+    const { onRequest } = await importMiddleware();
+    const guideResponse = htmlResponse();
+
+    const res = await onRequest({
+      request: new Request('https://libcheck.app/guide/bookstore'),
+      next: vi.fn(async () => guideResponse),
+    } as never);
+
+    expect(res).toBe(guideResponse);
+    // 未知のパス扱い（robots を noindex に書き換える）にもならない。
+    expect((res as RewrittenResponse).__rewriterSelectors).toBeUndefined();
+  });
+
   it('未知のパスも安全側で robots セレクタを登録する（noindex にする）', async () => {
     globalThis.HTMLRewriter = FakeHTMLRewriter as unknown as typeof HTMLRewriter;
     const { onRequest } = await importMiddleware();

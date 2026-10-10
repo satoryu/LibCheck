@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>本のバーコードを読むだけで図書館の予約可否を確認する — LibCheck</title>
+  <meta name="description" content="本の裏表紙のバーコード（ISBN）をスマホで読み取るだけで、登録した図書館で借りられるか・予約できるかを確認する方法と、結果の見方を説明します。">
+  <!-- 使い方ガイド（#184）。canonical は拡張子なしの URL（本番の Pages は .html を 308 で転送する）。 -->
+  <link rel="canonical" href="https://libcheck.app/guide/barcode">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <meta name="theme-color" content="#00796B">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="LibCheck">
+  <meta property="og:title" content="本のバーコードを読むだけで図書館の予約可否を確認する — LibCheck">
+  <meta property="og:description" content="本の裏表紙のバーコード（ISBN）をスマホで読み取るだけで、登録した図書館で借りられるか・予約できるかを確認する方法と、結果の見方を説明します。">
+  <meta property="og:url" content="https://libcheck.app/guide/barcode">
+  <meta property="og:image" content="https://libcheck.app/og-image.png">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="/guide/guide.css">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "トップ", "item": "https://libcheck.app/"}, {"@type": "ListItem", "position": 2, "name": "本のバーコードを読むだけで、図書館の予約可否を確認する"}]}, {"@type": "Article", "headline": "本のバーコードを読むだけで、図書館の予約可否を確認する", "description": "本の裏表紙のバーコード（ISBN）をスマホで読み取るだけで、登録した図書館で借りられるか・予約できるかを確認する方法と、結果の見方を説明します。", "mainEntityOfPage": "https://libcheck.app/guide/barcode", "datePublished": "2026-10-10", "dateModified": "2026-10-10", "inLanguage": "ja", "image": "https://libcheck.app/og-image.png", "author": {"@type": "Organization", "name": "LibCheck", "url": "https://libcheck.app/"}, "publisher": {"@type": "Organization", "name": "LibCheck", "url": "https://libcheck.app/"}}]}</script>
+</head>
+<body>
+  <header class="site-header"><a href="/">LibCheck</a></header>
+  <main>
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <ol>
+        <li><a href="/">トップ</a></li>
+        <li aria-current="page">本のバーコードを読むだけで、図書館の予約可否を確認する</li>
+      </ol>
+    </nav>
+    <article>
+      <h1>本のバーコードを読むだけで、図書館の予約可否を確認する</h1>
+
+      <p class="lead">図書館のサイトで本を探すには、書名を入力して、図書館ごとに結果を確かめる必要があります。LibCheck では、本のバーコードを読み取るだけで、登録した図書館すべての貸出状況をまとめて確認できます。</p>
+
+      <h2>本のバーコード（ISBN）とは</h2>
+      <p>本の裏表紙にあるバーコードには、その本を表す ISBN（国際標準図書番号）が入っています。日本の本の多くはバーコードが上下2段になっていて、上の段が「978」（一部は「979」）で始まる13桁の ISBN、下の段は価格や分類を表すコードです。LibCheck が使うのは上の段です。</p>
+
+      <h2>読み取り方</h2>
+      <ol class="steps">
+        <li>ログインして、ホーム画面の「バーコードでスキャン」からカメラを起動します。</li>
+        <li>上の段のバーコードを、画面の枠に合わせて映します。</li>
+        <li>読み取れると、自動で結果の画面に移ります。</li>
+      </ol>
+      <p>暗い場所では、画面右上のボタンでライトを点けられます（端末によっては使えない場合があります）。カメラが使えないときは、ホーム画面の「ISBNを入力」から調べることもできます。</p>
+
+      <h2>結果の見方</h2>
+      <table>
+        <thead><tr><th>表示</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><th>貸出可能</th><td>いま借りられます</td></tr>
+          <tr><th>館内のみ</th><td>図書館の中で読めます（貸出はできません）</td></tr>
+          <tr><th>貸出中</th><td>ほかの人が借りています。予約できる場合があります</td></tr>
+          <tr><th>予約中</th><td>予約が入っています</td></tr>
+          <tr><th>準備中</th><td>貸出の準備中です</td></tr>
+          <tr><th>休館中</th><td>図書館が休館しています</td></tr>
+          <tr><th>蔵書なし</th><td>その図書館にはありません</td></tr>
+        </tbody>
+      </table>
+      <p>「予約する」ボタンが表示された図書館は、その図書館の予約ページへ移動できます。予約の手続きは図書館のサイトで行います。</p>
+
+      <h2>うまく読み取れないとき</h2>
+      <ul>
+        <li>下の段を読んでいる場合は「978で始まる上段を映してください」と案内が出ます。上の段だけを枠に入れてください。</li>
+        <li>明るい場所で、バーコードが画面いっぱいにならない距離で映すと読み取りやすくなります。</li>
+        <li>カメラの使用を許可していない場合は、ブラウザの設定で許可してください。</li>
+      </ul>
+    </article>
+
+    <section class="cta" aria-labelledby="cta-heading">
+      <h2 id="cta-heading">まずは、近くの図書館を探してみましょう</h2>
+      <p>お住まいの地域のページでは、ログインしなくても本を1冊、試しに調べられます。</p>
+      <a class="cta-button" href="/library/add">都道府県から図書館を探す →</a>
+    </section>
+
+    <section class="related" aria-labelledby="related-heading">
+      <h2 id="related-heading">ほかの使い方ガイド</h2>
+      <ul>
+          <li><a href="/guide/bookstore.html">本屋で見つけた本が、図書館で借りられるか調べる</a></li>
+          <li><a href="/guide/nearby-libraries.html">近くの図書館をまとめて登録して、一度に確認する</a></li>
+      </ul>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <a href="/privacy-policy.html">プライバシーポリシー</a>
+    <a href="/terms.html">利用規約</a>
+  </footer>
+</body>
+</html>

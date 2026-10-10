@@ -22,6 +22,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
 const LIBRARIES_DIR = path.join(REPO_ROOT, 'public', 'data', 'libraries');
 const SITEMAP_PATH = path.join(REPO_ROOT, 'public', 'sitemap.xml');
+const GUIDE_DIR = path.join(REPO_ROOT, 'public', 'guide');
 const BASE_URL = 'https://libcheck.app';
 const CHANGEFREQ = 'monthly';
 
@@ -61,11 +62,14 @@ export function cityPriority(libraryCount) {
  * `librariesByPrefecture` は都道府県名 → 図書館配列（`city` を持つ）のマップ。
  * 図書館が0館の都道府県・市区町村はページが noindex になるため出力しない（#182）。
  * 市区町村は名前順（地域ページの一覧と同じ並び）。
+ * `guideSlugs` は使い方ガイド（#184、public/guide/{slug}.html）のスラッグ。
+ * 本番の Pages は `.html` を拡張子なしへ 308 で転送するため、拡張子なしで出す。
  */
-export function buildSitemapXml({ baseUrl, librariesByPrefecture, lastmod }) {
+export function buildSitemapXml({ baseUrl, librariesByPrefecture, guideSlugs = [], lastmod }) {
   const urls = [
     urlEntry(`${baseUrl}/`, { lastmod, priority: '1.0' }),
     urlEntry(`${baseUrl}/library/add`, { lastmod, priority: '0.8' }),
+    ...guideSlugs.map((slug) => urlEntry(`${baseUrl}/guide/${slug}`, { lastmod, priority: '0.6' })),
   ];
 
   for (const [pref, libraries] of Object.entries(librariesByPrefecture)) {
@@ -116,9 +120,21 @@ export async function readLibrariesByPrefecture(dir) {
   return result;
 }
 
-/** 図書館データから sitemap.xml を書き出す（generateLibraryData.mjs からも使う）。 */
+/** `dir` の `*.html` のファイル名（拡張子なし）を名前順で返す。 */
+export async function readGuideSlugs(dir) {
+  return (await readdir(dir))
+    .filter((f) => f.endsWith('.html'))
+    .map((f) => f.slice(0, -'.html'.length))
+    .sort();
+}
+
+/**
+ * 図書館データと使い方ガイドから sitemap.xml を書き出す（generateLibraryData.mjs からも使う）。
+ * ガイドは public/guide/*.html のファイル一覧から作るため、ページを足したときに更新漏れが起きない。
+ */
 export async function writeSitemap({ librariesByPrefecture, lastmod }) {
-  const xml = buildSitemapXml({ baseUrl: BASE_URL, librariesByPrefecture, lastmod });
+  const guideSlugs = await readGuideSlugs(GUIDE_DIR);
+  const xml = buildSitemapXml({ baseUrl: BASE_URL, librariesByPrefecture, guideSlugs, lastmod });
   await writeFile(SITEMAP_PATH, xml, 'utf-8');
   return (xml.match(/<url>/g) ?? []).length;
 }

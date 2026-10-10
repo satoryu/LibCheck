@@ -26,6 +26,7 @@ import {
 } from '@/presentation/regionPage/regionPageContent';
 import { PublicPageIntro } from '@/presentation/widgets/PublicPageIntro';
 import { RegionPageHeader } from '@/presentation/widgets/RegionPageHeader';
+import { GuideLinks } from '@/presentation/widgets/GuideLinks';
 import { RegisterLoginDialog } from '@/presentation/widgets/RegisterLoginDialog';
 import {
   REGISTER_LIBRARIES_ANCHOR,
@@ -236,6 +237,7 @@ export function LibraryListPage(): JSX.Element {
           description={content.trial.description}
         />
       )}
+      {content?.kind === 'city' && <GuideLinks sx={{ px: 2, pt: 3 }} />}
       {content?.kind === 'city' && (
         <Typography
           id={REGISTER_LIBRARIES_ANCHOR}
