@@ -4,13 +4,13 @@ TDD で進める（失敗するテストを先に書く → 実装 → リファ
 
 ## 0. 確認
 
-- [ ] URL 構成・見出し・本文の下書き（`content-draft.md`）についてユーザーの確認を得る
+- [x] URL 構成・見出し・本文の下書き（`content-draft.md`）についてユーザーの確認を得る（2026-10-10、3本・下書きどおりで承認）
 
 ## 1. ガイドの一覧と静的ページ
 
-- [ ] `src/presentation/guide/guidePages.ts` のテスト → 実装
-- [ ] 静的ページのテスト（`public/guide/*.html` を読み込んで検証）を書いて失敗させる
-- [ ] `public/guide/guide.css` と3本の HTML を作成し、テストを通す
+- [x] `src/presentation/guide/guidePages.ts` のテスト → 実装
+- [x] 静的ページのテスト（`public/guide/*.html` を読み込んで検証）を書いて失敗させる
+- [x] `public/guide/guide.css` と3本の HTML を作成し、テストを通す
 
 ## 2. middleware
 
