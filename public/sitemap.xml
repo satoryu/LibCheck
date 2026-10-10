@@ -13,6 +13,24 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://libcheck.app/guide/barcode</loc>
+    <lastmod>2026-10-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://libcheck.app/guide/bookstore</loc>
+    <lastmod>2026-10-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://libcheck.app/guide/nearby-libraries</loc>
+    <lastmod>2026-10-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://libcheck.app/library/add/%E4%B8%89%E9%87%8D%E7%9C%8C</loc>
     <lastmod>2026-10-10</lastmod>
     <changefreq>monthly</changefreq>

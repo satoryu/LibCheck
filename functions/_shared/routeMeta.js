@@ -37,6 +37,10 @@ export const ROUTE_META = [
   { pattern: '/library/add', region: 'index' },
   { pattern: '/library/add/:pref', region: 'prefecture' },
   { pattern: '/library/add/:pref/:city', region: 'city' },
+  // 使い方ガイド（#184）。public/guide/*.html の静的ページで、title・canonical・
+  // 構造化データはページ自身が持つ。ミドルウェアは手を加えない（未知のパス扱いで
+  // noindex にしない）。`:slug` は `bookstore.html` のような拡張子付きにも一致する。
+  { pattern: '/guide/:slug', static: true },
   {
     pattern: '/scan',
     noindex: true,
@@ -62,7 +66,8 @@ export const ROUTE_META = [
  * 展開したメタ情報として返す。無ければ `null`。
  *
  * 地域ページは `{ region, params }`（`region` は 'index' | 'prefecture' | 'city'）、
- * それ以外は `{ noindex, title, description }` を返す。
+ * 静的ページ（使い方ガイド）は `{ static: true }`、それ以外は
+ * `{ noindex, title, description }` を返す。
  *
  * パターンは `:` で始まるセグメントをワイルドカードとして扱う（1セグメント
  * のみに一致し、階層をまたがない）。それ以外のセグメントは完全一致が必要。
@@ -71,6 +76,9 @@ export function findRouteMeta(pathname) {
   for (const entry of ROUTE_META) {
     const params = matchPattern(pathname, entry.pattern);
     if (params === null) continue;
+    if (entry.static) {
+      return { static: true };
+    }
     if (entry.region !== undefined) {
       return { region: entry.region, params };
     }

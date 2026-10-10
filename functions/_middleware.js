@@ -13,6 +13,7 @@
  *   から title / description / canonical / OGP / JSON-LD / 本文を組み立てて差し込む
  *   （#182。JS を実行しないクローラにも本文が見えるようにする。JS が動く環境では
  *   SPA が `#root` を同じ内容で置き換える）。データにない地域は `noindex`。
+ * - 使い方ガイド（`/guide/*`、静的ページ）: 手を加えない（#184）。
  * - 個人向けページ・未知のパス: `noindex`（#157）。
  */
 import { findRouteMeta } from './_shared/routeMeta.js';
@@ -51,6 +52,10 @@ export async function onRequest(context) {
   }
 
   const routeMeta = findRouteMeta(url.pathname);
+  if (routeMeta?.static) {
+    // 使い方ガイド（#184）の静的ページ。メタ情報はページ自身が持つ。
+    return response;
+  }
   if (routeMeta === null) {
     // 未知のパスも安全側で noindex にする。
     return new HTMLRewriter()

@@ -9,6 +9,7 @@ import {
   regionPath,
 } from '../../src/presentation/regionPage/regionPageContent';
 import { escapeHtml, renderJsonLd, renderRootHtml, renderTopRootHtml } from './regionPageHtml.js';
+import { GUIDE_PAGES, guideHref } from '../../src/presentation/guide/guidePages';
 
 function lib(overrides: Partial<Library> & Pick<Library, 'city' | 'formalName'>): Library {
   return {
@@ -86,6 +87,17 @@ describe('renderRootHtml', () => {
     expect(html.indexOf('借りられる？')).toBeLessThan(html.indexOf('掲載している図書館'));
   });
 
+  it('市区町村ページ: 使い方ガイド（#184）へのリンクを、体験版の後・図書館一覧の前に含む', () => {
+    const html = renderRootHtml(cityContent());
+
+    expect(html).toContain('<h2>使い方ガイド</h2>');
+    for (const guide of GUIDE_PAGES) {
+      expect(html).toContain(`<a href="${guideHref(guide.slug)}">${guide.title}</a>`);
+    }
+    expect(html.indexOf('借りられる？')).toBeLessThan(html.indexOf('使い方ガイド'));
+    expect(html.indexOf('使い方ガイド')).toBeLessThan(html.indexOf('掲載している図書館'));
+  });
+
   it('都道府県ページ: h1 と館数付きの市区町村リンクを含む', () => {
     const content = buildPrefecturePageContent('滋賀県', SHIGA);
     if (content.kind !== 'prefecture') throw new Error('prefecture を期待');
@@ -129,6 +141,14 @@ describe('renderTopRootHtml', () => {
     expect(html).toContain(`<a href="${regionPath()}">`);
     expect(html.match(/<a href="\/library\/add\/[^"]+">/g)).toHaveLength(47);
     expect(html).not.toContain('蔵書検索');
+  });
+
+  it('使い方ガイド（#184）へのリンクを含む', () => {
+    const html = renderTopRootHtml();
+
+    for (const guide of GUIDE_PAGES) {
+      expect(html).toContain(`<a href="${guideHref(guide.slug)}">${guide.title}</a>`);
+    }
   });
 });
 

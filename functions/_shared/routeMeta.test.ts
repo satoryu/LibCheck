@@ -40,6 +40,16 @@ describe('findRouteMeta', () => {
     });
   });
 
+  describe('使い方ガイド（#184・静的ページ）', () => {
+    it('/guide/:slug は static を返す（ミドルウェアは手を加えない）', () => {
+      expect(findRouteMeta('/guide/bookstore')).toEqual({ static: true });
+    });
+
+    it('/guide/:slug.html（本番では 308 で転送される前のパス）も static', () => {
+      expect(findRouteMeta('/guide/bookstore.html')).toEqual({ static: true });
+    });
+  });
+
   describe('個人向けページ（引き続き非公開）', () => {
     it('/history は noindex のまま', () => {
       const meta = findRouteMeta('/history');

@@ -14,21 +14,21 @@ TDD で進める（失敗するテストを先に書く → 実装 → リファ
 
 ## 2. middleware
 
-- [ ] `routeMeta` / middleware のテスト（`/guide/:slug` を素通し）→ 実装
+- [x] `routeMeta` / middleware のテスト（`/guide/:slug` を素通し）→ 実装
 
 ## 3. 内部リンク
 
-- [ ] `regionPageHtml`: トップ・市区町村ページの差し込み HTML にガイドへのリンク（テスト → 実装）
-- [ ] `GuideLinks` ウィジェット（テスト → 実装）
-- [ ] `LandingPage`・`LibraryListPage` に組み込む（テスト → 実装）
+- [x] `regionPageHtml`: トップ・市区町村ページの差し込み HTML にガイドへのリンク（テスト → 実装）
+- [x] `GuideLinks` ウィジェット（テスト → 実装）
+- [x] `LandingPage`・`LibraryListPage` に組み込む（テスト → 実装）
 
 ## 4. sitemap
 
-- [ ] `generateSitemap` のテスト（ガイドの URL・拡張子なし）→ 実装 → `public/sitemap.xml` を再生成
+- [x] `generateSitemap` のテスト（ガイドの URL・拡張子なし）→ 実装 → `public/sitemap.xml` を再生成
 
 ## 5. 全体確認
 
-- [ ] `npm test` / `npx tsc -b` / `npm run build`
+- [x] `npm test` / `npx tsc -b` / `npm run build`
 - [ ] `wrangler pages dev` で3本・トップ・市区町村ページの配信 HTML を `curl` で確認（h1・title・description・canonical・robots・パンくず・内部リンク・JSON-LD）
 - [ ] ブラウザ（スマホ幅・コールドロード）で3本の見た目とリンクを確認
 - [ ] PR 作成・セルフレビュー
