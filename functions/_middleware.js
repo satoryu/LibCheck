@@ -1,6 +1,9 @@
 /**
  * ルート直下の Pages Functions ミドルウェア（#157）。
  *
+ * 最初に、Cloudflare Pages の既定ドメイン `libcheck.pages.dev` へのリクエストを
+ * 本番ドメインへ転送する（#189）。以降は本番・プレビュー・ローカルでの処理。
+ *
  * URL に応じて配信 HTML の `<head>` と、地域ページでは本文（`#root`）も
  * 書き換える。`/api/*` と非HTMLレスポンス（静的アセット）は `next()` の結果を
  * そのまま返し、一切手を加えない。`HTMLRewriter` が Pages Functions で動くことは
@@ -27,9 +30,19 @@ import {
 
 const SITE_ORIGIN = 'https://libcheck.app';
 
+/**
+ * Cloudflare Pages の既定ドメイン（#189）。本番と同じデプロイを配信してしまうため、
+ * 本番ドメインへ転送する。デプロイごとの URL（`<ハッシュ>.libcheck.pages.dev`）や
+ * ブランチ別の URL は検証に使うので、完全一致で判定して転送しない。
+ */
+const PAGES_DEV_HOST = 'libcheck.pages.dev';
+
 export async function onRequest(context) {
   const { request, next } = context;
   const url = new URL(request.url);
+
+  const redirect = redirectToCanonicalHost(request, url);
+  if (redirect) return redirect;
 
   if (url.pathname.startsWith('/api/')) {
     return next();
@@ -98,6 +111,17 @@ export async function onRequest(context) {
       },
     })
     .transform(response);
+}
+
+/**
+ * `libcheck.pages.dev` へのリクエストを、同じパス・クエリのまま本番ドメインへ転送する。
+ * GET / HEAD は 301（恒久的な移動）、それ以外は 308（301 だとブラウザが POST を GET に
+ * 変えることがあるため、メソッドと本文を保つ）。対象外なら null。
+ */
+function redirectToCanonicalHost(request, url) {
+  if (url.hostname !== PAGES_DEV_HOST) return null;
+  const status = request.method === 'GET' || request.method === 'HEAD' ? 301 : 308;
+  return Response.redirect(`${SITE_ORIGIN}${url.pathname}${url.search}`, status);
 }
 
 /**

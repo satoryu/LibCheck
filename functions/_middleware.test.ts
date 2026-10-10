@@ -340,4 +340,52 @@ describe('_middleware.js', () => {
 
     expect(res.__rewriterSelectors).toContain('meta[name="robots"]');
   });
+
+  describe('libcheck.pages.dev から本番ドメインへの転送（#189）', () => {
+    const path = `/library/add/${encodeURIComponent('滋賀県')}?x=1`;
+
+    it.each([
+      ['GET', 301],
+      ['HEAD', 301],
+      ['POST', 308],
+    ])('%s は %i で同じパス・クエリのまま libcheck.app へ転送し、後続の処理をしない', async (method, status) => {
+      const { onRequest } = await importMiddleware();
+      const next = vi.fn(async () => htmlResponse());
+
+      const res = await onRequest({
+        request: new Request(`https://libcheck.pages.dev${path}`, { method }),
+        next,
+      } as never);
+
+      expect(res.status).toBe(status);
+      expect(res.headers.get('location')).toBe(`https://libcheck.app${path}`);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it.each(['/api/me', '/assets/index-abc.js', '/sitemap.xml'])('%s（API・静的アセット）も転送する', async (p) => {
+      const { onRequest } = await importMiddleware();
+      const next = vi.fn(async () => htmlResponse());
+
+      const res = await onRequest({ request: new Request(`https://libcheck.pages.dev${p}`), next } as never);
+
+      expect(res.status).toBe(301);
+      expect(res.headers.get('location')).toBe(`https://libcheck.app${p}`);
+    });
+
+    it.each([
+      'https://5a85a6db.libcheck.pages.dev/api/me',
+      'https://feature-x.libcheck.pages.dev/api/me',
+      'https://libcheck.app/api/me',
+      'http://localhost:8788/api/me',
+    ])('%s（プレビュー・本番・ローカル）は転送しない', async (url) => {
+      const { onRequest } = await importMiddleware();
+      const apiResponse = new Response('unauthorized', { status: 401 });
+      const next = vi.fn(async () => apiResponse);
+
+      const res = await onRequest({ request: new Request(url), next } as never);
+
+      expect(res).toBe(apiResponse);
+      expect(next).toHaveBeenCalledOnce();
+    });
+  });
 });
