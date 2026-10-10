@@ -29,7 +29,8 @@ TDD で進める（失敗するテストを先に書く → 実装 → リファ
 ## 5. 全体確認
 
 - [x] `npm test` / `npx tsc -b` / `npm run build`
-- [ ] `wrangler pages dev` で3本・トップ・市区町村ページの配信 HTML を `curl` で確認（h1・title・description・canonical・robots・パンくず・内部リンク・JSON-LD）
-- [ ] ブラウザ（スマホ幅・コールドロード）で3本の見た目とリンクを確認
+- [x] `wrangler pages dev` で3本・トップ・市区町村ページの配信 HTML を `curl` で確認（h1・title・description・canonical・robots・パンくず・内部リンク・JSON-LD）
+- [x] ブラウザ（スマホ幅・コールドロード）で3本の見た目とリンクを確認
+- [x] PWA の Service Worker が制御している状態でも `/guide/*`（拡張子なし・`.html`）が SPA にフォールバックせず静的ページを表示することを確認（Workbox のプリキャッシュは cleanURLs で拡張子なしにも一致する）
 - [ ] PR 作成・セルフレビュー
 - [ ] マージ後: デプロイ監視 → `scripts/smoke.sh` → 本番で3本（拡張子なし・`.html` からの 308）とリンクを確認 → PR / Issue に記録
