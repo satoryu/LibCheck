@@ -28,7 +28,7 @@ TDD で進める（失敗するテストを先に書く → 実装 → リファ
 ## 4. 全体確認
 
 - [x] `npm test` / `npx tsc -b` / `npm run build`
-- [ ] `wrangler pages dev` で配信 HTML を `curl`（本ごとの title・og:*、noindex、canonical、不正 ISBN・該当なし）
-- [ ] ブラウザ: 未ログインのコールドロード（保護 API を呼ばない）・その場でログイン → 蔵書状況（`VITE_AUTH_MOCK=true`）・ログイン済みのコールドロードで案内が出ない
+- [x] `wrangler pages dev` で配信 HTML を `curl`（本ごとの title・og:*、noindex、canonical、不正 ISBN・該当なし）
+- [x] ブラウザ: 未ログインのコールドロード（保護 API を呼ばない）・その場でログイン → 蔵書状況（`VITE_AUTH_MOCK=true`）・ログイン済みのコールドロードで案内が出ない
 - [ ] PR 作成・セルフレビュー
 - [ ] マージ後: デプロイ監視 → `scripts/smoke.sh` → 本番で配信 HTML と未ログイン表示を確認 → PR / Issue に記録
