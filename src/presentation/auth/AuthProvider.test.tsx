@@ -114,6 +114,41 @@ describe('AuthProvider セッション（#91）', () => {
   });
 });
 
+describe('AuthProvider セッション復元中フラグ（#159）', () => {
+  it('復元が終わるまで isRestoring は true、終わったら false（未ログインでも）', async () => {
+    let resolve: (user: User | null) => void = () => {};
+    const restore = vi.fn(() => new Promise<User | null>((r) => (resolve = r)));
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: makeWrapper(makeFakeDeps(), { sessionApi: fakeSession({ restore }) }),
+    });
+
+    expect(result.current.isRestoring).toBe(true);
+    expect(result.current.user).toBeNull();
+
+    await act(async () => resolve(null));
+
+    expect(result.current.isRestoring).toBe(false);
+    expect(result.current.user).toBeNull();
+  });
+
+  it('復元できたらユーザーが入った状態で isRestoring が false になる', async () => {
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: makeWrapper(makeFakeDeps(), { sessionApi: fakeSession({ restore: async () => alice }) }),
+    });
+
+    await waitFor(() => expect(result.current.isRestoring).toBe(false));
+    expect(result.current.user).toEqual(alice);
+  });
+
+  it('initialUser を注入したときは最初から false', () => {
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: makeWrapper(makeFakeDeps(), { sessionApi: fakeSession(), initialUser: alice }),
+    });
+
+    expect(result.current.isRestoring).toBe(false);
+  });
+});
+
 describe('AuthProvider オフラインキャッシュ削除（#143）', () => {
   afterEach(() => {
     vi.unstubAllGlobals();

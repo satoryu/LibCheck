@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { act, screen, waitFor } from '@testing-library/react';
 
 import { AvailabilityStatus } from '@/domain/models/availabilityStatus';
 import type { BookAvailability } from '@/domain/models/bookAvailability';
@@ -15,12 +15,15 @@ import {
   makeFakeDeps,
   FakeBookMetadataRepository,
 } from '@/test/testUtils';
-import { trackBookSearchResultView } from '@/analytics/events';
+import { trackBookPreviewView, trackBookSearchResultView } from '@/analytics/events';
+import type { SessionApi } from '@/data/datasources/sessionApiClient';
+import type { User } from '@/domain/models/user';
 
 // GA4 計測（#169）。イベント名ではなく「意味のある呼び出し」で検証する。
 vi.mock('@/analytics/events', () => ({
   trackIsbnScanSuccess: vi.fn(),
   trackBookSearchResultView: vi.fn(),
+  trackBookPreviewView: vi.fn(),
   trackLibraryReservationLinkClick: vi.fn(),
   trackAmazonAffiliateLinkClick: vi.fn(),
 }));
@@ -120,7 +123,12 @@ class ThrowingBookMetadataRepository implements BookMetadataRepository {
   }
 }
 
+/** 既存のテストはログイン済みの結果表示を検証する（未ログインの表示は #159 の describe で検証）。 */
+const LOGGED_IN_USER: User = { id: 'test-user', name: 'Test User' };
+
 interface SubjectOptions {
+  authUser?: User | null;
+  sessionApi?: SessionApi;
   libraryRepo: LibraryRepository;
   registeredRepo: RegisteredLibraryRepository;
   historyRepo?: SearchHistoryRepository;
@@ -141,6 +149,8 @@ function renderSubject(opts: SubjectOptions) {
       bookMetadataRepository:
         opts.metadataRepo ?? new FakeBookMetadataRepository(),
     }),
+    authUser: opts.authUser === undefined ? LOGGED_IN_USER : opts.authUser,
+    sessionApi: opts.sessionApi,
   });
 }
 
@@ -627,5 +637,103 @@ describe('BookSearchResultPage GA4 計測（#169）', () => {
     await screen.findByText(/図書館が登録されていません/);
 
     expect(trackView).not.toHaveBeenCalled();
+  });
+});
+
+describe('未ログインでの表示（#159）', () => {
+  const metadata = new FakeBookMetadataRepository({
+    '9784123456789': { isbn: '9784123456789', title: 'テストの本' },
+  });
+
+  /** 復元を手で完了させられるセッション。 */
+  function controlledSession() {
+    let resolve: (user: User | null) => void = () => {};
+    const session: SessionApi = {
+      restore: () => new Promise((r) => (resolve = r)),
+      create: async () => {},
+      destroy: async () => {},
+    };
+    return { session, finish: (user: User | null) => act(async () => resolve(user)) };
+  }
+
+  function spies() {
+    const libraryRepo = new FakeLibraryRepository([
+      {
+        isbn: '9784123456789',
+        libraryStatuses: {
+          Tokyo_Minato: { systemId: 'Tokyo_Minato', status: AvailabilityStatus.available, libKeyStatuses: { みなと: '貸出可' } },
+        },
+      },
+    ]);
+    const registeredRepo = new FakeRegisteredLibraryRepository([library1]);
+    return {
+      libraryRepo,
+      registeredRepo,
+      check: vi.spyOn(libraryRepo, 'checkBookAvailability'),
+      getAll: vi.spyOn(registeredRepo, 'getAll'),
+    };
+  }
+
+  beforeEach(() => {
+    vi.mocked(trackBookPreviewView).mockClear();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  test('書誌情報と案内を表示し、ログインが必要な API は呼ばない', async () => {
+    const { session, finish } = controlledSession();
+    const s = spies();
+    renderSubject({ ...s, metadataRepo: metadata, authUser: null, sessionApi: session });
+    await finish(null);
+
+    expect(await screen.findByText('テストの本')).toBeInTheDocument();
+    expect(screen.getByText(/9784123456789/)).toBeInTheDocument();
+    expect(screen.getByText(/ログインして図書館を登録すると/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /近くの図書館を探す/ })).toHaveAttribute('href', '/library/add');
+    expect(screen.queryByText('蔵書状況')).not.toBeInTheDocument();
+    expect(s.check).not.toHaveBeenCalled();
+    expect(s.getAll).not.toHaveBeenCalled();
+  });
+
+  test('未ログインの表示を1回だけ計測し、検索結果の表示としては計測しない', async () => {
+    const { session, finish } = controlledSession();
+    vi.mocked(trackBookSearchResultView).mockClear();
+    renderSubject({ ...spies(), metadataRepo: metadata, authUser: null, sessionApi: session });
+    await finish(null);
+
+    await screen.findByText(/ログインして図書館を登録すると/);
+    expect(trackBookPreviewView).toHaveBeenCalledTimes(1);
+    expect(trackBookSearchResultView).not.toHaveBeenCalled();
+  });
+
+  test('セッション復元中は読み込み中を表示し、未ログイン用の案内は出さない', async () => {
+    const { session, finish } = controlledSession();
+    const s = spies();
+    renderSubject({ ...s, metadataRepo: metadata, authUser: null, sessionApi: session });
+
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(screen.queryByText(/ログインして図書館を登録すると/)).not.toBeInTheDocument();
+
+    // 復元できた（ログイン済みだった）場合は、案内を出さずに蔵書状況へ。
+    await finish(LOGGED_IN_USER);
+    expect(await screen.findByText('貸出可能')).toBeInTheDocument();
+    expect(screen.queryByText(/ログインして図書館を登録すると/)).not.toBeInTheDocument();
+    expect(trackBookPreviewView).not.toHaveBeenCalled();
+  });
+
+  test('その場でログインすると、同じページで蔵書状況に切り替わる', async () => {
+    vi.stubEnv('VITE_AUTH_MOCK', 'true');
+    const { session, finish } = controlledSession();
+    const s = spies();
+    const { user } = renderSubject({ ...s, metadataRepo: metadata, authUser: null, sessionApi: session });
+    await finish(null);
+
+    await user.click(await screen.findByRole('button', { name: 'Dev ログイン（モック）' }));
+
+    expect(await screen.findByText('貸出可能')).toBeInTheDocument();
+    expect(screen.getByText('港区立みなと図書館')).toBeInTheDocument();
+    expect(s.check).toHaveBeenCalled();
   });
 });

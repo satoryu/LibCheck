@@ -10,14 +10,14 @@ TDD で進める（失敗するテストを先に書く → 実装 → リファ
 
 ## 1. 認証の復元中フラグ
 
-- [ ] `AuthProvider.test.tsx`: `isRestoring` のテスト → 実装
+- [x] `AuthProvider.test.tsx`: `isRestoring` のテスト → 実装
 
 ## 2. 結果ページ
 
-- [ ] `publicPaths`: `/result/:isbn` を公開（テスト → 実装）
-- [ ] `BookSearchResultPage.test.tsx`: 未ログインの表示・保護 API を呼ばない・復元中・ログインで切り替え（テスト → 実装。既存の中身は `AuthenticatedResult` へ移す）
-- [ ] `PublicResultPreview` の案内（ログイン・地域から探す）
-- [ ] GA4 イベント `book_preview_view`（テスト → 実装）とプライバシーポリシーの追記
+- [x] `publicPaths`: `/result/:isbn` を公開（テスト → 実装）
+- [x] `BookSearchResultPage.test.tsx`: 未ログインの表示・保護 API を呼ばない・復元中・ログインで切り替え（テスト → 実装。既存の中身は `AuthenticatedResult` へ移す）
+- [x] `PublicResultPreview` の案内（ログイン・地域から探す）
+- [x] GA4 イベント `book_preview_view`（テスト → 実装）とプライバシーポリシーの追記
 
 ## 3. 配信 HTML の本ごとのメタ
 

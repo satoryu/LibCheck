@@ -14,6 +14,7 @@ import {
 import { SelectedLibrariesProvider } from "@/presentation/hooks/useSelectedLibraries";
 import { AuthProvider } from "@/presentation/auth/AuthProvider";
 import type { User } from "@/domain/models/user";
+import type { SessionApi } from "@/data/datasources/sessionApiClient";
 import { routes } from "@/app/router";
 import type { LocalStorageRepository } from "@/domain/repositories/localStorageRepository";
 import type { BookMetadata } from "@/domain/models/bookMetadata";
@@ -215,6 +216,8 @@ export interface RenderRouteOptions {
   deps?: AppDependencies;
   queryClient?: QueryClient;
   authUser?: User | null;
+  /** セッション復元の差し替え（復元中の状態を作るテスト用。#159）。 */
+  sessionApi?: SessionApi;
 }
 
 export function renderRouteWithProviders(
@@ -230,7 +233,7 @@ export function renderRouteWithProviders(
       <QueryClientProvider client={queryClient}>
         <SnackbarProvider>
           <ThemeProvider theme={theme}>
-            <AuthProvider initialUser={options?.authUser ?? null}>
+            <AuthProvider initialUser={options?.authUser ?? null} sessionApi={options?.sessionApi}>
               <SelectedLibrariesProvider>
                 <RouterProvider router={router} />
               </SelectedLibrariesProvider>

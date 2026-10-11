@@ -17,7 +17,11 @@ describe('publicPaths', () => {
       expect(isPublicPath('/library')).toBe(false);
       expect(isPublicPath('/scan')).toBe(false);
       expect(isPublicPath('/isbn-input')).toBe(false);
-      expect(isPublicPath('/result/9784873117584')).toBe(false);
+    });
+
+    // #159: 共有された検索結果ページは、未ログインでも書誌情報と案内を表示する。
+    test('検索結果ページが未ログインで閲覧できる', () => {
+      expect(isPublicPath('/result/9784873117584')).toBe(true);
     });
   });
 

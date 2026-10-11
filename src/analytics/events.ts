@@ -37,6 +37,15 @@ export function trackBookSearchResultView(
   });
 }
 
+/**
+ * 未ログインで検索結果ページを開き、書誌情報と案内（蔵書状況なし）を表示した（#159）。
+ * 共有された URL から来た人の数を測る。蔵書状況を確認できる状態ではないため、
+ * `book_search_result_view` とは別のイベントにする。
+ */
+export function trackBookPreviewView(): void {
+  trackEvent('book_preview_view');
+}
+
 /** 図書館の予約・蔵書検索サイトへ遷移した（現時点の主要な価値到達イベント）。 */
 export function trackLibraryReservationLinkClick(): void {
   trackEvent('library_reservation_link_click');

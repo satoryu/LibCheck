@@ -15,6 +15,12 @@ export interface AuthContextValue {
   user: User | null;
   /** ログイン中の ID トークン（保護 API への Bearer に使う）。未ログインは null。 */
   idToken: string | null;
+  /**
+   * マウント時のセッション復元（GET /api/me）が終わっていない間は true（#159）。
+   * この間 `user` は null だが「未ログイン」とは限らない。未ログイン用の表示を
+   * ログイン済みの人に一瞬見せないよう、画面側で読み込み中として扱うために使う。
+   */
+  isRestoring: boolean;
   /** ユーザーと ID トークンをセットしてログイン状態にする。 */
   signIn: (user: User, idToken: string) => void;
   /** ログイン状態を解除する。 */
@@ -45,6 +51,8 @@ export function AuthProvider({
 }): JSX.Element {
   const [user, setUser] = useState<User | null>(initialUser);
   const [idToken, setIdToken] = useState<string | null>(initialIdToken);
+  // initialUser を注入したとき（テスト）は復元しないため、最初から false。
+  const [isRestoring, setIsRestoring] = useState(initialUser === null);
   const deps = useDeps();
 
   const session = useMemo<SessionApi>(
@@ -61,8 +69,11 @@ export function AuthProvider({
   useEffect(() => {
     if (initialUser) return;
     let cancelled = false;
+    // restore は失敗しても例外を投げず null を返す（sessionApiClient）。
     void session.restore().then((restored) => {
-      if (!cancelled && restored) setUser(restored);
+      if (cancelled) return;
+      if (restored) setUser(restored);
+      setIsRestoring(false);
     });
     return () => {
       cancelled = true;
@@ -75,11 +86,13 @@ export function AuthProvider({
     () => ({
       user,
       idToken,
+      isRestoring,
       signIn: (nextUser, nextToken) => {
         // 状態は同期的に反映（再レンダー後のクエリが古い/未設定トークンを読むのを防ぐ）。
         setAuthToken(nextToken);
         setUser(nextUser);
         setIdToken(nextToken);
+        setIsRestoring(false);
         // セッション Cookie を発行（失敗は握りつぶす＝UI を壊さない）。
         void session.create(nextToken).catch(() => {});
       },
@@ -87,6 +100,7 @@ export function AuthProvider({
         setAuthToken(null);
         setUser(null);
         setIdToken(null);
+        setIsRestoring(false);
         void session.destroy().catch(() => {});
         // 同じ端末で次にログインする別ユーザーへ、#143 のオフラインキャッシュ
         // （登録図書館・検索履歴）が残存しないよう削除する。
@@ -97,7 +111,7 @@ export function AuthProvider({
         void deps.pendingScanRepository.removeAll().catch(() => {});
       },
     }),
-    [user, idToken, session, deps],
+    [user, idToken, isRestoring, session, deps],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
