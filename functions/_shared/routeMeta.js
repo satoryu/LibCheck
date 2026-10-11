@@ -64,12 +64,9 @@ export const ROUTE_META = [
     title: () => 'ISBN入力 — LibCheck',
     description: () => '',
   },
-  {
-    pattern: '/result/:isbn',
-    noindex: true,
-    title: () => '検索結果 — LibCheck',
-    description: () => '',
-  },
+  // 検索結果（#159 で未ログインにも部分公開）。noindex のまま、書名・書影による
+  // title / OGP は OpenBD の結果からミドルウェアが組み立てる（共有時のプレビュー用）。
+  { pattern: '/result/:isbn', book: true },
 ];
 
 /**
@@ -77,7 +74,7 @@ export const ROUTE_META = [
  * 展開したメタ情報として返す。無ければ `null`。
  *
  * 地域ページは `{ region, params }`（`region` は 'index' | 'prefecture' | 'city'）、
- * 静的ページ（使い方ガイド）は `{ static: true }`、それ以外は
+ * 静的ページ（使い方ガイド）は `{ static: true }`、検索結果は `{ book: true, params }`、それ以外は
  * `{ noindex, title, description }` を返す。
  *
  * パターンは `:` で始まるセグメントをワイルドカードとして扱う（1セグメント
@@ -90,6 +87,9 @@ export function findRouteMeta(pathname) {
     if (entry.accepts && !entry.accepts(params)) continue;
     if (entry.static) {
       return { static: true };
+    }
+    if (entry.book) {
+      return { book: true, params };
     }
     if (entry.region !== undefined) {
       return { region: entry.region, params };

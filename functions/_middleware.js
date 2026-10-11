@@ -17,9 +17,12 @@
  *   （#182。JS を実行しないクローラにも本文が見えるようにする。JS が動く環境では
  *   SPA が `#root` を同じ内容で置き換える）。データにない地域は `noindex`。
  * - 使い方ガイド（`/guide/*`、静的ページ）: 手を加えない（#184）。
+ * - 検索結果（`/result/:isbn`）: OpenBD の書名・書影で title / OGP を書き換え、noindex（#159）。
  * - 個人向けページ・未知のパス: `noindex`（#157）。
  */
 import { findRouteMeta } from './_shared/routeMeta.js';
+import { bookOgDescription, bookOgTitle, fetchBookMeta } from './_shared/bookMeta.js';
+import { isbnValidator } from '../src/domain/utils/isbnValidator.ts';
 import { renderJsonLd, renderRootHtml, renderTopRootHtml } from './_shared/regionPageHtml.js';
 import {
   buildCityPageContent,
@@ -82,6 +85,10 @@ export async function onRequest(context) {
 
   const canonicalUrl = `${SITE_ORIGIN}${url.pathname}`;
 
+  if (routeMeta.book) {
+    return rewriteBookPage(response, routeMeta.params.isbn, context, canonicalUrl);
+  }
+
   if (routeMeta.region !== undefined) {
     const content = await loadRegionContent(routeMeta, context);
     if (content === null) {
@@ -111,6 +118,85 @@ export async function onRequest(context) {
       },
     })
     .transform(response);
+}
+
+/** 検索結果ページの既定のタイトル（書名が分からないとき）。 */
+const DEFAULT_RESULT_TITLE = '検索結果 — LibCheck';
+
+/**
+ * 共有された検索結果ページ（#159）。SNS やチャットのプレビューに本の情報が出るよう、
+ * OpenBD の書名・書影で title / OGP を書き換える。インデックスはさせない（noindex）。
+ * 不正な ISBN は OpenBD を呼ばず、取得できなかったときは既定のタイトルのまま配信する。
+ * 本文は SPA が描画する（未ログインは書誌情報と案内のみ）。
+ */
+async function rewriteBookPage(response, rawIsbn, context, canonicalUrl) {
+  const isbn = rawIsbn.replace(/-/g, '');
+  const meta = isbnValidator.isValidIsbn(isbn)
+    ? await fetchBookMeta(isbn, {
+        fetchFn: globalThis.fetch,
+        cache: globalThis.caches?.default,
+        waitUntil: context.waitUntil?.bind(context),
+      })
+    : null;
+  const title = meta ? bookOgTitle(meta.title) : DEFAULT_RESULT_TITLE;
+
+  const rewriter = rewriteCanonical(new HTMLRewriter(), canonicalUrl)
+    .on('title', {
+      element(el) {
+        el.setInnerContent(title);
+      },
+    })
+    .on('meta[property="og:title"]', {
+      element(el) {
+        el.setAttribute('content', title);
+      },
+    })
+    .on('meta[name="robots"]', {
+      element(el) {
+        el.setAttribute('content', 'noindex');
+      },
+    });
+
+  if (meta) {
+    const description = bookOgDescription(meta.title);
+    rewriter
+      .on('meta[name="description"]', {
+        element(el) {
+          el.setAttribute('content', description);
+        },
+      })
+      .on('meta[property="og:description"]', {
+        element(el) {
+          el.setAttribute('content', description);
+        },
+      });
+  }
+  if (meta?.coverUrl) {
+    rewriter
+      .on('meta[property="og:image"]', {
+        element(el) {
+          el.setAttribute('content', meta.coverUrl);
+        },
+      })
+      .on('meta[name="twitter:card"]', {
+        element(el) {
+          // 書影は縦長のため、横長の大きなカードではなく通常のカードにする。
+          el.setAttribute('content', 'summary');
+        },
+      })
+      // index.html の既定画像（1024×500）のサイズ指定は書影と食い違うため外す。
+      .on('meta[property="og:image:width"]', {
+        element(el) {
+          el.remove();
+        },
+      })
+      .on('meta[property="og:image:height"]', {
+        element(el) {
+          el.remove();
+        },
+      });
+  }
+  return rewriter.transform(response);
 }
 
 /**

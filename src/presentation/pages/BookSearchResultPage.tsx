@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import {
+  Link as RouterLink,
   useNavigate,
   useParams,
   useSearchParams,
@@ -15,17 +16,20 @@ import AddIcon from '@mui/icons-material/Add';
 import BookIcon from '@mui/icons-material/Book';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import Link from '@mui/material/Link';
 import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
 import SearchIcon from '@mui/icons-material/Search';
 import type { UseQueryResult } from '@tanstack/react-query';
 
-import { trackBookSearchResultView } from '@/analytics/events';
+import { trackBookPreviewView, trackBookSearchResultView } from '@/analytics/events';
 import type { BookAvailability } from '@/domain/models/bookAvailability';
 import type { Library } from '@/domain/models/library';
 import { libraryKey } from '@/domain/models/library';
 import { countLibraryAvailability } from '@/presentation/utils/availabilityCounts';
 import { availabilityToHistoryStatuses } from '@/presentation/utils/availabilityToHistoryStatuses';
 import { resolveErrorMessage } from '@/presentation/utils/errorMessageResolver';
+import { useAuth } from '@/presentation/auth/AuthProvider';
+import { GoogleSignInControl } from '@/presentation/auth/GoogleSignInControl';
 import { useBookAvailability } from '@/presentation/hooks/useBookAvailability';
 import { useBookMetadata } from '@/presentation/hooks/useBookMetadata';
 import { useOnlineStatus } from '@/presentation/hooks/useOnlineStatus';
@@ -323,17 +327,57 @@ function ResultState({
 }
 
 /**
- * 蔵書検索結果画面。
+ * 未ログインで検索結果ページを開いたときの表示（#159）。
+ *
+ * 共有された URL から来た人向けに、書誌情報（OpenBD・公開 API）と案内だけを出す。
+ * 蔵書状況はカーリルの利用上限のためログイン後のみ（ログインが必要な API は呼ばない）。
+ * その場でログインすると、親の BookSearchResultPage が AuthenticatedResult に切り替える。
+ */
+function PublicResultPreview({ isbn }: { isbn: string }): JSX.Element {
+  const metadataQuery = useBookMetadata(isbn);
+  const metadata: MetadataProps = {
+    title: metadataQuery.data?.title,
+    coverUrl: metadataQuery.data?.coverImageUrl,
+    isLoading: metadataQuery.isLoading,
+  };
+
+  const trackedIsbnRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (trackedIsbnRef.current === isbn) return;
+    trackedIsbnRef.current = isbn;
+    trackBookPreviewView();
+  }, [isbn]);
+
+  return (
+    <Box sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+      <IsbnSection isbn={isbn} />
+      <MetadataSection isbn={isbn} metadata={metadata} />
+      <Card component="section" aria-label="LibCheckについて" sx={{ mt: 3, p: 2 }}>
+        <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>
+          この本、近くの図書館で借りられる？
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          LibCheck は、本のバーコードを読み取るだけで、登録した図書館で借りられるか・予約できるかを確認できるアプリです。ログインして図書館を登録すると、この本の貸出状況がわかります。
+        </Typography>
+        <Box sx={{ mt: 2 }}>
+          <GoogleSignInControl />
+        </Box>
+        <Link component={RouterLink} to="/library/add" variant="body2" sx={{ display: 'inline-block', mt: 2 }}>
+          近くの図書館を探す（ログインなしで1冊試せます）
+        </Link>
+      </Card>
+    </Box>
+  );
+}
+
+/**
+ * ログイン済みの蔵書検索結果（従来の画面）。
  *
  * 登録図書館を読み込み、ISBN の蔵書状況を表示する。
  * 結果が読み込まれたら検索履歴を1度だけ保存する（useSaveHistoryOnResult）。
  * 表示は状態別コンポーネント（Loading/Error/NoLibrary/Result）に分離している。
  */
-export function BookSearchResultPage(): JSX.Element {
-  const params = useParams<{ isbn: string }>();
-  const isbn = params.isbn ?? '';
-  const [searchParams] = useSearchParams();
-  const isScan = (searchParams.get('source') ?? undefined) === 'scan';
+function AuthenticatedResult({ isbn, isScan }: { isbn: string; isScan: boolean }): JSX.Element {
   const queryClient = useQueryClient();
 
   const registeredQuery = useRegisteredLibraries();
@@ -354,54 +398,78 @@ export function BookSearchResultPage(): JSX.Element {
     });
   };
 
-  const renderBody = (): JSX.Element => {
-    if (registeredQuery.isLoading) {
-      return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-          <CircularProgress />
-        </Box>
-      );
-    }
-    if (registeredQuery.isError) {
-      return (
-        <ErrorState
-          isbn={isbn}
-          metadata={metadata}
-          error={registeredQuery.error}
-          isScan={isScan}
-          onRetry={handleRetry}
-        />
-      );
-    }
-
-    const libraries = registeredQuery.data ?? [];
-    if (libraries.length === 0) {
-      return <NoLibraryState isbn={isbn} />;
-    }
-
-    if (availabilityQuery.isLoading) {
-      return <LoadingState isbn={isbn} metadata={metadata} />;
-    }
-    if (availabilityQuery.isError) {
-      return (
-        <ErrorState
-          isbn={isbn}
-          metadata={metadata}
-          error={availabilityQuery.error}
-          isScan={isScan}
-          onRetry={handleRetry}
-        />
-      );
-    }
+  if (registeredQuery.isLoading) {
+    return <CenteredProgress />;
+  }
+  if (registeredQuery.isError) {
     return (
-      <ResultState
+      <ErrorState
         isbn={isbn}
         metadata={metadata}
-        libraries={libraries}
-        results={availabilityQuery.data ?? []}
+        error={registeredQuery.error}
         isScan={isScan}
+        onRetry={handleRetry}
       />
     );
+  }
+
+  const libraries = registeredQuery.data ?? [];
+  if (libraries.length === 0) {
+    return <NoLibraryState isbn={isbn} />;
+  }
+
+  if (availabilityQuery.isLoading) {
+    return <LoadingState isbn={isbn} metadata={metadata} />;
+  }
+  if (availabilityQuery.isError) {
+    return (
+      <ErrorState
+        isbn={isbn}
+        metadata={metadata}
+        error={availabilityQuery.error}
+        isScan={isScan}
+        onRetry={handleRetry}
+      />
+    );
+  }
+  return (
+    <ResultState
+      isbn={isbn}
+      metadata={metadata}
+      libraries={libraries}
+      results={availabilityQuery.data ?? []}
+      isScan={isScan}
+    />
+  );
+}
+
+function CenteredProgress(): JSX.Element {
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+      <CircularProgress />
+    </Box>
+  );
+}
+
+/**
+ * 蔵書検索結果画面。
+ *
+ * #159 で未ログインでも開けるようにした（`PUBLIC_PATHS`）。ログイン済みなら従来の
+ * 結果（AuthenticatedResult）、未ログインなら書誌情報と案内（PublicResultPreview）。
+ * セッション復元中は `user` が一瞬 null になるため、未ログイン用の表示をログイン済みの
+ * 人に見せないよう、復元が終わるまで読み込み中にする。
+ */
+export function BookSearchResultPage(): JSX.Element {
+  const params = useParams<{ isbn: string }>();
+  const isbn = params.isbn ?? '';
+  const [searchParams] = useSearchParams();
+  const isScan = (searchParams.get('source') ?? undefined) === 'scan';
+  const { user, isRestoring } = useAuth();
+
+  const renderBody = (): JSX.Element => {
+    if (isRestoring) return <CenteredProgress />;
+    if (user === null) return <PublicResultPreview isbn={isbn} />;
+    return <AuthenticatedResult isbn={isbn} isScan={isScan} />;
   };
 
   return (

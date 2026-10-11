@@ -10,6 +10,8 @@ import { trackIsbnScanSuccess } from '@/analytics/events';
 vi.mock('@/analytics/events', () => ({
   trackIsbnScanSuccess: vi.fn(),
   trackBookSearchResultView: vi.fn(),
+  // 未ログインで結果画面へ遷移すると #159 のプレビュー表示が計測する。
+  trackBookPreviewView: vi.fn(),
   trackLibraryReservationLinkClick: vi.fn(),
   trackAmazonAffiliateLinkClick: vi.fn(),
 }));

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { trackEvent } from './gtag';
 import {
   trackAmazonAffiliateLinkClick,
+  trackBookPreviewView,
   trackBookSearchResultView,
   trackIsbnScanSuccess,
   trackLibraryReservationLinkClick,
@@ -78,5 +79,11 @@ describe('analytics/events', () => {
     trackTrialCheckResult('rate_limited');
 
     expect(trackEventMock).toHaveBeenCalledWith('trial_check_result', { outcome: 'rate_limited' });
+  });
+
+  test('未ログインで検索結果ページ（書誌情報のみ）を表示した（#159）', () => {
+    trackBookPreviewView();
+
+    expect(trackEventMock).toHaveBeenCalledWith('book_preview_view');
   });
 });
