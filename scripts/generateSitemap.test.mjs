@@ -6,6 +6,8 @@ import { afterEach, describe, expect, test } from 'vitest';
 import {
   buildSitemapXml,
   cityPriority,
+  diffSitemapUrls,
+  extractSitemapUrls,
   parseLastmodArg,
   readGuideSlugs,
   readLibrariesByPrefecture,
@@ -168,5 +170,41 @@ describe('readLibrariesByPrefecture', () => {
 
     expect(Object.keys(result)).toEqual(['滋賀県']);
     expect(result['滋賀県']).toHaveLength(2);
+  });
+});
+
+describe('extractSitemapUrls（#193）', () => {
+  test('<loc> の中身を集合で返し、XML のエスケープを戻す', () => {
+    const xml = buildSitemapXml({ baseUrl: 'https://example.com/a&b', librariesByPrefecture: {}, lastmod: LASTMOD });
+
+    expect(extractSitemapUrls(xml)).toEqual(new Set(['https://example.com/a&b/', 'https://example.com/a&b/library/add']));
+  });
+});
+
+describe('diffSitemapUrls（#193）', () => {
+  const base = { baseUrl: BASE_URL, librariesByPrefecture: { 東京都: [...libs('港区', 1), ...libs('大田区', 1)] } };
+
+  test('URL が同じなら過不足なし（lastmod・priority の違いは無視する）', () => {
+    const committed = buildSitemapXml({ ...base, lastmod: '2026-01-01' });
+    const expected = buildSitemapXml({ ...base, lastmod: '2026-10-10' });
+
+    expect(diffSitemapUrls(committed, expected)).toEqual({ missing: [], extra: [] });
+  });
+
+  test('作り直し忘れ: あるべき URL が足りない（名前順）', () => {
+    const committed = buildSitemapXml({ ...base, lastmod: LASTMOD });
+    const expected = buildSitemapXml({ ...base, guideSlugs: ['nearby', 'barcode'], lastmod: LASTMOD });
+
+    expect(diffSitemapUrls(committed, expected)).toEqual({
+      missing: [`${BASE_URL}/guide/barcode`, `${BASE_URL}/guide/nearby`],
+      extra: [],
+    });
+  });
+
+  test('消したページが残っている: 余分な URL', () => {
+    const committed = buildSitemapXml({ ...base, guideSlugs: ['old'], lastmod: LASTMOD });
+    const expected = buildSitemapXml({ ...base, lastmod: LASTMOD });
+
+    expect(diffSitemapUrls(committed, expected)).toEqual({ missing: [], extra: [`${BASE_URL}/guide/old`] });
   });
 });
