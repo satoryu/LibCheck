@@ -61,9 +61,11 @@ describe('findRouteMeta', () => {
       expect(meta.noindex).toBe(true);
     });
 
-    it('/result/:isbn は noindex のまま', () => {
-      const meta = findRouteMeta('/result/9784873117584');
-      expect(meta.noindex).toBe(true);
+    it('/result/:isbn は book（本ごとのメタはミドルウェアが組み立てる。noindex のまま。#159）', () => {
+      expect(findRouteMeta('/result/9784873117584')).toEqual({
+        book: true,
+        params: { isbn: '9784873117584' },
+      });
     });
 
     it('/library（登録図書館の管理）は noindex のまま', () => {

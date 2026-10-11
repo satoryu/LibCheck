@@ -341,6 +341,77 @@ describe('_middleware.js', () => {
     expect(res.__rewriterSelectors).toContain('meta[name="robots"]');
   });
 
+  describe('共有された検索結果ページ /result/:isbn（#159）', () => {
+    const ISBN = '9784003101018';
+    const url = `https://libcheck.app/result/${ISBN}`;
+
+    function mockOpenBd(body: unknown) {
+      const fetch = vi.fn(async () =>
+        new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } }),
+      );
+      globalThis.fetch = fetch as never;
+      return fetch;
+    }
+
+    it('書名・書影で title と OGP を書き換え、noindex・canonical は自身にする', async () => {
+      globalThis.HTMLRewriter = FakeHTMLRewriter as unknown as typeof HTMLRewriter;
+      mockOpenBd([{ summary: { title: '吾輩は猫である', cover: 'https://cover.openbd.jp/x.jpg' } }]);
+      const { onRequest } = await importMiddleware();
+
+      const res = (await onRequest({
+        request: new Request(url),
+        next: vi.fn(async () => htmlResponse()),
+      } as never)) as RewrittenResponse;
+
+      const title = '『吾輩は猫である』が図書館で借りられるか、LibCheckで確認';
+      expect(res.__ops['title'].inner?.content).toBe(title);
+      expect(res.__ops['meta[property="og:title"]'].attrs.content).toBe(title);
+      expect(res.__ops['meta[name="description"]'].attrs.content).toContain('『吾輩は猫である』が近くの図書館で');
+      expect(res.__ops['meta[property="og:description"]'].attrs.content).toContain('『吾輩は猫である』');
+      expect(res.__ops['meta[property="og:image"]'].attrs.content).toBe('https://cover.openbd.jp/x.jpg');
+      // 既定画像（1024×500）のサイズ指定は書影と食い違うため外す。
+      expect(res.__ops['meta[property="og:image:width"]'].removed).toBe(true);
+      expect(res.__ops['meta[property="og:image:height"]'].removed).toBe(true);
+      // 書影は縦長のため大きな横長カードにしない。
+      expect(res.__ops['meta[name="twitter:card"]'].attrs.content).toBe('summary');
+      expect(res.__ops['meta[name="robots"]'].attrs.content).toBe('noindex');
+      expect(res.__ops['link[rel="canonical"]'].attrs.href).toBe(url);
+      expect(res.__ops['meta[property="og:url"]'].attrs.content).toBe(url);
+      // 本文（#root）は SPA が描画するため差し込まない。
+      expect(res.__rewriterSelectors).not.toContain('#root');
+    });
+
+    it('書影が無ければ og:image と twitter:card は既定のまま', async () => {
+      globalThis.HTMLRewriter = FakeHTMLRewriter as unknown as typeof HTMLRewriter;
+      mockOpenBd([{ summary: { title: '吾輩は猫である' } }]);
+      const { onRequest } = await importMiddleware();
+
+      const res = (await onRequest({ request: new Request(url), next: vi.fn(async () => htmlResponse()) } as never)) as RewrittenResponse;
+
+      expect(res.__rewriterSelectors).not.toContain('meta[property="og:image"]');
+      expect(res.__rewriterSelectors).not.toContain('meta[name="twitter:card"]');
+      expect(res.__ops['title'].inner?.content).toContain('吾輩は猫である');
+    });
+
+    it.each([
+      ['不正な ISBN（OpenBD を呼ばない）', '9784003101019', [null], false],
+      ['OpenBD に無い', ISBN, [null], true],
+    ])('%s は既定のタイトルで noindex・canonical 自身', async (_label, isbn, body, called) => {
+      globalThis.HTMLRewriter = FakeHTMLRewriter as unknown as typeof HTMLRewriter;
+      const fetch = mockOpenBd(body);
+      const { onRequest } = await importMiddleware();
+      const target = `https://libcheck.app/result/${isbn}`;
+
+      const res = (await onRequest({ request: new Request(target), next: vi.fn(async () => htmlResponse()) } as never)) as RewrittenResponse;
+
+      expect(fetch).toHaveBeenCalledTimes(called ? 1 : 0);
+      expect(res.__ops['title'].inner?.content).toBe('検索結果 — LibCheck');
+      expect(res.__ops['meta[name="robots"]'].attrs.content).toBe('noindex');
+      expect(res.__ops['link[rel="canonical"]'].attrs.href).toBe(target);
+      expect(res.__rewriterSelectors).not.toContain('meta[property="og:image"]');
+    });
+  });
+
   describe('libcheck.pages.dev から本番ドメインへの転送（#189）', () => {
     const path = `/library/add/${encodeURIComponent('滋賀県')}?x=1`;
 

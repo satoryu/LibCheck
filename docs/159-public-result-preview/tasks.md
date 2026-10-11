@@ -21,12 +21,13 @@ TDD で進める（失敗するテストを先に書く → 実装 → リファ
 
 ## 3. 配信 HTML の本ごとのメタ
 
-- [ ] `bookMeta.js`（OpenBD 取得・キャッシュ・タイムアウト）のテスト → 実装
-- [ ] `routeMeta` / middleware: `/result/:isbn` の書き換え（テスト → 実装）
+- [x] `bookMeta.js`（OpenBD 取得・キャッシュ・タイムアウト）のテスト → 実装
+- [x] `routeMeta` / middleware: `/result/:isbn` の書き換え（テスト → 実装）
+- [x] 書影に差し替えるときは既定画像のサイズ指定（og:image:width / height）を外す
 
 ## 4. 全体確認
 
-- [ ] `npm test` / `npx tsc -b` / `npm run build`
+- [x] `npm test` / `npx tsc -b` / `npm run build`
 - [ ] `wrangler pages dev` で配信 HTML を `curl`（本ごとの title・og:*、noindex、canonical、不正 ISBN・該当なし）
 - [ ] ブラウザ: 未ログインのコールドロード（保護 API を呼ばない）・その場でログイン → 蔵書状況（`VITE_AUTH_MOCK=true`）・ログイン済みのコールドロードで案内が出ない
 - [ ] PR 作成・セルフレビュー
