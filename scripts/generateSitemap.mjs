@@ -99,6 +99,35 @@ export function buildSitemapXml({ baseUrl, librariesByPrefecture, guideSlugs = [
   );
 }
 
+function unescapeXml(value) {
+  return value
+    .replaceAll('&apos;', "'")
+    .replaceAll('&quot;', '"')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&lt;', '<')
+    .replaceAll('&amp;', '&');
+}
+
+/** sitemap の `<loc>` の中身（XML のエスケープを戻したもの）を集合で返す（#193）。 */
+export function extractSitemapUrls(xml) {
+  return new Set(Array.from(xml.matchAll(/<loc>([^<]*)<\/loc>/g), (m) => unescapeXml(m[1])));
+}
+
+/**
+ * コミット済みの sitemap と、生成元から作った sitemap の URL の過不足を返す（#193）。
+ * lastmod・priority・changefreq は比べない（lastmod は作り直した日で変わるため）。
+ *
+ * @returns {{missing: string[], extra: string[]}} missing はあるべきなのに無い URL、extra はその逆（名前順）
+ */
+export function diffSitemapUrls(committedXml, expectedXml) {
+  const committed = extractSitemapUrls(committedXml);
+  const expected = extractSitemapUrls(expectedXml);
+  return {
+    missing: [...expected].filter((url) => !committed.has(url)).sort(),
+    extra: [...committed].filter((url) => !expected.has(url)).sort(),
+  };
+}
+
 /** `--lastmod=YYYY-MM-DD` を読む。無ければ `now` の日付（UTC）。 */
 export function parseLastmodArg(argv, now) {
   const arg = argv.find((a) => a.startsWith('--lastmod='));
@@ -129,20 +158,37 @@ export async function readGuideSlugs(dir) {
 }
 
 /**
- * 図書館データと使い方ガイドから sitemap.xml を書き出す（generateLibraryData.mjs からも使う）。
- * ガイドは public/guide/*.html のファイル一覧から作るため、ページを足したときに更新漏れが起きない。
+ * 生成元から sitemap.xml を組み立てる。`librariesByPrefecture` を省略すると
+ * public/data/libraries/*.json を読む。使い方ガイドは public/guide/*.html の
+ * ファイル一覧から作るため、ページを足したときに更新漏れが起きない。
  */
+async function buildSitemapFromSources({ librariesByPrefecture, lastmod }) {
+  return buildSitemapXml({
+    baseUrl: BASE_URL,
+    librariesByPrefecture: librariesByPrefecture ?? (await readLibrariesByPrefecture(LIBRARIES_DIR)),
+    guideSlugs: await readGuideSlugs(GUIDE_DIR),
+    lastmod,
+  });
+}
+
+/**
+ * 生成元から「あるべき sitemap」を作る（#193 の作り直し忘れの検知用）。
+ * 比べるのは URL だけなので、lastmod は固定値でよい。
+ */
+export async function buildExpectedSitemapXml() {
+  return buildSitemapFromSources({ lastmod: '1970-01-01' });
+}
+
+/** 図書館データと使い方ガイドから sitemap.xml を書き出す（generateLibraryData.mjs からも使う）。 */
 export async function writeSitemap({ librariesByPrefecture, lastmod }) {
-  const guideSlugs = await readGuideSlugs(GUIDE_DIR);
-  const xml = buildSitemapXml({ baseUrl: BASE_URL, librariesByPrefecture, guideSlugs, lastmod });
+  const xml = await buildSitemapFromSources({ librariesByPrefecture, lastmod });
   await writeFile(SITEMAP_PATH, xml, 'utf-8');
   return (xml.match(/<url>/g) ?? []).length;
 }
 
 async function main() {
   const lastmod = parseLastmodArg(process.argv.slice(2), new Date());
-  const librariesByPrefecture = await readLibrariesByPrefecture(LIBRARIES_DIR);
-  const count = await writeSitemap({ librariesByPrefecture, lastmod });
+  const count = await writeSitemap({ lastmod });
   console.log(`sitemap.xml を更新しました（${count} URL、lastmod ${lastmod}）。`);
 }
 
