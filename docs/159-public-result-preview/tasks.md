@@ -2,6 +2,12 @@
 
 TDD で進める（失敗するテストを先に書く → 実装 → リファクタ）。
 
+## 0. 決定事項（2026-10-11）
+
+- [x] 共有ボタンは範囲外とし #191 に起票
+- [x] 未ログインの表示は別イベント `book_preview_view` で計測
+- [x] OGP タイトルは「『{書名}』が図書館で借りられるか、LibCheckで確認」
+
 ## 1. 認証の復元中フラグ
 
 - [ ] `AuthProvider.test.tsx`: `isRestoring` のテスト → 実装
@@ -11,6 +17,7 @@ TDD で進める（失敗するテストを先に書く → 実装 → リファ
 - [ ] `publicPaths`: `/result/:isbn` を公開（テスト → 実装）
 - [ ] `BookSearchResultPage.test.tsx`: 未ログインの表示・保護 API を呼ばない・復元中・ログインで切り替え（テスト → 実装。既存の中身は `AuthenticatedResult` へ移す）
 - [ ] `PublicResultPreview` の案内（ログイン・地域から探す）
+- [ ] GA4 イベント `book_preview_view`（テスト → 実装）とプライバシーポリシーの追記
 
 ## 3. 配信 HTML の本ごとのメタ
 

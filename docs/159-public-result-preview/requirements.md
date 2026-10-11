@@ -23,6 +23,7 @@
 - **F4. 本ごとの OGP**: 配信 HTML の `title`・`og:title`・`og:description`・`og:image` を本ごとの値にする（書名は OpenBD をサーバ側で取得。書影は OpenBD の書影があればそれ、無ければ既定の `og-image.png`）。
 - **F5. noindex**: `/result/:isbn` は引き続き `noindex`。sitemap には含めない。canonical は自身に向ける（`noindex` と食い違わないように）。
 - **F6. 復元中の表示**: セッション復元中は、未ログイン用の表示ではなく読み込み中を表示する（ログイン済みの人に案内が一瞬出ないように）。
+- **F8. 計測**: 未ログインの表示は GA4 の別イベント `book_preview_view` で計測する（ISBN・書名は送らない）。プライバシーポリシーの GA4 の説明に追記する。
 - **F7. 不正な ISBN**: 不正な ISBN の URL は、OpenBD を呼ばず既定の OGP のままにする。
 
 ### Non-Functional
